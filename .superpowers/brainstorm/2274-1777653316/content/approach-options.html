@@ -1,0 +1,82 @@
+<h2>开发方案基线选择</h2>
+<p class="subtitle">目标已锁定为“先出全量方案，不立即开发”。请看 3 套方案基线，确认我接下来按哪套写完整设计文档。</p>
+
+<div class="cards">
+  <div class="card" data-choice="a" onclick="toggleSelect(this)">
+    <div class="card-image">
+      <div class="mockup">
+        <div class="mockup-header">A. 汇报型全量蓝图</div>
+        <div class="mockup-body">
+          <div class="mock-nav">多端覆盖 | 微服务 | 多云 | AI | 政府对接</div>
+          <div style="display:flex; gap:12px;">
+            <div class="mock-sidebar">业务域<br>摊主 / 主办方 / 消费者 / 平台</div>
+            <div class="mock-content">完整目标架构、商业模式、分期路线、组织与预算</div>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="card-body">
+      <h3>A. 投资/汇报版</h3>
+      <p>强调远景、全域架构和商业化，适合路演、立项、汇报。</p>
+    </div>
+  </div>
+
+  <div class="card" data-choice="b" onclick="toggleSelect(this)">
+    <div class="card-image">
+      <div class="mockup">
+        <div class="mockup-header">B. 自动化交付蓝图</div>
+        <div class="mockup-body">
+          <div class="mock-nav">MVP闭环 | 云端自动任务 | 测试门禁 | 发布流水线</div>
+          <div style="display:flex; gap:12px;">
+            <div class="mock-sidebar">阶段1<br>招募闭环</div>
+            <div class="mock-content">围绕“能自动开发、能自动验证、能逐步上线”来设计技术方案与任务拆分</div>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="card-body">
+      <h3>B. 落地执行版</h3>
+      <p>强调云端自主开发可行性、任务原子化、自动测试与增量交付。</p>
+    </div>
+  </div>
+
+  <div class="card" data-choice="c" onclick="toggleSelect(this)">
+    <div class="card-image">
+      <div class="mockup">
+        <div class="mockup-header">C. 双轨并行版</div>
+        <div class="mockup-body">
+          <div class="mock-nav">企业远景架构 + MVP高效架构</div>
+          <div style="display:flex; gap:12px;">
+            <div class="mock-sidebar">左轨<br>全量</div>
+            <div class="mock-content">右轨<br>MVP自动化落地，并标出迁移路径</div>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="card-body">
+      <h3>C. 双轨推荐版</h3>
+      <p>同时兼顾融资/汇报和真实交付，先定义终局，再定义最低可执行起步方案。</p>
+    </div>
+  </div>
+</div>
+
+<div class="section">
+  <h3>我的推荐</h3>
+  <div class="pros-cons">
+    <div class="pros">
+      <h4>推荐 C 的原因</h4>
+      <ul>
+        <li>保留你原始方案的战略完整度</li>
+        <li>同时避免 Kuikly + 全微服务 + 全端同期上线导致早期失控</li>
+        <li>最适合后续生成自动化任务清单和分阶段云端执行计划</li>
+      </ul>
+    </div>
+    <div class="cons">
+      <h4>代价</h4>
+      <ul>
+        <li>文档会更长</li>
+        <li>需要明确“终局架构”和“MVP架构”的映射关系</li>
+      </ul>
+    </div>
+  </div>
+</div>
