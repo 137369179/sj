@@ -1,0 +1,132 @@
+<h2>三端增强版 MVP 边界</h2>
+<p class="subtitle">先确认首发版本的深度，而不是功能名称是否“存在”</p>
+
+<div class="cards">
+  <div class="card" data-choice="vendor" onclick="toggleSelect(this)">
+    <div class="card-image">
+      <div class="mockup">
+        <div class="mockup-header">摊主端</div>
+        <div class="mockup-body">
+          <div class="label">必须首发</div>
+          <ul>
+            <li>市集发现 / 搜索 / 筛选</li>
+            <li>详情页与费用透明展示</li>
+            <li>报名申请与资质上传</li>
+            <li>报名进度 / 消息通知</li>
+            <li>在线支付报名费 / 摊位费</li>
+          </ul>
+          <div class="label">增强但可降级</div>
+          <ul>
+            <li>基础经营看板</li>
+            <li>收藏 / 档期管理</li>
+            <li>评价与信用档案</li>
+          </ul>
+          <div class="label">不进 MVP</div>
+          <ul>
+            <li>完整 POS 收银</li>
+            <li>高级库存与客流探针</li>
+            <li>私域社群工具</li>
+          </ul>
+        </div>
+      </div>
+    </div>
+    <div class="card-body">
+      <h3>摊主端重点</h3>
+      <p>核心目标是让摊主完成发现、报名、支付、确认，不把经营工具做成主线阻塞项。</p>
+    </div>
+  </div>
+
+  <div class="card" data-choice="organizer" onclick="toggleSelect(this)">
+    <div class="card-image">
+      <div class="mockup">
+        <div class="mockup-header">主办方端</div>
+        <div class="mockup-body">
+          <div class="label">必须首发</div>
+          <ul>
+            <li>市集创建与发布</li>
+            <li>报名审核与资质复核</li>
+            <li>摊位地图基础配置</li>
+            <li>人工 + 规则式分配</li>
+            <li>订单 / 退款 / 结算台账</li>
+          </ul>
+          <div class="label">增强但可降级</div>
+          <ul>
+            <li>活动数据看板</li>
+            <li>宣传素材协同</li>
+            <li>现场签到与通知</li>
+          </ul>
+          <div class="label">不进 MVP</div>
+          <ul>
+            <li>3D 场地图</li>
+            <li>复杂 AI 分配算法</li>
+            <li>政府系统对接</li>
+          </ul>
+        </div>
+      </div>
+    </div>
+    <div class="card-body">
+      <h3>主办方端重点</h3>
+      <p>先把发布、审核、分配、收款和履约流程跑通，智能化先做规则引擎而不是 AI 黑盒。</p>
+    </div>
+  </div>
+
+  <div class="card" data-choice="consumer" onclick="toggleSelect(this)">
+    <div class="card-image">
+      <div class="mockup">
+        <div class="mockup-header">消费者端</div>
+        <div class="mockup-body">
+          <div class="label">必须首发</div>
+          <ul>
+            <li>周边市集发现</li>
+            <li>市集详情 / 摊主预览</li>
+            <li>收藏 / 开场提醒</li>
+            <li>活动日历</li>
+          </ul>
+          <div class="label">增强但可降级</div>
+          <ul>
+            <li>预约到访</li>
+            <li>评论 / 打卡 / 投票</li>
+            <li>专题推荐页</li>
+          </ul>
+          <div class="label">不进 MVP</div>
+          <ul>
+            <li>线上商城闭环</li>
+            <li>即时配送</li>
+            <li>复杂会员体系</li>
+          </ul>
+        </div>
+      </div>
+    </div>
+    <div class="card-body">
+      <h3>消费者端重点</h3>
+      <p>首版承担引流和种草，不承担重交易；避免把消费者端做成另一套电商系统。</p>
+    </div>
+  </div>
+</div>
+
+<div class="section">
+  <h3>请重点判断</h3>
+  <div class="options">
+    <div class="option" data-choice="yes" onclick="toggleSelect(this)">
+      <div class="letter">A</div>
+      <div class="content">
+        <h3>边界合理</h3>
+        <p>按这套 MVP 深度继续往下设计。</p>
+      </div>
+    </div>
+    <div class="option" data-choice="more-consumer" onclick="toggleSelect(this)">
+      <div class="letter">B</div>
+      <div class="content">
+        <h3>消费者端还要更重</h3>
+        <p>需要把互动或交易再前置一些。</p>
+      </div>
+    </div>
+    <div class="option" data-choice="more-tools" onclick="toggleSelect(this)">
+      <div class="letter">C</div>
+      <div class="content">
+        <h3>摊主经营工具更重</h3>
+        <p>需要把记账、库存、分析提到 MVP 主路径。</p>
+      </div>
+    </div>
+  </div>
+</div>
