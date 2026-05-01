@@ -1,0 +1,28 @@
+{
+  "name": "workspace",
+  "version": "1.0.0",
+  "description": "市集活动摊主招募APP开发方案",
+  "main": "index.js",
+  "directories": {
+    "doc": "docs"
+  },
+  "scripts": {
+    "test": "vitest run"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://x-access-token:ghu_2FyIMc0iVGIYwYC7NNomxmRaRwODk83nyUMX@github.com/137369179/sj.git"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "type": "commonjs",
+  "bugs": {
+    "url": "https://github.com/137369179/sj/issues"
+  },
+  "homepage": "https://github.com/137369179/sj#readme",
+  "devDependencies": {
+    "jsdom": "^29.1.1",
+    "vitest": "^4.1.5"
+  }
+}
