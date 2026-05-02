@@ -2,7 +2,7 @@ import Link from "next/link";
 
 export function HeroSection() {
   return (
-    <section className="hero-section" aria-labelledby="hero-title">
+    <section className="hero-section" aria-labelledby="hero-title" role="region">
       <p className="eyebrow">市集招募平台</p>
       <h2 id="hero-title">让市集招募、报名与管理更高效</h2>
       <p className="hero-copy">

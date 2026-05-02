@@ -1,0 +1,90 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum UserRole {
+  vendor
+  organizer
+  admin
+}
+
+enum MarketStatus {
+  draft
+  published
+  recruiting
+  reviewing
+  confirmed
+  ongoing
+  completed
+}
+
+enum ApplicationStatus {
+  submitted
+  under_review
+  approved
+  rejected
+  stall_assigned
+}
+
+model User {
+  id                    String         @id @default(cuid())
+  phone                 String         @unique
+  role                  UserRole
+  name                  String
+  createdAt             DateTime       @default(now())
+  organizedMarkets      Market[]       @relation("OrganizerMarkets")
+  applications          Application[]  @relation("VendorApplications")
+  notifications         Notification[]
+}
+
+model Market {
+  id                    String         @id @default(cuid())
+  organizerId           String
+  title                 String
+  city                  String
+  startsAt              DateTime
+  endsAt                DateTime
+  status                MarketStatus   @default(draft)
+  organizer             User           @relation("OrganizerMarkets", fields: [organizerId], references: [id])
+  applications          Application[]
+  stalls                Stall[]
+}
+
+model Application {
+  id                    String            @id @default(cuid())
+  marketId              String
+  vendorId              String
+  status                ApplicationStatus @default(submitted)
+  note                  String?
+  createdAt             DateTime          @default(now())
+  market                Market            @relation(fields: [marketId], references: [id])
+  vendor                User              @relation("VendorApplications", fields: [vendorId], references: [id])
+
+  @@unique([marketId, vendorId])
+}
+
+model Stall {
+  id                    String   @id @default(cuid())
+  marketId              String
+  code                  String
+  name                  String
+  isActive              Boolean  @default(true)
+  market                Market   @relation(fields: [marketId], references: [id])
+
+  @@unique([marketId, code])
+}
+
+model Notification {
+  id                    String   @id @default(cuid())
+  userId                String
+  title                 String
+  content               String
+  readAt                DateTime?
+  createdAt             DateTime @default(now())
+  user                  User     @relation(fields: [userId], references: [id])
+}

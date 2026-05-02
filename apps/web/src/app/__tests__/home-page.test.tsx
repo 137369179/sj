@@ -41,4 +41,24 @@ describe("HomePage", () => {
     expect(screen.getByText("审核沟通")).toBeInTheDocument();
     expect(screen.getByText("现场执行")).toBeInTheDocument();
   });
+
+  it("renders one main region and five explicit named landing sections", () => {
+    const { container } = render(<HomePage />);
+
+    expect(screen.getByRole("main")).toBeInTheDocument();
+    expect(container.querySelectorAll('section[role="region"]')).toHaveLength(5);
+    expect(
+      screen.getByRole("region", { name: "让市集招募、报名与管理更高效" })
+    ).toBeInTheDocument();
+    expect(
+      screen.getByRole("region", { name: "为什么使用这套平台" })
+    ).toBeInTheDocument();
+    expect(screen.getByRole("region", { name: "核心流程" })).toBeInTheDocument();
+    expect(
+      screen.getByRole("region", { name: "选择你的使用路径" })
+    ).toBeInTheDocument();
+    expect(
+      screen.getByRole("region", { name: "现在开始建立更清晰的市集协作流程" })
+    ).toBeInTheDocument();
+  });
 });

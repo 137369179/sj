@@ -15,7 +15,7 @@ const values = [
 
 export function ValueSection() {
   return (
-    <section className="value-section" aria-labelledby="value-title">
+    <section className="value-section" aria-labelledby="value-title" role="region">
       <h3 id="value-title">为什么使用这套平台</h3>
       <div className="value-grid">
         {values.map((value) => (

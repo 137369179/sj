@@ -1,0 +1,10 @@
+node_modules/
+.pnpm-store/
+.turbo/
+apps/web/node_modules/
+apps/web/.next/
+apps/web/.turbo/
+coverage/
+dist/
+build/
+.DS_Store

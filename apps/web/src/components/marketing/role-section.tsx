@@ -2,7 +2,7 @@ import Link from "next/link";
 
 export function RoleSection() {
   return (
-    <section className="role-section" aria-labelledby="role-title">
+    <section className="role-section" aria-labelledby="role-title" role="region">
       <h3 id="role-title">选择你的使用路径</h3>
       <div className="role-grid">
         <article className="role-card">
