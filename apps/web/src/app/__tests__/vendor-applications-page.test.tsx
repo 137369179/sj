@@ -78,6 +78,10 @@ describe("Vendor applications page", () => {
     expect(screen.getByText("审核历史")).toBeInTheDocument();
     expect(screen.getByText("2026-05-02 · 通过 · 复核通过")).toBeInTheDocument();
     expect(screen.getByText("2026-05-02 · 拒绝 · 首轮资料不完整")).toBeInTheDocument();
+    expect(screen.getByRole("link", { name: "查看春日咖啡市集详情" })).toHaveAttribute(
+      "href",
+      "/markets/market_1"
+    );
     expect(screen.getByRole("link", { name: "license.pdf" })).toHaveAttribute(
       "href",
       "/uploads/license.pdf"
@@ -202,8 +206,75 @@ describe("Vendor applications page", () => {
       "href",
       "/applications?status=stall_assigned"
     );
+    expect(screen.getByRole("link", { name: "春日咖啡市集" })).toHaveAttribute(
+      "href",
+      "/applications?marketId=market_1&status=approved"
+    );
+    expect(screen.getByRole("link", { name: "夏夜面包市集" })).toHaveAttribute(
+      "href",
+      "/applications?marketId=market_2&status=approved"
+    );
+    expect(screen.getByRole("link", { name: "秋日手作市集" })).toHaveAttribute(
+      "href",
+      "/applications?marketId=market_3&status=approved"
+    );
     expect(screen.getByText("夏夜面包市集 · 上海")).toBeInTheDocument();
     expect(screen.queryByText("春日咖啡市集 · 杭州")).not.toBeInTheDocument();
     expect(screen.queryByText("秋日手作市集 · 南京")).not.toBeInTheDocument();
+  });
+
+  it("filters vendor applications by marketId and preserves status context", async () => {
+    vi.mocked(getSessionUser).mockResolvedValue({
+      userId: "vendor_1",
+      role: "vendor"
+    });
+    vi.mocked(listVendorApplications).mockResolvedValue([
+      {
+        id: "app_1",
+        marketId: "market_1",
+        marketTitle: "春日咖啡市集",
+        marketCity: "杭州",
+        status: "submitted",
+        applicationNote: "主营手作咖啡",
+        reviewNote: null,
+        reviewedAt: null,
+        reviews: [],
+        attachments: [],
+        createdAt: new Date("2026-05-01T00:00:00.000Z"),
+        assignedStallId: null,
+        assignedStallCode: null,
+        assignedStallName: null
+      },
+      {
+        id: "app_2",
+        marketId: "market_2",
+        marketTitle: "夏夜面包市集",
+        marketCity: "上海",
+        status: "approved",
+        applicationNote: "主营木作器物",
+        reviewNote: "初审通过",
+        reviewedAt: new Date("2026-05-02T08:30:00.000Z"),
+        reviews: [],
+        attachments: [],
+        createdAt: new Date("2026-05-01T01:00:00.000Z"),
+        assignedStallId: null,
+        assignedStallCode: null,
+        assignedStallName: null
+      }
+    ]);
+
+    const page = await VendorApplicationsPage({
+      searchParams: Promise.resolve({ marketId: "market_1" })
+    });
+
+    render(page);
+
+    expect(screen.getByText("当前市集：春日咖啡市集")).toBeInTheDocument();
+    expect(screen.getByRole("link", { name: "全部（1）" })).toHaveAttribute(
+      "href",
+      "/applications?marketId=market_1"
+    );
+    expect(screen.getByText("春日咖啡市集 · 杭州")).toBeInTheDocument();
+    expect(screen.queryByText("夏夜面包市集 · 上海")).not.toBeInTheDocument();
   });
 });
