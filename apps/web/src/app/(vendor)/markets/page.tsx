@@ -1,17 +1,19 @@
 import Link from "next/link";
 
 import { AppShell } from "../../../components/layout/app-shell";
+import { filterMarkets, listDemoMarkets } from "../../../server/markets/service";
 
-const featuredMarkets = [
-  {
-    id: "spring-coffee",
-    title: "春日咖啡市集",
-    city: "杭州",
-    date: "2026-05-18"
-  }
-];
+export default async function VendorMarketsPage({
+  searchParams
+}: {
+  searchParams?: Promise<{
+    city?: string;
+    keyword?: string;
+  }>;
+}) {
+  const filters = (await searchParams) ?? {};
+  const featuredMarkets = filterMarkets(listDemoMarkets(), filters);
 
-export default function VendorMarketsPage() {
   return (
     <AppShell>
       <main aria-labelledby="vendor-markets-title">

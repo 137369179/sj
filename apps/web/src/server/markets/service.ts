@@ -9,6 +9,31 @@ export const marketSchema = z.object({
 
 export type MarketPayload = z.infer<typeof marketSchema>;
 
+export type DemoMarket = {
+  id: string;
+  title: string;
+  city: string;
+  date: string;
+  description: string;
+};
+
+const demoMarkets: DemoMarket[] = [
+  {
+    id: "spring-coffee",
+    title: "春日咖啡市集",
+    city: "杭州",
+    date: "2026-05-18",
+    description: "面向精品咖啡、甜点与生活方式品牌开放招募。"
+  },
+  {
+    id: "craft-weekend",
+    title: "独立手作品牌周末",
+    city: "上海",
+    date: "2026-06-06",
+    description: "聚焦手作、文创与小众设计品牌的周末限定市集。"
+  }
+];
+
 export function buildMarketPayload(input: unknown): MarketPayload {
   return marketSchema.parse(input);
 }
@@ -32,4 +57,12 @@ export function filterMarkets<T extends { city: string; title: string }>(
 
     return cityMatched && keywordMatched;
   });
+}
+
+export function listDemoMarkets() {
+  return [...demoMarkets];
+}
+
+export function getDemoMarketById(marketId: string) {
+  return demoMarkets.find((market) => market.id === marketId);
 }
