@@ -36,6 +36,7 @@ export default async function OrganizerDashboardPage({
   });
 
   const approvalRateLabel = `${Math.round(summary.metrics.approvalRate * 100)}%`;
+  const stallOccupancyRateLabel = `${Math.round(summary.metrics.stallOccupancyRate * 100)}%`;
 
   return (
     <AppShell>
@@ -92,6 +93,18 @@ export default async function OrganizerDashboardPage({
           <article>
             <h3>通过率</h3>
             <p>{approvalRateLabel}</p>
+          </article>
+          <article>
+            <h3>摊位总数</h3>
+            <p>{summary.metrics.totalStalls}</p>
+          </article>
+          <article>
+            <h3>启用中摊位</h3>
+            <p>{summary.metrics.activeStalls}</p>
+          </article>
+          <article>
+            <h3>摊位利用率</h3>
+            <p>{stallOccupancyRateLabel}</p>
           </article>
         </section>
       </main>

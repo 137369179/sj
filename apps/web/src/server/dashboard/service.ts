@@ -7,6 +7,9 @@ export type DashboardSummaryInput = {
   approvedCount: number;
   rejectedCount: number;
   assignedCount: number;
+  totalStalls: number;
+  activeStalls: number;
+  occupiedStalls: number;
 };
 
 export type MarketDashboardSummary = {
@@ -44,7 +47,12 @@ export function buildDashboardSummary(input: DashboardSummaryInput) {
     approvedCount: input.approvedCount,
     rejectedCount: input.rejectedCount,
     assignedCount: input.assignedCount,
-    approvalRate: totalApplications === 0 ? 0 : acceptedCount / totalApplications
+    approvalRate: totalApplications === 0 ? 0 : acceptedCount / totalApplications,
+    totalStalls: input.totalStalls,
+    activeStalls: input.activeStalls,
+    occupiedStalls: input.occupiedStalls,
+    stallOccupancyRate:
+      input.activeStalls === 0 ? 0 : input.occupiedStalls / input.activeStalls
   };
 }
 
@@ -80,6 +88,15 @@ export async function getMarketDashboardSummary(input: {
       status: true
     }
   });
+  const stalls = await db.stall.findMany({
+    where: {
+      marketId: input.marketId
+    },
+    select: {
+      isActive: true,
+      assignedApplicationId: true
+    }
+  });
 
   return {
     market: {
@@ -87,7 +104,10 @@ export async function getMarketDashboardSummary(input: {
       title: market.title,
       city: market.city
     },
-    metrics: buildDashboardSummary(countStatuses(applications.map((item) => item.status)))
+    metrics: buildDashboardSummary({
+      ...countStatuses(applications.map((item) => item.status)),
+      ...countStalls(stalls)
+    })
   };
 }
 
@@ -97,7 +117,10 @@ function countStatuses(statuses: ApplicationStatus[]): DashboardSummaryInput {
     underReviewCount: 0,
     approvedCount: 0,
     rejectedCount: 0,
-    assignedCount: 0
+    assignedCount: 0,
+    totalStalls: 0,
+    activeStalls: 0,
+    occupiedStalls: 0
   };
 
   for (const status of statuses) {
@@ -121,4 +144,19 @@ function countStatuses(statuses: ApplicationStatus[]): DashboardSummaryInput {
   }
 
   return counts;
+}
+
+function countStalls(
+  stalls: Array<{
+    isActive: boolean;
+    assignedApplicationId: string | null;
+  }>
+) {
+  return {
+    totalStalls: stalls.length,
+    activeStalls: stalls.filter((stall) => stall.isActive).length,
+    occupiedStalls: stalls.filter(
+      (stall) => stall.isActive && typeof stall.assignedApplicationId === "string"
+    ).length
+  };
 }

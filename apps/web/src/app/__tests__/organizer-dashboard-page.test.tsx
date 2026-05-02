@@ -52,7 +52,11 @@ describe("Organizer dashboard page", () => {
         approvedCount: 1,
         rejectedCount: 1,
         assignedCount: 1,
-        approvalRate: 0.4
+        approvalRate: 0.4,
+        totalStalls: 6,
+        activeStalls: 5,
+        occupiedStalls: 3,
+        stallOccupancyRate: 0.6
       }
     });
 
@@ -71,10 +75,16 @@ describe("Organizer dashboard page", () => {
     expect(screen.getByRole("heading", { name: "市集看板" })).toBeInTheDocument();
     expect(screen.getByText("春日咖啡市集 · 杭州")).toBeInTheDocument();
     expect(screen.getByText("总报名数")).toBeInTheDocument();
-    expect(screen.getByText("5")).toBeInTheDocument();
+    expect(screen.getAllByText("5")).toHaveLength(2);
     expect(screen.getByText("待处理")).toBeInTheDocument();
     expect(screen.getByText("2")).toBeInTheDocument();
     expect(screen.getByText("40%")).toBeInTheDocument();
+    expect(screen.getByText("摊位总数")).toBeInTheDocument();
+    expect(screen.getByText("6")).toBeInTheDocument();
+    expect(screen.getByText("启用中摊位")).toBeInTheDocument();
+    expect(screen.getAllByText("5")).toHaveLength(2);
+    expect(screen.getByText("摊位利用率")).toBeInTheDocument();
+    expect(screen.getByText("60%")).toBeInTheDocument();
     expect(screen.getByRole("link", { name: "查看当前市集申请" })).toHaveAttribute(
       "href",
       "/organizer/applications?marketId=market_1"
