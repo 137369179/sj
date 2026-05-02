@@ -78,6 +78,8 @@ describe("application service", () => {
         note: "主营手作咖啡",
         applicationNote: null,
         reviewNote: null,
+        reviewedAt: null,
+        reviews: [],
         createdAt: new Date("2026-05-01T00:00:00.000Z"),
         market: {
           id: "market_1",
@@ -103,6 +105,7 @@ describe("application service", () => {
         market: {
           select: {
             id: true,
+            organizerId: true,
             title: true,
             city: true
           }
@@ -111,6 +114,19 @@ describe("application service", () => {
           select: {
             id: true,
             name: true
+          }
+        },
+        reviews: {
+          select: {
+            id: true,
+            applicationId: true,
+            organizerId: true,
+            decision: true,
+            reviewNote: true,
+            createdAt: true
+          },
+          orderBy: {
+            createdAt: "desc"
           }
         }
       },
@@ -130,6 +146,8 @@ describe("application service", () => {
         note: "主营手作咖啡",
         applicationNote: "主营手作咖啡",
         attachments: [],
+        reviewedAt: null,
+        reviews: [],
         reviewNote: null,
         createdAt: new Date("2026-05-01T00:00:00.000Z")
       }
@@ -150,6 +168,22 @@ describe("application service", () => {
           {
             url: "/uploads/license.pdf",
             originalName: "license.pdf"
+          }
+        ],
+        reviews: [
+          {
+            id: "review_2",
+            organizerId: "org_1",
+            decision: "approve",
+            reviewNote: "复核通过",
+            createdAt: new Date("2026-05-02T09:00:00.000Z")
+          },
+          {
+            id: "review_1",
+            organizerId: "org_1",
+            decision: "reject",
+            reviewNote: "首轮资料不完整",
+            createdAt: new Date("2026-05-02T08:30:00.000Z")
           }
         ],
         reviewedAt: new Date("2026-05-02T08:30:00.000Z"),
@@ -187,6 +221,19 @@ describe("application service", () => {
             code: true,
             name: true
           }
+        },
+        reviews: {
+          select: {
+            id: true,
+            applicationId: true,
+            organizerId: true,
+            decision: true,
+            reviewNote: true,
+            createdAt: true
+          },
+          orderBy: {
+            createdAt: "desc"
+          }
         }
       },
       orderBy: {
@@ -206,6 +253,22 @@ describe("application service", () => {
           {
             url: "/uploads/license.pdf",
             originalName: "license.pdf"
+          }
+        ],
+        reviews: [
+          {
+            id: "review_2",
+            organizerId: "org_1",
+            decision: "approve",
+            reviewNote: "复核通过",
+            createdAt: new Date("2026-05-02T09:00:00.000Z")
+          },
+          {
+            id: "review_1",
+            organizerId: "org_1",
+            decision: "reject",
+            reviewNote: "首轮资料不完整",
+            createdAt: new Date("2026-05-02T08:30:00.000Z")
           }
         ],
         reviewNote: null,
@@ -300,6 +363,19 @@ describe("application service", () => {
           select: {
             id: true,
             name: true
+          }
+        },
+        reviews: {
+          select: {
+            id: true,
+            applicationId: true,
+            organizerId: true,
+            decision: true,
+            reviewNote: true,
+            createdAt: true
+          },
+          orderBy: {
+            createdAt: "desc"
           }
         }
       }

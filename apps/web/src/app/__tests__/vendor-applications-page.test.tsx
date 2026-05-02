@@ -33,6 +33,22 @@ describe("Vendor applications page", () => {
         applicationNote: "主营手作咖啡",
         reviewNote: "摊位需求明确，允许进入分配",
         reviewedAt: new Date("2026-05-02T08:30:00.000Z"),
+        reviews: [
+          {
+            id: "review_2",
+            organizerId: "org_1",
+            decision: "approve",
+            reviewNote: "复核通过",
+            createdAt: new Date("2026-05-02T09:00:00.000Z")
+          },
+          {
+            id: "review_1",
+            organizerId: "org_1",
+            decision: "reject",
+            reviewNote: "首轮资料不完整",
+            createdAt: new Date("2026-05-02T08:30:00.000Z")
+          }
+        ],
         attachments: [
           {
             url: "/uploads/license.pdf",
@@ -57,6 +73,9 @@ describe("Vendor applications page", () => {
     expect(screen.getByText("报名备注：主营手作咖啡")).toBeInTheDocument();
     expect(screen.getByText("审核备注：摊位需求明确，允许进入分配")).toBeInTheDocument();
     expect(screen.getByText("最近审核时间：2026-05-02")).toBeInTheDocument();
+    expect(screen.getByText("审核历史")).toBeInTheDocument();
+    expect(screen.getByText("2026-05-02 · 通过 · 复核通过")).toBeInTheDocument();
+    expect(screen.getByText("2026-05-02 · 拒绝 · 首轮资料不完整")).toBeInTheDocument();
     expect(screen.getByRole("link", { name: "license.pdf" })).toHaveAttribute(
       "href",
       "/uploads/license.pdf"

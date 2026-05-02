@@ -45,6 +45,7 @@ type OrganizerApplicationRecord = {
   reviewNote: string | null;
   attachmentsJson?: unknown;
   reviewedAt: Date | null;
+  reviews: RawApplicationReviewRecord[];
   createdAt: Date;
   market: {
     id: string;
@@ -66,6 +67,7 @@ type VendorApplicationRecord = {
   reviewNote: string | null;
   attachmentsJson?: unknown;
   reviewedAt: Date | null;
+  reviews: RawApplicationReviewRecord[];
   createdAt: Date;
   market: {
     id: string;
@@ -92,6 +94,7 @@ export type OrganizerApplicationListItem = {
   reviewNote: string | null;
   attachments: StoredAttachment[];
   reviewedAt: Date | null;
+  reviews: ApplicationReviewAuditRecord[];
   createdAt: Date;
 };
 
@@ -106,6 +109,7 @@ export type VendorApplicationListItem = {
   reviewNote: string | null;
   attachments: StoredAttachment[];
   reviewedAt: Date | null;
+  reviews: ApplicationReviewAuditRecord[];
   createdAt: Date;
   assignedStallId: string | null;
   assignedStallCode: string | null;
@@ -123,6 +127,10 @@ export type ApplicationReviewAuditRecord = {
   decision: ApplicationReviewPayload["decision"];
   reviewNote: string | null;
   createdAt: Date;
+};
+
+type RawApplicationReviewRecord = Omit<ApplicationReviewAuditRecord, "decision"> & {
+  decision: string;
 };
 
 export type ApplicationReviewErrorCode =
@@ -153,6 +161,19 @@ const organizerApplicationInclude = {
       id: true,
       name: true
     }
+  },
+  reviews: {
+    select: {
+      id: true,
+      applicationId: true,
+      organizerId: true,
+      decision: true,
+      reviewNote: true,
+      createdAt: true
+    },
+    orderBy: {
+      createdAt: "desc"
+    }
   }
 } as const;
 
@@ -169,6 +190,19 @@ const vendorApplicationInclude = {
       id: true,
       code: true,
       name: true
+    }
+  },
+  reviews: {
+    select: {
+      id: true,
+      applicationId: true,
+      organizerId: true,
+      decision: true,
+      reviewNote: true,
+      createdAt: true
+    },
+    orderBy: {
+      createdAt: "desc"
     }
   }
 } as const;
@@ -196,21 +230,7 @@ export async function listOrganizerApplications(
         organizerId
       }
     },
-    include: {
-      market: {
-        select: {
-          id: true,
-          title: true,
-          city: true
-        }
-      },
-      vendor: {
-        select: {
-          id: true,
-          name: true
-        }
-      }
-    },
+    include: organizerApplicationInclude,
     orderBy: {
       createdAt: "desc"
     }
@@ -319,6 +339,7 @@ function formatOrganizerApplication(
     reviewNote: application.reviewNote,
     attachments: normalizeAttachments(application.attachmentsJson),
     reviewedAt: application.reviewedAt,
+    reviews: normalizeReviewRecords(application.reviews),
     createdAt: application.createdAt
   };
 }
@@ -337,9 +358,27 @@ function formatVendorApplication(
     reviewNote: application.reviewNote,
     attachments: normalizeAttachments(application.attachmentsJson),
     reviewedAt: application.reviewedAt,
+    reviews: normalizeReviewRecords(application.reviews),
     createdAt: application.createdAt,
     assignedStallId: application.assignedStall?.id ?? null,
     assignedStallCode: application.assignedStall?.code ?? null,
     assignedStallName: application.assignedStall?.name ?? null
   };
+}
+
+function normalizeReviewRecords(
+  reviews: RawApplicationReviewRecord[]
+): ApplicationReviewAuditRecord[] {
+  return reviews
+    .filter(isSupportedReviewDecision)
+    .map((review) => ({
+      ...review,
+      decision: review.decision
+    }));
+}
+
+function isSupportedReviewDecision(
+  review: RawApplicationReviewRecord
+): review is ApplicationReviewAuditRecord {
+  return review.decision === "approve" || review.decision === "reject";
 }

@@ -66,6 +66,19 @@ export default async function OrganizerApplicationsPage() {
               <p>报名备注：{application.applicationNote ?? "无"}</p>
               <p>审核备注：{application.reviewNote ?? "无"}</p>
               <p>最近审核时间：{application.reviewedAt ? formatDate(application.reviewedAt) : "未审核"}</p>
+              <p>审核历史</p>
+              {application.reviews.length > 0 ? (
+                <ul aria-label="审核历史列表">
+                  {application.reviews.map((review) => (
+                    <li key={review.id}>
+                      {formatDate(review.createdAt)} · {getReviewDecisionLabel(review.decision)} ·{" "}
+                      {review.reviewNote ?? "无备注"}
+                    </li>
+                  ))}
+                </ul>
+              ) : (
+                <p>暂无审核历史</p>
+              )}
               <p>报名附件：{application.attachments.length > 0 ? null : "无"}</p>
               {application.attachments.map((attachment) => (
                 <p key={attachment.url}>
@@ -103,4 +116,8 @@ export default async function OrganizerApplicationsPage() {
 
 function formatDate(value: Date) {
   return value.toISOString().slice(0, 10);
+}
+
+function getReviewDecisionLabel(decision: "approve" | "reject") {
+  return decision === "approve" ? "通过" : "拒绝";
 }
