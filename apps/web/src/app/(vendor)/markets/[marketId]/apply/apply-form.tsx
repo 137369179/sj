@@ -31,7 +31,9 @@ export function VendorApplyForm({ marketId }: VendorApplyFormProps) {
 
     const form = event.currentTarget;
     const formData = new FormData(form);
-    const attachmentUrl = String(formData.get("attachmentUrl") ?? "").trim();
+    const attachmentInput = form.elements.namedItem("attachmentFile");
+    const attachmentFile =
+      attachmentInput instanceof HTMLInputElement ? attachmentInput.files?.[0] : null;
 
     setSubmitState({
       status: "submitting",
@@ -39,6 +41,11 @@ export function VendorApplyForm({ marketId }: VendorApplyFormProps) {
     });
 
     try {
+      const attachments =
+        attachmentFile instanceof File && attachmentFile.size > 0
+          ? [await uploadAttachment(attachmentFile)]
+          : [];
+
       const response = await fetch("/api/applications", {
         method: "POST",
         headers: {
@@ -48,14 +55,7 @@ export function VendorApplyForm({ marketId }: VendorApplyFormProps) {
           marketId,
           boothPreference: String(formData.get("boothPreference") ?? ""),
           applicationNote: String(formData.get("applicationNote") ?? ""),
-          attachments: attachmentUrl
-            ? [
-                {
-                  url: attachmentUrl,
-                  originalName: getAttachmentName(attachmentUrl)
-                }
-              ]
-            : []
+          attachments
         })
       });
 
@@ -108,19 +108,19 @@ export function VendorApplyForm({ marketId }: VendorApplyFormProps) {
           />
         </label>
         <label>
-          附件地址
+          附件文件
           <input
-            name="attachmentUrl"
-            aria-label="附件地址"
-            type="url"
-            placeholder="https://example.com/license.pdf"
+            name="attachmentFile"
+            aria-label="附件文件"
+            type="file"
+            accept=".pdf,image/jpeg,image/png,image/webp"
           />
         </label>
         <button type="submit" disabled={isSubmitting}>
           {submitLabel}
         </button>
       </form>
-      <p>开发期通过最小表单接通报名闭环，后续再增强上传体验。</p>
+      <p>开发期已接通本地最小上传链路，后续再升级到对象存储。</p>
       <Link href="/applications">查看我的报名</Link>
       {submitState.message ? (
         <p aria-live={statusTone} role={submitState.status === "error" ? "alert" : "status"}>
@@ -129,11 +129,6 @@ export function VendorApplyForm({ marketId }: VendorApplyFormProps) {
       ) : null}
     </>
   );
-}
-
-function getAttachmentName(attachmentUrl: string) {
-  const segments = attachmentUrl.split("/").filter(Boolean);
-  return segments.at(-1) ?? "attachment";
 }
 
 async function readErrorPayload(response: Response) {
@@ -168,4 +163,33 @@ function resolveSubmitErrorMessage(status: number, errorCode: string | null) {
   }
 
   return "报名提交失败，请稍后重试。";
+}
+
+async function uploadAttachment(file: File) {
+  const uploadFormData = new FormData();
+  uploadFormData.set("file", file);
+
+  const response = await fetch("/api/uploads", {
+    method: "POST",
+    body: uploadFormData
+  });
+
+  if (!response.ok) {
+    const errorPayload = await readErrorPayload(response);
+    throw new Error(resolveUploadErrorMessage(response.status, errorPayload));
+  }
+
+  return response.json() as Promise<{ url: string; originalName: string }>;
+}
+
+function resolveUploadErrorMessage(status: number, errorCode: string | null) {
+  if (status === 415 || errorCode === "unsupported file type") {
+    return "附件上传失败，请更换 JPG、PNG、WEBP 或 PDF 文件后重试。";
+  }
+
+  if (status === 413 || errorCode === "file too large") {
+    return "附件上传失败，文件大小不能超过 5MB。";
+  }
+
+  return "附件上传失败，请稍后重试。";
 }

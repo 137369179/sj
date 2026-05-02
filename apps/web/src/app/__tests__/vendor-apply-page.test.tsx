@@ -9,28 +9,50 @@ describe("VendorApplyPage", () => {
     vi.stubGlobal("fetch", vi.fn());
   });
 
-  function fillAndSubmitForm() {
+  function fillAndSubmitForm(options?: { withFile?: boolean }) {
     fireEvent.change(screen.getByLabelText("摊位偏好"), {
       target: { value: "靠近主通道" }
     });
     fireEvent.change(screen.getByLabelText("报名备注"), {
       target: { value: "主营手作咖啡" }
     });
-    fireEvent.change(screen.getByLabelText("附件地址"), {
-      target: { value: "https://example.com/license.pdf" }
-    });
+
+    if (options?.withFile) {
+      const file = new File(["license"], "license.pdf", {
+        type: "application/pdf"
+      });
+      fireEvent.change(screen.getByLabelText("附件文件"), {
+        target: { files: [file] }
+      });
+    }
+
     fireEvent.click(screen.getByRole("button", { name: "提交申请" }));
   }
 
-  it("submits the minimal application form and shows success feedback", async () => {
-    vi.mocked(fetch).mockResolvedValue(
+  it("uploads the selected file before submitting the application and shows success feedback", async () => {
+    vi.mocked(fetch)
+      .mockResolvedValueOnce(
+        new Response(
+          JSON.stringify({
+            url: "/uploads/license.pdf",
+            originalName: "license.pdf"
+          }),
+          {
+            status: 201,
+            headers: {
+              "content-type": "application/json"
+            }
+          }
+        )
+      )
+      .mockResolvedValueOnce(
       new Response(JSON.stringify({ id: "app_1" }), {
         status: 201,
         headers: {
           "content-type": "application/json"
         }
       })
-    );
+      );
 
     render(
       await VendorApplyPage({
@@ -43,15 +65,27 @@ describe("VendorApplyPage", () => {
     ).toBeInTheDocument();
     expect(screen.getByLabelText("摊位偏好")).toBeInTheDocument();
     expect(screen.getByLabelText("报名备注")).toBeInTheDocument();
-    expect(screen.getByLabelText("附件地址")).toBeInTheDocument();
+    expect(screen.getByLabelText("附件文件")).toBeInTheDocument();
     expect(
       document.querySelector('input[name="marketId"][value="market_1"]')
     ).not.toBeNull();
 
-    fillAndSubmitForm();
+    fillAndSubmitForm({ withFile: true });
 
     await waitFor(() => {
-      expect(fetch).toHaveBeenCalledWith(
+      expect(fetch).toHaveBeenNthCalledWith(
+        1,
+        "/api/uploads",
+        expect.objectContaining({
+          method: "POST",
+          body: expect.any(FormData)
+        })
+      );
+    });
+
+    await waitFor(() => {
+      expect(fetch).toHaveBeenNthCalledWith(
+        2,
         "/api/applications",
         expect.objectContaining({
           method: "POST",
@@ -64,7 +98,7 @@ describe("VendorApplyPage", () => {
             applicationNote: "主营手作咖啡",
             attachments: [
               {
-                url: "https://example.com/license.pdf",
+                url: "/uploads/license.pdf",
                 originalName: "license.pdf"
               }
             ]
@@ -146,6 +180,29 @@ describe("VendorApplyPage", () => {
 
     expect(
       await screen.findByText("你已经提交过该市集的报名，请前往我的报名查看进度。")
+    ).toBeInTheDocument();
+  });
+
+  it("shows an upload error when the attachment upload fails", async () => {
+    vi.mocked(fetch).mockResolvedValueOnce(
+      new Response(JSON.stringify({ message: "unsupported file type" }), {
+        status: 415,
+        headers: {
+          "content-type": "application/json"
+        }
+      })
+    );
+
+    render(
+      await VendorApplyPage({
+        params: Promise.resolve({ marketId: "market_1" })
+      })
+    );
+
+    fillAndSubmitForm({ withFile: true });
+
+    expect(
+      await screen.findByText("附件上传失败，请更换 JPG、PNG、WEBP 或 PDF 文件后重试。")
     ).toBeInTheDocument();
   });
 });
