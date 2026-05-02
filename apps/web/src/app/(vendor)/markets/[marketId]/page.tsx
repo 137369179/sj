@@ -50,7 +50,7 @@ export default async function MarketDetailPage({
         ) : null}
         <section aria-label="报名入口">
           <Link href={applyHref}>立即报名</Link>
-          <Link href="/applications">查看我的报名</Link>
+          <Link href={returnToApplications ?? "/applications"}>查看我的报名</Link>
         </section>
       </main>
     </AppShell>

@@ -64,7 +64,7 @@ describe("Organizer markets page", () => {
       "href",
       "/organizer/stalls?marketId=market_2&from=markets"
     );
-    expect(screen.getByRole("link", { name: "夏夜面包市集 查看看板" })).toHaveAttribute(
+    expect(screen.getByRole("link", { name: "夏夜面包市集 查看市集看板" })).toHaveAttribute(
       "href",
       "/organizer/dashboard/market_2?from=markets"
     );
@@ -143,7 +143,7 @@ describe("Organizer markets page", () => {
       "href",
       "/organizer/stalls?marketId=market_2&from=markets&marketStatus=published"
     );
-    expect(screen.getByRole("link", { name: "夏夜面包市集 查看看板" })).toHaveAttribute(
+    expect(screen.getByRole("link", { name: "夏夜面包市集 查看市集看板" })).toHaveAttribute(
       "href",
       "/organizer/dashboard/market_2?from=markets&marketStatus=published"
     );

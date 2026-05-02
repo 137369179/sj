@@ -62,5 +62,8 @@ describe("Vendor market pages", () => {
     expect(
       screen.getByRole("link", { name: "返回我的报名" })
     ).toHaveAttribute("href", "/applications?marketId=spring-coffee&status=approved");
+    expect(
+      screen.getByRole("link", { name: "查看我的报名" })
+    ).toHaveAttribute("href", "/applications?marketId=spring-coffee&status=approved");
   });
 });

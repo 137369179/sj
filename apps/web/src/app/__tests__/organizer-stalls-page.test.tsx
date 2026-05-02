@@ -479,6 +479,18 @@ describe("Organizer stalls page", () => {
       "href",
       "/organizer/applications?marketId=market_2&status=approved"
     );
+    expect(screen.getByRole("link", { name: "全部（1）" })).toHaveAttribute(
+      "href",
+      "/organizer/stalls?marketId=market_2&from=applications&sourceStatus=approved"
+    );
+    expect(screen.getByRole("link", { name: "已分配（1）" })).toHaveAttribute(
+      "href",
+      "/organizer/stalls?marketId=market_2&status=assigned&from=applications&sourceStatus=approved"
+    );
+    expect(screen.getByRole("link", { name: "夏夜面包市集（当前）" })).toHaveAttribute(
+      "href",
+      "/organizer/stalls?marketId=market_2&from=applications&sourceStatus=approved"
+    );
     expect(screen.getByRole("link", { name: "查看当前市集申请" })).toHaveAttribute(
       "href",
       "/organizer/applications?marketId=market_2&from=applications&status=approved"

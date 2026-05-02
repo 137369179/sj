@@ -152,13 +152,13 @@ export default async function OrganizerMarketsPage({
                   摊位管理
                 </Link>
                 <Link
-                  aria-label={`${market.title} 查看看板`}
+                  aria-label={`${market.title} 查看市集看板`}
                   href={buildOrganizerDashboardHref({
                     marketId: market.id,
                     selectedStatus
                   })}
                 >
-                  查看看板
+                  查看市集看板
                 </Link>
               </nav>
               {market.status === "draft" ? (

@@ -43,6 +43,7 @@ type OrganizerApplicationsPageProps = {
     marketId?: string;
     from?: string;
     marketStatus?: string;
+    sourceStatus?: string;
   }>;
 };
 
@@ -68,11 +69,14 @@ export default async function OrganizerApplicationsPage({
       ? marketScopedApplications
       : marketScopedApplications.filter((application) => application.status === selectedStatus);
   const summary = buildStatusSummary(marketScopedApplications);
+  const sourceStallStatus = getOrganizerStallStatus(
+    resolvedSearchParams.sourceStatus ?? resolvedSearchParams.status
+  );
   const stallReturnHref =
     resolvedSearchParams.from === "stalls"
       ? buildOrganizerStallsReturnHref({
           marketId: selectedMarketId,
-          status: getOrganizerStallStatus(resolvedSearchParams.status)
+          status: sourceStallStatus
         })
       : null;
   const organizerMarketsHref = buildOrganizerMarketsHref(resolvedSearchParams.marketStatus);
@@ -114,7 +118,7 @@ export default async function OrganizerApplicationsPage({
                     marketId: selectedMarketId,
                     from: resolvedSearchParams.from,
                     marketStatus: resolvedSearchParams.marketStatus,
-                    status: resolvedSearchParams.status
+                        status: sourceStallStatus
                   })}
                 >
                   查看当前市集摊位
@@ -126,10 +130,7 @@ export default async function OrganizerApplicationsPage({
                       resolvedSearchParams.from === "markets" || resolvedSearchParams.from === "stalls"
                         ? resolvedSearchParams.from
                         : "applications",
-                    status:
-                      resolvedSearchParams.from === "stalls"
-                        ? resolvedSearchParams.status
-                        : selectedStatus,
+                    status: resolvedSearchParams.from === "stalls" ? sourceStallStatus : selectedStatus,
                     marketStatus: resolvedSearchParams.marketStatus
                   })}
                 >
@@ -149,7 +150,8 @@ export default async function OrganizerApplicationsPage({
                         marketId: market.id,
                         status: selectedStatus === "all" ? undefined : selectedStatus,
                         from: resolvedSearchParams.from,
-                        marketStatus: resolvedSearchParams.marketStatus
+                        marketStatus: resolvedSearchParams.marketStatus,
+                        sourceStatus: sourceStallStatus
                       })}
                     >
                       {isCurrent ? `${market.title}（当前）` : market.title}
@@ -170,7 +172,8 @@ export default async function OrganizerApplicationsPage({
                 href={buildApplicationsFilterHref({
                   marketId: selectedMarketId,
                   from: resolvedSearchParams.from,
-                  marketStatus: resolvedSearchParams.marketStatus
+                  marketStatus: resolvedSearchParams.marketStatus,
+                  sourceStatus: sourceStallStatus
                 })}
               >
                 全部（{summary.all}）
@@ -180,7 +183,8 @@ export default async function OrganizerApplicationsPage({
                   marketId: selectedMarketId,
                   status: "submitted",
                   from: resolvedSearchParams.from,
-                  marketStatus: resolvedSearchParams.marketStatus
+                  marketStatus: resolvedSearchParams.marketStatus,
+                  sourceStatus: sourceStallStatus
                 })}
               >
                 待审核（{summary.submitted}）
@@ -190,7 +194,8 @@ export default async function OrganizerApplicationsPage({
                   marketId: selectedMarketId,
                   status: "approved",
                   from: resolvedSearchParams.from,
-                  marketStatus: resolvedSearchParams.marketStatus
+                  marketStatus: resolvedSearchParams.marketStatus,
+                  sourceStatus: sourceStallStatus
                 })}
               >
                 已通过（{summary.approved}）
@@ -200,7 +205,8 @@ export default async function OrganizerApplicationsPage({
                   marketId: selectedMarketId,
                   status: "rejected",
                   from: resolvedSearchParams.from,
-                  marketStatus: resolvedSearchParams.marketStatus
+                  marketStatus: resolvedSearchParams.marketStatus,
+                  sourceStatus: sourceStallStatus
                 })}
               >
                 已拒绝（{summary.rejected}）
@@ -281,6 +287,7 @@ function buildApplicationsFilterHref(input: {
   status?: "submitted" | "approved" | "rejected";
   from?: string;
   marketStatus?: string;
+  sourceStatus?: "unassigned" | "assigned" | "inactive" | null;
 }) {
   const params = new URLSearchParams();
 
@@ -304,6 +311,14 @@ function buildApplicationsFilterHref(input: {
     }
   }
 
+  if (input.from === "stalls") {
+    params.set("from", "stalls");
+
+    if (input.sourceStatus) {
+      params.set("sourceStatus", input.sourceStatus);
+    }
+  }
+
   const query = params.toString();
   return query.length > 0 ? `/organizer/applications?${query}` : "/organizer/applications";
 }
@@ -311,7 +326,7 @@ function buildApplicationsFilterHref(input: {
 function buildDashboardHref(input: {
   marketId: string;
   from: "applications" | "markets" | "stalls";
-  status?: string;
+  status?: string | null;
   marketStatus?: string;
 }) {
   const params = new URLSearchParams({
@@ -354,7 +369,7 @@ function buildOrganizerMarketsContextHref(input: {
   marketId: string;
   from?: string;
   marketStatus?: string;
-  status?: string;
+  status?: "unassigned" | "assigned" | "inactive" | null;
 }) {
   const params = new URLSearchParams({
     marketId: input.marketId
@@ -375,11 +390,7 @@ function buildOrganizerMarketsContextHref(input: {
   if (input.from === "stalls") {
     params.set("from", "stalls");
 
-    if (
-      input.status === "unassigned" ||
-      input.status === "assigned" ||
-      input.status === "inactive"
-    ) {
+    if (input.status) {
       params.set("status", input.status);
     }
   }

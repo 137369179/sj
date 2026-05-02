@@ -65,6 +65,7 @@ type OrganizerStallsPageProps = {
     marketId?: string;
     from?: string;
     marketStatus?: string;
+    sourceStatus?: string;
   }>;
 };
 
@@ -99,11 +100,14 @@ export default async function OrganizerStallsPage({
       ? marketScopedStalls
       : marketScopedStalls.filter((stall) => getStallFilterStatus(stall) === selectedStatus);
   const summary = buildStallSummary(marketScopedStalls);
+  const sourceApplicationStatus = getOrganizerApplicationStatus(
+    resolvedSearchParams.sourceStatus ?? resolvedSearchParams.status
+  );
   const applicationsReturnHref =
     resolvedSearchParams.from === "applications"
       ? buildOrganizerApplicationsReturnHref({
           marketId: selectedMarketId,
-          status: getOrganizerApplicationStatus(resolvedSearchParams.status)
+          status: sourceApplicationStatus
         })
       : null;
   const organizerMarketsHref = buildOrganizerMarketsHref(resolvedSearchParams.marketStatus);
@@ -145,7 +149,7 @@ export default async function OrganizerStallsPage({
                     marketId: selectedMarketId,
                     from: resolvedSearchParams.from,
                     marketStatus: resolvedSearchParams.marketStatus,
-                    status: resolvedSearchParams.status
+                    status: sourceApplicationStatus
                   })}
                 >
                   查看当前市集申请
@@ -160,7 +164,7 @@ export default async function OrganizerStallsPage({
                         : "stalls",
                     status:
                       resolvedSearchParams.from === "applications"
-                        ? resolvedSearchParams.status
+                        ? sourceApplicationStatus
                         : selectedStatus,
                     marketStatus: resolvedSearchParams.marketStatus
                   })}
@@ -181,7 +185,8 @@ export default async function OrganizerStallsPage({
                         marketId: market.id,
                         status: selectedStatus === "all" ? undefined : selectedStatus,
                         from: resolvedSearchParams.from,
-                        marketStatus: resolvedSearchParams.marketStatus
+                        marketStatus: resolvedSearchParams.marketStatus,
+                        sourceStatus: sourceApplicationStatus
                       })}
                     >
                       {isCurrent ? `${market.title}（当前）` : market.title}
@@ -202,7 +207,8 @@ export default async function OrganizerStallsPage({
                 href={buildStallsFilterHref({
                   marketId: selectedMarketId,
                   from: resolvedSearchParams.from,
-                  marketStatus: resolvedSearchParams.marketStatus
+                  marketStatus: resolvedSearchParams.marketStatus,
+                  sourceStatus: sourceApplicationStatus
                 })}
               >
                 全部（{summary.all}）
@@ -212,7 +218,8 @@ export default async function OrganizerStallsPage({
                   marketId: selectedMarketId,
                   status: "unassigned",
                   from: resolvedSearchParams.from,
-                  marketStatus: resolvedSearchParams.marketStatus
+                  marketStatus: resolvedSearchParams.marketStatus,
+                  sourceStatus: sourceApplicationStatus
                 })}
               >
                 待分配（{summary.unassigned}）
@@ -222,7 +229,8 @@ export default async function OrganizerStallsPage({
                   marketId: selectedMarketId,
                   status: "assigned",
                   from: resolvedSearchParams.from,
-                  marketStatus: resolvedSearchParams.marketStatus
+                  marketStatus: resolvedSearchParams.marketStatus,
+                  sourceStatus: sourceApplicationStatus
                 })}
               >
                 已分配（{summary.assigned}）
@@ -232,7 +240,8 @@ export default async function OrganizerStallsPage({
                   marketId: selectedMarketId,
                   status: "inactive",
                   from: resolvedSearchParams.from,
-                  marketStatus: resolvedSearchParams.marketStatus
+                  marketStatus: resolvedSearchParams.marketStatus,
+                  sourceStatus: sourceApplicationStatus
                 })}
               >
                 已停用（{summary.inactive}）
@@ -344,6 +353,7 @@ function buildStallsFilterHref(input: {
   status?: "unassigned" | "assigned" | "inactive";
   from?: string;
   marketStatus?: string;
+  sourceStatus?: "submitted" | "approved" | "rejected" | null;
 }) {
   const params = new URLSearchParams();
 
@@ -367,6 +377,14 @@ function buildStallsFilterHref(input: {
     }
   }
 
+  if (input.from === "applications") {
+    params.set("from", "applications");
+
+    if (input.sourceStatus) {
+      params.set("sourceStatus", input.sourceStatus);
+    }
+  }
+
   const query = params.toString();
   return query.length > 0 ? `/organizer/stalls?${query}` : "/organizer/stalls";
 }
@@ -374,7 +392,7 @@ function buildStallsFilterHref(input: {
 function buildDashboardHref(input: {
   marketId: string;
   from: "stalls" | "markets" | "applications";
-  status?: string;
+  status?: string | null;
   marketStatus?: string;
 }) {
   const params = new URLSearchParams({
@@ -413,7 +431,7 @@ function buildOrganizerMarketsContextHref(input: {
   marketId: string;
   from?: string;
   marketStatus?: string;
-  status?: string;
+  status?: "submitted" | "approved" | "rejected" | null;
 }) {
   const params = new URLSearchParams({
     marketId: input.marketId
@@ -434,11 +452,7 @@ function buildOrganizerMarketsContextHref(input: {
   if (input.from === "applications") {
     params.set("from", "applications");
 
-    if (
-      input.status === "submitted" ||
-      input.status === "approved" ||
-      input.status === "rejected"
-    ) {
+    if (input.status) {
       params.set("status", input.status);
     }
   }
