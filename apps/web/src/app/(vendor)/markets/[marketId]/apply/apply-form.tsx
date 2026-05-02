@@ -5,6 +5,7 @@ import { useMemo, useState, type FormEvent } from "react";
 
 type VendorApplyFormProps = {
   marketId: string;
+  applicationsHref: string;
 };
 
 type SubmitState =
@@ -17,7 +18,7 @@ type SubmitState =
       message: string;
     };
 
-export function VendorApplyForm({ marketId }: VendorApplyFormProps) {
+export function VendorApplyForm({ marketId, applicationsHref }: VendorApplyFormProps) {
   const [submitState, setSubmitState] = useState<SubmitState>({
     status: "idle",
     message: null
@@ -121,7 +122,7 @@ export function VendorApplyForm({ marketId }: VendorApplyFormProps) {
         </button>
       </form>
       <p>开发期已接通本地最小上传链路，后续再升级到对象存储。</p>
-      <Link href="/applications">查看我的报名</Link>
+      <Link href={applicationsHref}>查看我的报名</Link>
       {submitState.message ? (
         <p aria-live={statusTone} role={submitState.status === "error" ? "alert" : "status"}>
           {submitState.message}

@@ -16,6 +16,11 @@ export default async function MarketDetailPage({
   const { marketId } = await params;
   const market = getDemoMarketById(marketId);
   const resolvedSearchParams = (await searchParams) ?? {};
+  const applyHref = buildVendorApplyHref({
+    marketId,
+    from: resolvedSearchParams.from,
+    status: getVendorApplicationStatus(resolvedSearchParams.status)
+  });
   const returnToApplications =
     resolvedSearchParams.from === "applications"
       ? buildVendorApplicationsReturnHref({
@@ -44,7 +49,7 @@ export default async function MarketDetailPage({
           </section>
         ) : null}
         <section aria-label="报名入口">
-          <Link href={`/markets/${marketId}/apply`}>立即报名</Link>
+          <Link href={applyHref}>立即报名</Link>
           <Link href="/applications">查看我的报名</Link>
         </section>
       </main>
@@ -73,4 +78,24 @@ function buildVendorApplicationsReturnHref(input: {
   }
 
   return `/applications?${params.toString()}`;
+}
+
+function buildVendorApplyHref(input: {
+  marketId: string;
+  from?: string;
+  status: "submitted" | "approved" | "stall_assigned" | null;
+}) {
+  if (input.from !== "applications") {
+    return `/markets/${input.marketId}/apply`;
+  }
+
+  const params = new URLSearchParams({
+    from: "applications"
+  });
+
+  if (input.status) {
+    params.set("status", input.status);
+  }
+
+  return `/markets/${input.marketId}/apply?${params.toString()}`;
 }

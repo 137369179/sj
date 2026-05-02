@@ -57,6 +57,9 @@ describe("Vendor market pages", () => {
 
     expect(screen.getByText("当前来自我的报名页。")).toBeInTheDocument();
     expect(
+      screen.getByRole("link", { name: "立即报名" })
+    ).toHaveAttribute("href", "/markets/spring-coffee/apply?from=applications&status=approved");
+    expect(
       screen.getByRole("link", { name: "返回我的报名" })
     ).toHaveAttribute("href", "/applications?marketId=spring-coffee&status=approved");
   });

@@ -205,4 +205,21 @@ describe("VendorApplyPage", () => {
       await screen.findByText("附件上传失败，请更换 JPG、PNG、WEBP 或 PDF 文件后重试。")
     ).toBeInTheDocument();
   });
+
+  it("renders an applications return link when opened from vendor applications", async () => {
+    render(
+      await VendorApplyPage({
+        params: Promise.resolve({ marketId: "market_1" }),
+        searchParams: Promise.resolve({
+          from: "applications",
+          status: "approved"
+        })
+      })
+    );
+
+    expect(screen.getByText("当前来自我的报名页，可直接返回当前市集的报名记录。")).toBeInTheDocument();
+    expect(
+      screen.getByRole("link", { name: "返回我的报名" })
+    ).toHaveAttribute("href", "/applications?marketId=market_1&status=approved");
+  });
 });
