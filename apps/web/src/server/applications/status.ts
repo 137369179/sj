@@ -9,7 +9,7 @@ export const applicationStatuses = [
 export type ApplicationStatus = (typeof applicationStatuses)[number];
 
 const allowedTransitions: Record<ApplicationStatus, ApplicationStatus[]> = {
-  submitted: ["under_review"],
+  submitted: ["under_review", "approved", "rejected"],
   under_review: ["approved", "rejected"],
   approved: ["stall_assigned"],
   rejected: [],
