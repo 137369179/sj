@@ -1,3 +1,5 @@
+import Link from "next/link";
+
 import { AppShell } from "../../../../../components/layout/app-shell";
 import { getSessionUser } from "../../../../../lib/auth";
 import { getMarketDashboardSummary } from "../../../../../server/dashboard/service";
@@ -42,6 +44,14 @@ export default async function OrganizerDashboardPage({
         </p>
         <p>市集编号：{summary.market.id}</p>
         <p>用于回看当前招募、审核与摊位分配的最小结果。</p>
+        <nav aria-label="当前市集快捷操作">
+          <Link href={`/organizer/applications?marketId=${summary.market.id}`}>
+            查看当前市集申请
+          </Link>
+          <Link href={`/organizer/stalls?marketId=${summary.market.id}`}>
+            查看当前市集摊位
+          </Link>
+        </nav>
 
         <section aria-label="看板指标">
           <article>

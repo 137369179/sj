@@ -58,6 +58,14 @@ describe("Organizer dashboard page", () => {
     expect(screen.getByText("待处理")).toBeInTheDocument();
     expect(screen.getByText("2")).toBeInTheDocument();
     expect(screen.getByText("40%")).toBeInTheDocument();
+    expect(screen.getByRole("link", { name: "查看当前市集申请" })).toHaveAttribute(
+      "href",
+      "/organizer/applications?marketId=market_1"
+    );
+    expect(screen.getByRole("link", { name: "查看当前市集摊位" })).toHaveAttribute(
+      "href",
+      "/organizer/stalls?marketId=market_1"
+    );
   });
 
   it("prompts for organizer login when the session identity is missing", async () => {
