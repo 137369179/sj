@@ -222,6 +222,15 @@ describe("stall service", () => {
       note: "主营手作咖啡",
       createdAt: new Date("2026-05-01T00:00:00.000Z")
     } as Awaited<ReturnType<typeof db.application.update>>);
+    const transactionSpy = vi
+      .spyOn(db, "$transaction")
+      .mockImplementation(async (callback) => {
+        if (typeof callback !== "function") {
+          throw new Error("expected interactive transaction");
+        }
+
+        return callback(db);
+      });
     const notificationSpy = vi.spyOn(db.notification, "create").mockResolvedValue({
       id: "notice_1",
       userId: "vendor_1",
@@ -237,6 +246,7 @@ describe("stall service", () => {
       applicationId: "app_1"
     });
 
+    expect(transactionSpy).toHaveBeenCalledTimes(1);
     expect(stallUpdateSpy).toHaveBeenCalledWith({
       where: {
         id: "stall_1"

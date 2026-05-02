@@ -243,23 +243,32 @@ export async function assignStall(input: AssignStallInput) {
     throw new StallAssignmentError("INVALID_APPLICATION_STATUS");
   }
 
-  const updatedStall = await db.stall.update({
-    where: {
-      id: input.stallId
-    },
-    data: {
-      assignedApplicationId: input.applicationId
-    }
-  });
+  const { updatedStall, updatedApplication } = await db.$transaction(
+    async (transaction) => {
+      const updatedStall = await transaction.stall.update({
+        where: {
+          id: input.stallId
+        },
+        data: {
+          assignedApplicationId: input.applicationId
+        }
+      });
 
-  const updatedApplication = await db.application.update({
-    where: {
-      id: input.applicationId
-    },
-    data: {
-      status: "stall_assigned"
+      const updatedApplication = await transaction.application.update({
+        where: {
+          id: input.applicationId
+        },
+        data: {
+          status: "stall_assigned"
+        }
+      });
+
+      return {
+        updatedStall,
+        updatedApplication
+      };
     }
-  });
+  );
 
   const notification = await createNotification(
     buildStallAssignmentNotification({
