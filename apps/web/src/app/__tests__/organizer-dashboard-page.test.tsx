@@ -2,11 +2,16 @@ import { render, screen } from "@testing-library/react";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
 import { getSessionUser } from "../../lib/auth";
+import { listOrganizerMarketOptions } from "../../server/markets/service";
 import { getMarketDashboardSummary } from "../../server/dashboard/service";
 import OrganizerDashboardPage from "../(organizer)/organizer/dashboard/[marketId]/page";
 
 vi.mock("../../lib/auth", () => ({
   getSessionUser: vi.fn()
+}));
+
+vi.mock("../../server/markets/service", () => ({
+  listOrganizerMarketOptions: vi.fn()
 }));
 
 vi.mock("../../server/dashboard/service", () => ({
@@ -23,6 +28,18 @@ describe("Organizer dashboard page", () => {
       userId: "org_1",
       role: "organizer"
     });
+    vi.mocked(listOrganizerMarketOptions).mockResolvedValue([
+      {
+        id: "market_1",
+        title: "春日咖啡市集",
+        city: "杭州"
+      },
+      {
+        id: "market_2",
+        title: "夏夜面包市集",
+        city: "上海"
+      }
+    ]);
     vi.mocked(getMarketDashboardSummary).mockResolvedValue({
       market: {
         id: "market_1",
@@ -66,6 +83,14 @@ describe("Organizer dashboard page", () => {
       "href",
       "/organizer/stalls?marketId=market_1"
     );
+    expect(screen.getByRole("link", { name: "春日咖啡市集（当前）" })).toHaveAttribute(
+      "href",
+      "/organizer/dashboard/market_1"
+    );
+    expect(screen.getByRole("link", { name: "夏夜面包市集" })).toHaveAttribute(
+      "href",
+      "/organizer/dashboard/market_2"
+    );
   });
 
   it("prompts for organizer login when the session identity is missing", async () => {
@@ -82,6 +107,7 @@ describe("Organizer dashboard page", () => {
     expect(
       screen.getByText("请先以主办方身份登录后查看看板。")
     ).toBeInTheDocument();
+    expect(listOrganizerMarketOptions).not.toHaveBeenCalled();
     expect(screen.getByText("当前市集编号：market_1")).toBeInTheDocument();
     expect(getMarketDashboardSummary).not.toHaveBeenCalled();
   });

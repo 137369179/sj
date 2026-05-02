@@ -3,6 +3,7 @@ import Link from "next/link";
 import { AppShell } from "../../../../../components/layout/app-shell";
 import { getSessionUser } from "../../../../../lib/auth";
 import { getMarketDashboardSummary } from "../../../../../server/dashboard/service";
+import { listOrganizerMarketOptions } from "../../../../../server/markets/service";
 
 type OrganizerDashboardPageProps = {
   params: Promise<{
@@ -28,6 +29,7 @@ export default async function OrganizerDashboardPage({
     );
   }
 
+  const marketOptions = await listOrganizerMarketOptions(sessionUser.userId);
   const summary = await getMarketDashboardSummary({
     organizerId: sessionUser.userId,
     marketId
@@ -52,6 +54,19 @@ export default async function OrganizerDashboardPage({
             查看当前市集摊位
           </Link>
         </nav>
+        {marketOptions.length > 0 ? (
+          <nav aria-label="切换市集">
+            {marketOptions.map((market) => {
+              const isCurrent = market.id === summary.market.id;
+
+              return (
+                <Link key={market.id} href={`/organizer/dashboard/${market.id}`}>
+                  {isCurrent ? `${market.title}（当前）` : market.title}
+                </Link>
+              );
+            })}
+          </nav>
+        ) : null}
 
         <section aria-label="看板指标">
           <article>
