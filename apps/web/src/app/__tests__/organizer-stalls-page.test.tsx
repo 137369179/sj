@@ -275,7 +275,7 @@ describe("Organizer stalls page", () => {
     );
     expect(screen.getByRole("link", { name: "查看当前市集看板" })).toHaveAttribute(
       "href",
-      "/organizer/dashboard/market_2"
+      "/organizer/dashboard/market_2?from=stalls"
     );
     expect(screen.getByRole("link", { name: "春日咖啡市集" })).toHaveAttribute(
       "href",
@@ -288,6 +288,61 @@ describe("Organizer stalls page", () => {
     expect(screen.getByRole("combobox", { name: "选择市集" })).toHaveValue("market_2");
     expect(screen.getByText("面包区 1 号位")).toBeInTheDocument();
     expect(screen.queryByText("主通道 1 号位")).not.toBeInTheDocument();
+  });
+
+  it("preserves status context when opening the dashboard from organizer stalls", async () => {
+    vi.mocked(getSessionUser).mockResolvedValue({
+      userId: "org_1",
+      role: "organizer"
+    });
+    vi.mocked(listOrganizerMarketOptions).mockResolvedValue([
+      {
+        id: "market_2",
+        title: "夏夜面包市集",
+        city: "上海"
+      }
+    ]);
+    vi.mocked(listOrganizerStalls).mockResolvedValue([
+      {
+        id: "stall_2",
+        marketId: "market_2",
+        marketTitle: "夏夜面包市集",
+        code: "B-01",
+        name: "面包区 1 号位",
+        isActive: true,
+        assignedApplicationId: "app_2",
+        assignedVendorId: "vendor_2",
+        assignedVendorName: "木野手作"
+      }
+    ]);
+    vi.mocked(listOrganizerApplications).mockResolvedValue([
+      {
+        id: "app_2",
+        marketId: "market_2",
+        marketTitle: "夏夜面包市集",
+        marketCity: "上海",
+        vendorId: "vendor_2",
+        vendorName: "木野手作",
+        status: "approved",
+        applicationNote: "主营木作器物",
+        reviewNote: "可安排面包区",
+        reviewedAt: null,
+        reviews: [],
+        attachments: [],
+        createdAt: new Date("2026-05-01T00:00:00.000Z")
+      }
+    ]);
+
+    const page = await OrganizerStallsPage({
+      searchParams: Promise.resolve({ marketId: "market_2", status: "assigned" })
+    });
+
+    render(page);
+
+    expect(screen.getByRole("link", { name: "查看当前市集看板" })).toHaveAttribute(
+      "href",
+      "/organizer/dashboard/market_2?from=stalls&status=assigned"
+    );
   });
 
   it("prompts for organizer login when the session identity is missing", async () => {

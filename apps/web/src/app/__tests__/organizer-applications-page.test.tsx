@@ -259,7 +259,7 @@ describe("Organizer applications page", () => {
     );
     expect(screen.getByRole("link", { name: "查看当前市集看板" })).toHaveAttribute(
       "href",
-      "/organizer/dashboard/market_2"
+      "/organizer/dashboard/market_2?from=applications"
     );
     expect(screen.getByRole("link", { name: "春日咖啡市集" })).toHaveAttribute(
       "href",
@@ -271,6 +271,48 @@ describe("Organizer applications page", () => {
     );
     expect(screen.getByText("木野手作")).toBeInTheDocument();
     expect(screen.queryByText("山野咖啡")).not.toBeInTheDocument();
+  });
+
+  it("preserves status context when opening the dashboard from organizer applications", async () => {
+    vi.mocked(getSessionUser).mockResolvedValue({
+      userId: "org_1",
+      role: "organizer"
+    });
+    vi.mocked(listOrganizerMarketOptions).mockResolvedValue([
+      {
+        id: "market_2",
+        title: "夏夜面包市集",
+        city: "上海"
+      }
+    ]);
+    vi.mocked(listOrganizerApplications).mockResolvedValue([
+      {
+        id: "app_2",
+        marketId: "market_2",
+        marketTitle: "夏夜面包市集",
+        marketCity: "上海",
+        vendorId: "vendor_2",
+        vendorName: "木野手作",
+        status: "approved",
+        applicationNote: "主营木作器物",
+        reviewNote: "初审通过",
+        reviewedAt: new Date("2026-05-02T08:30:00.000Z"),
+        reviews: [],
+        attachments: [],
+        createdAt: new Date("2026-05-01T01:00:00.000Z")
+      }
+    ]);
+
+    const page = await OrganizerApplicationsPage({
+      searchParams: Promise.resolve({ marketId: "market_2", status: "approved" })
+    });
+
+    render(page);
+
+    expect(screen.getByRole("link", { name: "查看当前市集看板" })).toHaveAttribute(
+      "href",
+      "/organizer/dashboard/market_2?from=applications&status=approved"
+    );
   });
 
   it("prompts for organizer login when the session identity is missing", async () => {

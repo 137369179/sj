@@ -87,7 +87,15 @@ export default async function OrganizerApplicationsPage({
             {selectedMarketId ? (
               <nav aria-label="当前市集快捷操作">
                 <Link href={`/organizer/stalls?marketId=${selectedMarketId}`}>查看当前市集摊位</Link>
-                <Link href={`/organizer/dashboard/${selectedMarketId}`}>查看当前市集看板</Link>
+                <Link
+                  href={buildDashboardHref({
+                    marketId: selectedMarketId,
+                    from: "applications",
+                    status: selectedStatus
+                  })}
+                >
+                  查看当前市集看板
+                </Link>
               </nav>
             ) : null}
             {marketOptions.length > 0 ? (
@@ -231,6 +239,22 @@ function buildApplicationsFilterHref(input: {
 
   const query = params.toString();
   return query.length > 0 ? `/organizer/applications?${query}` : "/organizer/applications";
+}
+
+function buildDashboardHref(input: {
+  marketId: string;
+  from: "applications";
+  status: "all" | "submitted" | "approved" | "rejected";
+}) {
+  const params = new URLSearchParams({
+    from: input.from
+  });
+
+  if (input.status !== "all") {
+    params.set("status", input.status);
+  }
+
+  return `/organizer/dashboard/${input.marketId}?${params.toString()}`;
 }
 
 function buildStatusSummary(

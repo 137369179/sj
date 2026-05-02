@@ -120,7 +120,15 @@ export default async function OrganizerStallsPage({
                 <Link href={`/organizer/applications?marketId=${selectedMarketId}`}>
                   查看当前市集申请
                 </Link>
-                <Link href={`/organizer/dashboard/${selectedMarketId}`}>查看当前市集看板</Link>
+                <Link
+                  href={buildDashboardHref({
+                    marketId: selectedMarketId,
+                    from: "stalls",
+                    status: selectedStatus
+                  })}
+                >
+                  查看当前市集看板
+                </Link>
               </nav>
             ) : null}
             {marketOptions.length > 0 ? (
@@ -295,6 +303,22 @@ function buildStallsFilterHref(input: {
 
   const query = params.toString();
   return query.length > 0 ? `/organizer/stalls?${query}` : "/organizer/stalls";
+}
+
+function buildDashboardHref(input: {
+  marketId: string;
+  from: "stalls";
+  status: "all" | "unassigned" | "assigned" | "inactive";
+}) {
+  const params = new URLSearchParams({
+    from: input.from
+  });
+
+  if (input.status !== "all") {
+    params.set("status", input.status);
+  }
+
+  return `/organizer/dashboard/${input.marketId}?${params.toString()}`;
 }
 
 function getStallFilterStatus(stall: Awaited<ReturnType<typeof listOrganizerStalls>>[number]) {

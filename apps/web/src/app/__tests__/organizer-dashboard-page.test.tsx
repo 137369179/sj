@@ -103,6 +103,108 @@ describe("Organizer dashboard page", () => {
     );
   });
 
+  it("renders an applications return link when opened from organizer applications", async () => {
+    vi.mocked(getSessionUser).mockResolvedValue({
+      userId: "org_1",
+      role: "organizer"
+    });
+    vi.mocked(listOrganizerMarketOptions).mockResolvedValue([
+      {
+        id: "market_1",
+        title: "春日咖啡市集",
+        city: "杭州"
+      }
+    ]);
+    vi.mocked(getMarketDashboardSummary).mockResolvedValue({
+      market: {
+        id: "market_1",
+        title: "春日咖啡市集",
+        city: "杭州"
+      },
+      metrics: {
+        totalApplications: 5,
+        pendingReviewCount: 2,
+        approvedCount: 1,
+        rejectedCount: 1,
+        assignedCount: 1,
+        approvalRate: 0.4,
+        totalStalls: 6,
+        activeStalls: 5,
+        occupiedStalls: 3,
+        stallOccupancyRate: 0.6
+      }
+    });
+
+    const page = await OrganizerDashboardPage({
+      params: Promise.resolve({
+        marketId: "market_1"
+      }),
+      searchParams: Promise.resolve({
+        from: "applications",
+        status: "approved"
+      })
+    });
+
+    render(page);
+
+    expect(screen.getByText("当前来自报名申请页。")).toBeInTheDocument();
+    expect(screen.getByRole("link", { name: "返回当前市集申请" })).toHaveAttribute(
+      "href",
+      "/organizer/applications?marketId=market_1&status=approved"
+    );
+  });
+
+  it("renders a stalls return link when opened from organizer stalls", async () => {
+    vi.mocked(getSessionUser).mockResolvedValue({
+      userId: "org_1",
+      role: "organizer"
+    });
+    vi.mocked(listOrganizerMarketOptions).mockResolvedValue([
+      {
+        id: "market_1",
+        title: "春日咖啡市集",
+        city: "杭州"
+      }
+    ]);
+    vi.mocked(getMarketDashboardSummary).mockResolvedValue({
+      market: {
+        id: "market_1",
+        title: "春日咖啡市集",
+        city: "杭州"
+      },
+      metrics: {
+        totalApplications: 5,
+        pendingReviewCount: 2,
+        approvedCount: 1,
+        rejectedCount: 1,
+        assignedCount: 1,
+        approvalRate: 0.4,
+        totalStalls: 6,
+        activeStalls: 5,
+        occupiedStalls: 3,
+        stallOccupancyRate: 0.6
+      }
+    });
+
+    const page = await OrganizerDashboardPage({
+      params: Promise.resolve({
+        marketId: "market_1"
+      }),
+      searchParams: Promise.resolve({
+        from: "stalls",
+        status: "assigned"
+      })
+    });
+
+    render(page);
+
+    expect(screen.getByText("当前来自摊位管理页。")).toBeInTheDocument();
+    expect(screen.getByRole("link", { name: "返回当前市集摊位" })).toHaveAttribute(
+      "href",
+      "/organizer/stalls?marketId=market_1&status=assigned"
+    );
+  });
+
   it("prompts for organizer login when the session identity is missing", async () => {
     vi.mocked(getSessionUser).mockResolvedValue(null);
 
