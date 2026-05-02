@@ -158,7 +158,9 @@ export default async function OrganizerStallsPage({
                       key={market.id}
                       href={buildStallsFilterHref({
                         marketId: market.id,
-                        status: selectedStatus === "all" ? undefined : selectedStatus
+                        status: selectedStatus === "all" ? undefined : selectedStatus,
+                        from: resolvedSearchParams.from,
+                        marketStatus: resolvedSearchParams.marketStatus
                       })}
                     >
                       {isCurrent ? `${market.title}（当前）` : market.title}
@@ -175,13 +177,21 @@ export default async function OrganizerStallsPage({
             </section>
 
             <nav aria-label="摊位筛选">
-              <Link href={buildStallsFilterHref({ marketId: selectedMarketId })}>
+              <Link
+                href={buildStallsFilterHref({
+                  marketId: selectedMarketId,
+                  from: resolvedSearchParams.from,
+                  marketStatus: resolvedSearchParams.marketStatus
+                })}
+              >
                 全部（{summary.all}）
               </Link>
               <Link
                 href={buildStallsFilterHref({
                   marketId: selectedMarketId,
-                  status: "unassigned"
+                  status: "unassigned",
+                  from: resolvedSearchParams.from,
+                  marketStatus: resolvedSearchParams.marketStatus
                 })}
               >
                 待分配（{summary.unassigned}）
@@ -189,7 +199,9 @@ export default async function OrganizerStallsPage({
               <Link
                 href={buildStallsFilterHref({
                   marketId: selectedMarketId,
-                  status: "assigned"
+                  status: "assigned",
+                  from: resolvedSearchParams.from,
+                  marketStatus: resolvedSearchParams.marketStatus
                 })}
               >
                 已分配（{summary.assigned}）
@@ -197,7 +209,9 @@ export default async function OrganizerStallsPage({
               <Link
                 href={buildStallsFilterHref({
                   marketId: selectedMarketId,
-                  status: "inactive"
+                  status: "inactive",
+                  from: resolvedSearchParams.from,
+                  marketStatus: resolvedSearchParams.marketStatus
                 })}
               >
                 已停用（{summary.inactive}）
@@ -307,6 +321,8 @@ function getSelectedMarketId(marketId: string | undefined) {
 function buildStallsFilterHref(input: {
   marketId: string | null;
   status?: "unassigned" | "assigned" | "inactive";
+  from?: string;
+  marketStatus?: string;
 }) {
   const params = new URLSearchParams();
 
@@ -316,6 +332,18 @@ function buildStallsFilterHref(input: {
 
   if (input.status) {
     params.set("status", input.status);
+  }
+
+  if (input.from === "markets") {
+    params.set("from", "markets");
+
+    if (
+      input.marketStatus === "draft" ||
+      input.marketStatus === "published" ||
+      input.marketStatus === "completed"
+    ) {
+      params.set("marketStatus", input.marketStatus);
+    }
   }
 
   const query = params.toString();

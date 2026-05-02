@@ -360,6 +360,14 @@ describe("Organizer applications page", () => {
       "href",
       "/organizer/markets?status=published"
     );
+    expect(screen.getByRole("link", { name: "全部（1）" })).toHaveAttribute(
+      "href",
+      "/organizer/applications?marketId=market_2&from=markets&marketStatus=published"
+    );
+    expect(screen.getByRole("link", { name: "夏夜面包市集（当前）" })).toHaveAttribute(
+      "href",
+      "/organizer/applications?marketId=market_2&from=markets&marketStatus=published"
+    );
     expect(screen.getByRole("link", { name: "查看当前市集摊位" })).toHaveAttribute(
       "href",
       "/organizer/stalls?marketId=market_2&from=markets&marketStatus=published"

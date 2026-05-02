@@ -127,7 +127,9 @@ export default async function OrganizerApplicationsPage({
                       key={market.id}
                       href={buildApplicationsFilterHref({
                         marketId: market.id,
-                        status: selectedStatus === "all" ? undefined : selectedStatus
+                        status: selectedStatus === "all" ? undefined : selectedStatus,
+                        from: resolvedSearchParams.from,
+                        marketStatus: resolvedSearchParams.marketStatus
                       })}
                     >
                       {isCurrent ? `${market.title}（当前）` : market.title}
@@ -144,13 +146,21 @@ export default async function OrganizerApplicationsPage({
             </section>
 
             <nav aria-label="状态筛选">
-              <Link href={buildApplicationsFilterHref({ marketId: selectedMarketId })}>
+              <Link
+                href={buildApplicationsFilterHref({
+                  marketId: selectedMarketId,
+                  from: resolvedSearchParams.from,
+                  marketStatus: resolvedSearchParams.marketStatus
+                })}
+              >
                 全部（{summary.all}）
               </Link>
               <Link
                 href={buildApplicationsFilterHref({
                   marketId: selectedMarketId,
-                  status: "submitted"
+                  status: "submitted",
+                  from: resolvedSearchParams.from,
+                  marketStatus: resolvedSearchParams.marketStatus
                 })}
               >
                 待审核（{summary.submitted}）
@@ -158,7 +168,9 @@ export default async function OrganizerApplicationsPage({
               <Link
                 href={buildApplicationsFilterHref({
                   marketId: selectedMarketId,
-                  status: "approved"
+                  status: "approved",
+                  from: resolvedSearchParams.from,
+                  marketStatus: resolvedSearchParams.marketStatus
                 })}
               >
                 已通过（{summary.approved}）
@@ -166,7 +178,9 @@ export default async function OrganizerApplicationsPage({
               <Link
                 href={buildApplicationsFilterHref({
                   marketId: selectedMarketId,
-                  status: "rejected"
+                  status: "rejected",
+                  from: resolvedSearchParams.from,
+                  marketStatus: resolvedSearchParams.marketStatus
                 })}
               >
                 已拒绝（{summary.rejected}）
@@ -245,6 +259,8 @@ function getSelectedMarketId(marketId: string | undefined) {
 function buildApplicationsFilterHref(input: {
   marketId: string | null;
   status?: "submitted" | "approved" | "rejected";
+  from?: string;
+  marketStatus?: string;
 }) {
   const params = new URLSearchParams();
 
@@ -254,6 +270,18 @@ function buildApplicationsFilterHref(input: {
 
   if (input.status) {
     params.set("status", input.status);
+  }
+
+  if (input.from === "markets") {
+    params.set("from", "markets");
+
+    if (
+      input.marketStatus === "draft" ||
+      input.marketStatus === "published" ||
+      input.marketStatus === "completed"
+    ) {
+      params.set("marketStatus", input.marketStatus);
+    }
   }
 
   const query = params.toString();
