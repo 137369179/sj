@@ -16,3 +16,20 @@ export function buildMarketPayload(input: unknown): MarketPayload {
 export function canPublishMarket(status: string) {
   return status === "draft";
 }
+
+export function filterMarkets<T extends { city: string; title: string }>(
+  markets: T[],
+  filters: {
+    city?: string;
+    keyword?: string;
+  }
+) {
+  return markets.filter((market) => {
+    const cityMatched = filters.city ? market.city === filters.city : true;
+    const keywordMatched = filters.keyword
+      ? market.title.includes(filters.keyword)
+      : true;
+
+    return cityMatched && keywordMatched;
+  });
+}
