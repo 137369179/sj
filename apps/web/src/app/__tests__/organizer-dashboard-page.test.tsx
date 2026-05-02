@@ -152,6 +152,10 @@ describe("Organizer dashboard page", () => {
       "href",
       "/organizer/applications?marketId=market_1&status=approved"
     );
+    expect(screen.getByRole("link", { name: "查看当前市集摊位" })).toHaveAttribute(
+      "href",
+      "/organizer/stalls?marketId=market_1&from=applications&status=approved"
+    );
   });
 
   it("renders a stalls return link when opened from organizer stalls", async () => {
@@ -202,6 +206,10 @@ describe("Organizer dashboard page", () => {
     expect(screen.getByRole("link", { name: "返回当前市集摊位" })).toHaveAttribute(
       "href",
       "/organizer/stalls?marketId=market_1&status=assigned"
+    );
+    expect(screen.getByRole("link", { name: "查看当前市集申请" })).toHaveAttribute(
+      "href",
+      "/organizer/applications?marketId=market_1&from=stalls&status=assigned"
     );
   });
 

@@ -72,6 +72,7 @@ export default async function OrganizerDashboardPage({
               pathname: "/organizer/applications",
               marketId: summary.market.id,
               from: resolvedSearchParams.from,
+              status: resolvedSearchParams.status,
               marketStatus: resolvedSearchParams.marketStatus
             })}
           >
@@ -82,6 +83,7 @@ export default async function OrganizerDashboardPage({
               pathname: "/organizer/stalls",
               marketId: summary.market.id,
               from: resolvedSearchParams.from,
+              status: resolvedSearchParams.status,
               marketStatus: resolvedSearchParams.marketStatus
             })}
           >
@@ -279,6 +281,7 @@ function buildDashboardShortcutHref(input: {
   pathname: "/organizer/applications" | "/organizer/stalls";
   marketId: string;
   from?: string;
+  status?: string;
   marketStatus?: string;
 }) {
   const params = new URLSearchParams({
@@ -294,6 +297,22 @@ function buildDashboardShortcutHref(input: {
       input.marketStatus === "completed"
     ) {
       params.set("marketStatus", input.marketStatus);
+    }
+  }
+
+  if (input.from === "applications") {
+    params.set("from", "applications");
+
+    if (input.status === "submitted" || input.status === "approved" || input.status === "rejected") {
+      params.set("status", input.status);
+    }
+  }
+
+  if (input.from === "stalls") {
+    params.set("from", "stalls");
+
+    if (input.status === "unassigned" || input.status === "assigned" || input.status === "inactive") {
+      params.set("status", input.status);
     }
   }
 
