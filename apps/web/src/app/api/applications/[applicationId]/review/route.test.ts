@@ -1,15 +1,15 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
-import { getSessionRole } from "../../../../../lib/auth";
+import { getSessionUser } from "../../../../../lib/auth";
 import {
   ApplicationReviewError,
   buildApplicationReviewPayload,
   reviewApplication
 } from "../../../../../server/applications/service";
-import { PUT } from "./route";
+import { POST } from "./route";
 
 vi.mock("../../../../../lib/auth", () => ({
-  getSessionRole: vi.fn()
+  getSessionUser: vi.fn()
 }));
 
 vi.mock("../../../../../server/applications/service", () => ({
@@ -25,26 +25,29 @@ vi.mock("../../../../../server/applications/service", () => ({
   reviewApplication: vi.fn()
 }));
 
-describe("PUT /api/applications/[applicationId]/review", () => {
+describe("POST /api/applications/[applicationId]/review", () => {
   beforeEach(() => {
     vi.clearAllMocks();
   });
 
-  it("rejects non-organizer roles", async () => {
-    vi.mocked(getSessionRole).mockResolvedValue("vendor");
+  it("rejects non-organizer session users", async () => {
+    vi.mocked(getSessionUser).mockResolvedValue({
+      userId: "vendor_session_1",
+      role: "vendor"
+    });
 
     const request = new Request("http://localhost/api/applications/app_1/review", {
-      method: "PUT",
+      method: "POST",
       headers: {
         "content-type": "application/json"
       },
       body: JSON.stringify({
-        organizerId: "org_1",
+        organizerId: "org_body_1",
         decision: "approve"
       })
     });
 
-    const response = await PUT(request, {
+    const response = await POST(request, {
       params: Promise.resolve({ applicationId: "app_1" })
     });
 
@@ -54,46 +57,47 @@ describe("PUT /api/applications/[applicationId]/review", () => {
   });
 
   it("returns not found when the application does not exist", async () => {
-    vi.mocked(getSessionRole).mockResolvedValue("organizer");
-    vi.mocked(buildApplicationReviewPayload).mockReturnValue({
-      organizerId: "org_1",
-      decision: "approve",
-      note: undefined
+    vi.mocked(getSessionUser).mockResolvedValue({
+      userId: "organizer_session_1",
+      role: "organizer"
     });
     vi.mocked(reviewApplication).mockRejectedValue(
       new ApplicationReviewError("NOT_FOUND")
     );
 
     const request = new Request("http://localhost/api/applications/app_1/review", {
-      method: "PUT",
+      method: "POST",
       headers: {
         "content-type": "application/json"
       },
       body: JSON.stringify({
-        organizerId: "org_1",
+        organizerId: "org_body_1",
         decision: "approve"
       })
     });
 
-    const response = await PUT(request, {
+    const response = await POST(request, {
       params: Promise.resolve({ applicationId: "app_1" })
     });
 
+    expect(buildApplicationReviewPayload).toHaveBeenCalledWith({
+      organizerId: "organizer_session_1",
+      decision: "approve"
+    });
     expect(response.status).toBe(404);
     await expect(response.json()).resolves.toEqual({ message: "application not found" });
   });
 
-  it("reviews an application for organizers", async () => {
-    vi.mocked(getSessionRole).mockResolvedValue("organizer");
-    vi.mocked(buildApplicationReviewPayload).mockReturnValue({
-      organizerId: "org_1",
-      decision: "reject",
-      note: "资质与本场主题不匹配"
+  it("reviews an application with session organizerId and reviewNote", async () => {
+    vi.mocked(getSessionUser).mockResolvedValue({
+      userId: "organizer_session_1",
+      role: "organizer"
     });
     vi.mocked(reviewApplication).mockResolvedValue({
       application: {
         id: "app_1",
-        status: "rejected"
+        status: "rejected",
+        reviewNote: "资质与本场主题不匹配"
       },
       notification: {
         id: "notice_1",
@@ -104,37 +108,38 @@ describe("PUT /api/applications/[applicationId]/review", () => {
     });
 
     const request = new Request("http://localhost/api/applications/app_1/review", {
-      method: "PUT",
+      method: "POST",
       headers: {
         "content-type": "application/json"
       },
       body: JSON.stringify({
-        organizerId: "org_1",
+        organizerId: "org_body_1",
         decision: "reject",
-        note: "资质与本场主题不匹配"
+        reviewNote: "资质与本场主题不匹配"
       })
     });
 
-    const response = await PUT(request, {
+    const response = await POST(request, {
       params: Promise.resolve({ applicationId: "app_1" })
     });
 
     expect(buildApplicationReviewPayload).toHaveBeenCalledWith({
-      organizerId: "org_1",
+      organizerId: "organizer_session_1",
       decision: "reject",
-      note: "资质与本场主题不匹配"
+      reviewNote: "资质与本场主题不匹配"
     });
     expect(reviewApplication).toHaveBeenCalledWith({
       applicationId: "app_1",
-      organizerId: "org_1",
+      organizerId: "organizer_session_1",
       decision: "reject",
-      note: "资质与本场主题不匹配"
+      reviewNote: "资质与本场主题不匹配"
     });
     expect(response.status).toBe(200);
     await expect(response.json()).resolves.toEqual({
       application: {
         id: "app_1",
-        status: "rejected"
+        status: "rejected",
+        reviewNote: "资质与本场主题不匹配"
       },
       notification: {
         id: "notice_1",

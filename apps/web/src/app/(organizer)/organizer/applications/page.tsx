@@ -1,6 +1,7 @@
 import { revalidatePath } from "next/cache";
 
 import { AppShell } from "../../../../components/layout/app-shell";
+import { getSessionUser } from "../../../../lib/auth";
 import {
   buildApplicationReviewPayload,
   listOrganizerApplications,
@@ -10,35 +11,33 @@ import {
 async function reviewApplicationAction(formData: FormData) {
   "use server";
 
+  const sessionUser = await getSessionUser();
+
+  if (!sessionUser || sessionUser.role !== "organizer") {
+    return;
+  }
+
   const applicationId = String(formData.get("applicationId") ?? "");
-  const organizerId = String(formData.get("organizerId") ?? "");
   const decision = String(formData.get("decision") ?? "");
-  const note = String(formData.get("note") ?? "");
+  const reviewNote = String(formData.get("reviewNote") ?? "");
   const payload = buildApplicationReviewPayload({
-    organizerId,
+    organizerId: sessionUser.userId,
     decision,
-    note
+    reviewNote
   });
 
   await reviewApplication({
     applicationId,
     ...payload
   });
-  revalidatePath(`/organizer/applications?organizerId=${organizerId}`);
+  revalidatePath("/organizer/applications");
 }
 
-type OrganizerApplicationsPageProps = {
-  searchParams: Promise<{
-    organizerId?: string;
-  }>;
-};
-
-export default async function OrganizerApplicationsPage({
-  searchParams
-}: OrganizerApplicationsPageProps) {
-  const { organizerId } = await searchParams;
-  const applications = organizerId
-    ? await listOrganizerApplications(organizerId)
+export default async function OrganizerApplicationsPage() {
+  const sessionUser = await getSessionUser();
+  const isOrganizerSession = sessionUser?.role === "organizer";
+  const applications = isOrganizerSession
+    ? await listOrganizerApplications(sessionUser.userId)
     : [];
 
   return (
@@ -47,11 +46,11 @@ export default async function OrganizerApplicationsPage({
         <h2 id="organizer-applications-title">报名申请</h2>
         <p>查看摊主报名，并完成最小审核闭环。</p>
 
-        {!organizerId ? (
-          <p>请通过 `?organizerId=` 指定当前主办方后查看申请。</p>
+        {!isOrganizerSession ? (
+          <p>请先以主办方身份登录后查看申请。</p>
         ) : null}
 
-        {organizerId && applications.length === 0 ? (
+        {isOrganizerSession && applications.length === 0 ? (
           <p>当前没有待处理申请。</p>
         ) : null}
 
@@ -63,16 +62,16 @@ export default async function OrganizerApplicationsPage({
                 {application.marketTitle} · {application.marketCity}
               </p>
               <p>状态：{application.status}</p>
-              <p>报名备注：{application.note ?? "无"}</p>
+              <p>报名备注：{application.applicationNote ?? "无"}</p>
+              <p>审核备注：{application.reviewNote ?? "无"}</p>
               <p>提交时间：{formatDate(application.createdAt)}</p>
 
               <form action={reviewApplicationAction} aria-label={`${application.vendorName} 审核表单`}>
                 <input name="applicationId" type="hidden" value={application.id} />
-                <input name="organizerId" type="hidden" value={organizerId ?? ""} />
                 <label>
                   审核备注
                   <textarea
-                    name="note"
+                    name="reviewNote"
                     rows={3}
                     placeholder="可选填写审核备注，系统会同步通知摊主。"
                   />

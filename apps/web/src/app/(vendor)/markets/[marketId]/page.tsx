@@ -24,7 +24,10 @@ export default async function MarketDetailPage({
           </>
         ) : null}
         <p>查看基础招募信息后，可继续进入报名页面提交申请。</p>
-        <Link href={`/markets/${marketId}/apply`}>立即报名</Link>
+        <section aria-label="报名入口">
+          <Link href={`/markets/${marketId}/apply`}>立即报名</Link>
+          <Link href="/applications">查看我的报名</Link>
+        </section>
       </main>
     </AppShell>
   );

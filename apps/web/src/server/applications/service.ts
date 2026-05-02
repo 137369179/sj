@@ -8,7 +8,7 @@ import {
 } from "../notifications/service";
 import { canTransitionApplication, type ApplicationStatus } from "./status";
 
-const optionalNoteSchema = z
+const optionalTextSchema = z
   .string()
   .trim()
   .optional()
@@ -16,9 +16,8 @@ const optionalNoteSchema = z
 
 export const applicationSchema = z.object({
   marketId: z.string().trim().min(1),
-  vendorId: z.string().trim().min(1),
   boothPreference: z.string().trim().min(1),
-  note: optionalNoteSchema,
+  applicationNote: optionalTextSchema,
   attachments: z.array(storedAttachmentSchema).default([])
 });
 
@@ -27,7 +26,7 @@ export type ApplicationPayload = z.infer<typeof applicationSchema>;
 export const applicationReviewSchema = z.object({
   organizerId: z.string().trim().min(1),
   decision: z.enum(["approve", "reject"]),
-  note: optionalNoteSchema
+  reviewNote: optionalTextSchema
 });
 
 export type ApplicationReviewPayload = z.infer<typeof applicationReviewSchema>;
@@ -38,6 +37,8 @@ type OrganizerApplicationRecord = {
   vendorId: string;
   status: ApplicationStatus;
   note: string | null;
+  applicationNote: string | null;
+  reviewNote: string | null;
   createdAt: Date;
   market: {
     id: string;
@@ -55,6 +56,8 @@ type VendorApplicationRecord = {
   marketId: string;
   status: ApplicationStatus;
   note: string | null;
+  applicationNote: string | null;
+  reviewNote: string | null;
   createdAt: Date;
   market: {
     id: string;
@@ -77,6 +80,8 @@ export type OrganizerApplicationListItem = {
   vendorName: string;
   status: ApplicationStatus;
   note: string | null;
+  applicationNote: string | null;
+  reviewNote: string | null;
   createdAt: Date;
 };
 
@@ -87,6 +92,8 @@ export type VendorApplicationListItem = {
   marketCity: string;
   status: ApplicationStatus;
   note: string | null;
+  applicationNote: string | null;
+  reviewNote: string | null;
   createdAt: Date;
   assignedStallId: string | null;
   assignedStallCode: string | null;
@@ -235,7 +242,8 @@ export async function reviewApplication(input: ReviewApplicationInput) {
       id: input.applicationId
     },
     data: {
-      status: nextStatus
+      status: nextStatus,
+      reviewNote: input.reviewNote
     }
   });
 
@@ -244,7 +252,7 @@ export async function reviewApplication(input: ReviewApplicationInput) {
       userId: application.vendor.id,
       marketTitle: application.market.title,
       decision: input.decision,
-      note: input.note
+      note: input.reviewNote
     })
   );
 
@@ -266,6 +274,8 @@ function formatOrganizerApplication(
     vendorName: application.vendor.name,
     status: application.status,
     note: application.note,
+    applicationNote: application.applicationNote ?? application.note,
+    reviewNote: application.reviewNote,
     createdAt: application.createdAt
   };
 }
@@ -280,6 +290,8 @@ function formatVendorApplication(
     marketCity: application.market.city,
     status: application.status,
     note: application.note,
+    applicationNote: application.applicationNote ?? application.note,
+    reviewNote: application.reviewNote,
     createdAt: application.createdAt,
     assignedStallId: application.assignedStall?.id ?? null,
     assignedStallCode: application.assignedStall?.code ?? null,

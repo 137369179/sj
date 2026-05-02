@@ -1,25 +1,32 @@
 import { NextResponse } from "next/server";
 
-import { getSessionRole } from "../../../../../lib/auth";
+import { getSessionUser } from "../../../../../lib/auth";
 import {
   ApplicationReviewError,
   buildApplicationReviewPayload,
   reviewApplication
 } from "../../../../../server/applications/service";
 
-export async function PUT(
+export async function POST(
   request: Request,
   { params }: { params: Promise<{ applicationId: string }> }
 ) {
-  const role = await getSessionRole();
+  const sessionUser = await getSessionUser();
 
-  if (role !== "organizer" && role !== "admin") {
+  if (!sessionUser) {
+    return NextResponse.json({ message: "unauthorized" }, { status: 401 });
+  }
+
+  if (sessionUser.role !== "organizer" && sessionUser.role !== "admin") {
     return NextResponse.json({ message: "forbidden" }, { status: 403 });
   }
 
   const { applicationId } = await params;
   const body = await request.json();
-  const payload = buildApplicationReviewPayload(body);
+  const payload = buildApplicationReviewPayload({
+    ...body,
+    organizerId: sessionUser.userId
+  });
 
   try {
     const result = await reviewApplication({
@@ -49,3 +56,5 @@ export async function PUT(
     throw error;
   }
 }
+
+export const PUT = POST;

@@ -1,28 +1,25 @@
 import { AppShell } from "../../../../../components/layout/app-shell";
+import { getSessionUser } from "../../../../../lib/auth";
 import { getMarketDashboardSummary } from "../../../../../server/dashboard/service";
 
 type OrganizerDashboardPageProps = {
   params: Promise<{
     marketId: string;
   }>;
-  searchParams: Promise<{
-    organizerId?: string;
-  }>;
 };
 
 export default async function OrganizerDashboardPage({
-  params,
-  searchParams
+  params
 }: OrganizerDashboardPageProps) {
   const { marketId } = await params;
-  const { organizerId } = await searchParams;
+  const sessionUser = await getSessionUser();
 
-  if (!organizerId) {
+  if (!sessionUser || sessionUser.role !== "organizer") {
     return (
       <AppShell>
         <main aria-labelledby="organizer-dashboard-title">
           <h2 id="organizer-dashboard-title">市集看板</h2>
-          <p>请通过 `?organizerId=` 指定当前主办方后查看看板。</p>
+          <p>请先以主办方身份登录后查看看板。</p>
           <p>当前市集编号：{marketId}</p>
         </main>
       </AppShell>
@@ -30,7 +27,7 @@ export default async function OrganizerDashboardPage({
   }
 
   const summary = await getMarketDashboardSummary({
-    organizerId,
+    organizerId: sessionUser.userId,
     marketId
   });
 

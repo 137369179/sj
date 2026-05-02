@@ -3,7 +3,7 @@ import { cookies } from "next/headers";
 import { NextRequest } from "next/server";
 
 import { POST } from "../../../app/api/auth/login/route";
-import { getSessionRole } from "../../../lib/auth";
+import { getSessionRole, getSessionUser } from "../../../lib/auth";
 import { canAccessRoute } from "../../../lib/roles";
 import { middleware } from "../../../middleware";
 
@@ -44,14 +44,47 @@ describe("getSessionRole", () => {
   });
 });
 
+describe("getSessionUser", () => {
+  beforeEach(() => {
+    vi.mocked(cookies).mockReset();
+  });
+
+  it("returns both userId and role from cookies", async () => {
+    vi.mocked(cookies).mockResolvedValue({
+      get: (name: string) => {
+        const values: Record<string, { name: string; value: string }> = {
+          mrp_session_role: { name: "mrp_session_role", value: "vendor" },
+          mrp_session_user_id: { name: "mrp_session_user_id", value: "vendor_1" }
+        };
+
+        return values[name];
+      }
+    } as Awaited<ReturnType<typeof cookies>>);
+
+    await expect(getSessionUser()).resolves.toEqual({
+      userId: "vendor_1",
+      role: "vendor"
+    });
+  });
+
+  it("returns null when userId cookie is missing", async () => {
+    vi.mocked(cookies).mockResolvedValue({
+      get: (name: string) =>
+        name === "mrp_session_role" ? { name, value: "vendor" } : undefined
+    } as Awaited<ReturnType<typeof cookies>>);
+
+    await expect(getSessionUser()).resolves.toBeNull();
+  });
+});
+
 describe("POST /api/auth/login", () => {
-  it("sets the role cookie for a valid role", async () => {
+  it("sets the role and userId cookies for a valid session payload", async () => {
     const request = new Request("http://localhost/api/auth/login", {
       method: "POST",
       headers: {
         "content-type": "application/json"
       },
-      body: JSON.stringify({ role: "vendor" })
+      body: JSON.stringify({ role: "vendor", userId: "vendor_1" })
     });
 
     const response = await POST(request);
@@ -59,21 +92,22 @@ describe("POST /api/auth/login", () => {
     expect(response.status).toBe(200);
     await expect(response.json()).resolves.toEqual({ ok: true });
     expect(response.cookies.get("mrp_session_role")?.value).toBe("vendor");
+    expect(response.cookies.get("mrp_session_user_id")?.value).toBe("vendor_1");
   });
 
-  it("rejects an invalid role", async () => {
+  it("rejects an invalid session payload", async () => {
     const request = new Request("http://localhost/api/auth/login", {
       method: "POST",
       headers: {
         "content-type": "application/json"
       },
-      body: JSON.stringify({ role: "guest" })
+      body: JSON.stringify({ role: "guest", userId: "" })
     });
 
     const response = await POST(request);
 
     expect(response.status).toBe(400);
-    await expect(response.json()).resolves.toEqual({ message: "invalid role" });
+    await expect(response.json()).resolves.toEqual({ message: "invalid session payload" });
   });
 });
 

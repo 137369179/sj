@@ -19,9 +19,8 @@ describe("application service", () => {
   it("builds a valid application payload", () => {
     const payload = buildApplicationPayload({
       marketId: "m1",
-      vendorId: "v1",
       boothPreference: "靠近主通道",
-      note: "主营手作咖啡",
+      applicationNote: "主营手作咖啡",
       attachments: [
         {
           url: "/uploads/license.pdf",
@@ -31,8 +30,8 @@ describe("application service", () => {
     });
 
     expect(payload.marketId).toBe("m1");
-    expect(payload.vendorId).toBe("v1");
     expect(payload.boothPreference).toBe("靠近主通道");
+    expect(payload.applicationNote).toBe("主营手作咖啡");
     expect(payload.attachments).toEqual([
       {
         url: "/uploads/license.pdf",
@@ -49,17 +48,27 @@ describe("application service", () => {
     const payload = buildApplicationReviewPayload({
       organizerId: "org_1",
       decision: "approve",
-      note: "  已录取，摊位后续通知  "
+      reviewNote: "  已录取，摊位后续通知  "
     });
 
     expect(payload).toEqual({
       organizerId: "org_1",
       decision: "approve",
-      note: "已录取，摊位后续通知"
+      reviewNote: "已录取，摊位后续通知"
     });
   });
 
-  it("lists organizer applications with market and vendor info", async () => {
+  it("accepts reviewNote instead of legacy note", () => {
+    const payload = buildApplicationReviewPayload({
+      organizerId: "org_1",
+      decision: "approve",
+      reviewNote: "资质完整，允许进入分配"
+    });
+
+    expect(payload.reviewNote).toBe("资质完整，允许进入分配");
+  });
+
+  it("lists organizer applications with market, vendor, and split note semantics", async () => {
     const findManySpy = vi.spyOn(db.application, "findMany").mockResolvedValue([
       {
         id: "app_1",
@@ -67,6 +76,8 @@ describe("application service", () => {
         vendorId: "vendor_1",
         status: "submitted",
         note: "主营手作咖啡",
+        applicationNote: null,
+        reviewNote: null,
         createdAt: new Date("2026-05-01T00:00:00.000Z"),
         market: {
           id: "market_1",
@@ -117,12 +128,14 @@ describe("application service", () => {
         vendorName: "山野咖啡",
         status: "submitted",
         note: "主营手作咖啡",
+        applicationNote: "主营手作咖啡",
+        reviewNote: null,
         createdAt: new Date("2026-05-01T00:00:00.000Z")
       }
     ]);
   });
 
-  it("lists vendor applications with status, note, and assigned stall result", async () => {
+  it("lists vendor applications with split notes and assigned stall result", async () => {
     const findManySpy = vi.spyOn(db.application, "findMany").mockResolvedValue([
       {
         id: "app_1",
@@ -130,6 +143,8 @@ describe("application service", () => {
         vendorId: "vendor_1",
         status: "stall_assigned",
         note: "主营手作咖啡",
+        applicationNote: null,
+        reviewNote: null,
         createdAt: new Date("2026-05-01T00:00:00.000Z"),
         market: {
           id: "market_1",
@@ -178,6 +193,8 @@ describe("application service", () => {
         marketCity: "杭州",
         status: "stall_assigned",
         note: "主营手作咖啡",
+        applicationNote: "主营手作咖啡",
+        reviewNote: null,
         createdAt: new Date("2026-05-01T00:00:00.000Z"),
         assignedStallId: "stall_1",
         assignedStallCode: "A-01",
@@ -226,7 +243,7 @@ describe("application service", () => {
       applicationId: "app_1",
       organizerId: "org_1",
       decision: "approve",
-      note: "已录取，摊位后续通知"
+      reviewNote: "已录取，摊位后续通知"
     });
 
     expect(findUniqueSpy).toHaveBeenCalledWith({
@@ -255,7 +272,8 @@ describe("application service", () => {
         id: "app_1"
       },
       data: {
-        status: "approved"
+        status: "approved",
+        reviewNote: "已录取，摊位后续通知"
       }
     });
     expect(notificationSpy).toHaveBeenCalledWith({
@@ -294,7 +312,7 @@ describe("application service", () => {
         applicationId: "app_1",
         organizerId: "org_1",
         decision: "reject",
-        note: "资质与本场主题不匹配"
+        reviewNote: "资质与本场主题不匹配"
       })
     ).rejects.toMatchObject<ApplicationReviewError>({
       code: "FORBIDDEN"
