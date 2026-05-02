@@ -269,6 +269,15 @@ describe("Organizer stalls page", () => {
       "href",
       "/organizer/stalls?marketId=market_2&status=assigned"
     );
+    expect(screen.getByRole("link", { name: "查看当前市集申请" })).toHaveAttribute(
+      "href",
+      "/organizer/applications?marketId=market_2"
+    );
+    expect(screen.getByRole("link", { name: "查看当前市集看板" })).toHaveAttribute(
+      "href",
+      "/organizer/dashboard/market_2"
+    );
+    expect(screen.getByRole("combobox", { name: "选择市集" })).toHaveValue("market_2");
     expect(screen.getByText("面包区 1 号位")).toBeInTheDocument();
     expect(screen.queryByText("主通道 1 号位")).not.toBeInTheDocument();
   });

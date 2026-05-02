@@ -221,6 +221,14 @@ describe("Organizer applications page", () => {
       "href",
       "/organizer/applications?marketId=market_2&status=approved"
     );
+    expect(screen.getByRole("link", { name: "查看当前市集摊位" })).toHaveAttribute(
+      "href",
+      "/organizer/stalls?marketId=market_2"
+    );
+    expect(screen.getByRole("link", { name: "查看当前市集看板" })).toHaveAttribute(
+      "href",
+      "/organizer/dashboard/market_2"
+    );
     expect(screen.getByText("木野手作")).toBeInTheDocument();
     expect(screen.queryByText("山野咖啡")).not.toBeInTheDocument();
   });

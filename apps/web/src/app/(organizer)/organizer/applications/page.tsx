@@ -80,6 +80,12 @@ export default async function OrganizerApplicationsPage({
         {isOrganizerSession ? (
           <>
             {currentMarketTitle ? <p>当前市集：{currentMarketTitle}</p> : null}
+            {selectedMarketId ? (
+              <nav aria-label="当前市集快捷操作">
+                <Link href={`/organizer/stalls?marketId=${selectedMarketId}`}>查看当前市集摊位</Link>
+                <Link href={`/organizer/dashboard/${selectedMarketId}`}>查看当前市集看板</Link>
+              </nav>
+            ) : null}
             <section aria-label="申请摘要">
               <p>全部申请：{summary.all}</p>
               <p>待审核：{summary.submitted}</p>

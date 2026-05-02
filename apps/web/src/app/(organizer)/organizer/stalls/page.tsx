@@ -115,6 +115,14 @@ export default async function OrganizerStallsPage({
         {isOrganizerSession ? (
           <>
             {currentMarketTitle ? <p>当前市集：{currentMarketTitle}</p> : null}
+            {selectedMarketId ? (
+              <nav aria-label="当前市集快捷操作">
+                <Link href={`/organizer/applications?marketId=${selectedMarketId}`}>
+                  查看当前市集申请
+                </Link>
+                <Link href={`/organizer/dashboard/${selectedMarketId}`}>查看当前市集看板</Link>
+              </nav>
+            ) : null}
             <section aria-label="摊位摘要">
               <p>全部摊位：{summary.all}</p>
               <p>待分配：{summary.unassigned}</p>
@@ -157,7 +165,11 @@ export default async function OrganizerStallsPage({
               <form action={createStallAction} aria-label="创建摊位表单">
                 <label>
                   选择市集
-                  <select name="marketId" aria-label="选择市集" defaultValue="">
+                  <select
+                    name="marketId"
+                    aria-label="选择市集"
+                    defaultValue={selectedMarketId ?? ""}
+                  >
                     <option value="" disabled>
                       请选择已创建的市集
                     </option>
