@@ -1,6 +1,7 @@
 import { revalidatePath } from "next/cache";
 
 import { AppShell } from "../../../../components/layout/app-shell";
+import { getApplicationStatusLabel } from "../../../../lib/application-status";
 import { getSessionUser } from "../../../../lib/auth";
 import {
   buildApplicationReviewPayload,
@@ -61,7 +62,7 @@ export default async function OrganizerApplicationsPage() {
               <p>
                 {application.marketTitle} · {application.marketCity}
               </p>
-              <p>状态：{application.status}</p>
+              <p>状态：{getApplicationStatusLabel(application.status)}</p>
               <p>报名备注：{application.applicationNote ?? "无"}</p>
               <p>审核备注：{application.reviewNote ?? "无"}</p>
               <p>提交时间：{formatDate(application.createdAt)}</p>

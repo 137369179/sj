@@ -1,4 +1,5 @@
 import { AppShell } from "../../../components/layout/app-shell";
+import { getApplicationStatusLabel } from "../../../lib/application-status";
 import { getSessionUser } from "../../../lib/auth";
 import { listVendorApplications } from "../../../server/applications/service";
 
@@ -27,7 +28,7 @@ export default async function VendorApplicationsPage() {
               <h3>
                 {application.marketTitle} · {application.marketCity}
               </h3>
-              <p>状态：{application.status}</p>
+              <p>状态：{getApplicationStatusLabel(application.status)}</p>
               <p>报名备注：{application.applicationNote ?? "无"}</p>
               <p>审核备注：{application.reviewNote ?? "无"}</p>
               <p>

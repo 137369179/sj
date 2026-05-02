@@ -46,7 +46,7 @@ describe("Vendor applications page", () => {
     expect(listVendorApplications).toHaveBeenCalledWith("vendor_1");
     expect(screen.getByRole("heading", { name: "我的报名" })).toBeInTheDocument();
     expect(screen.getByText("春日咖啡市集 · 杭州")).toBeInTheDocument();
-    expect(screen.getByText("状态：stall_assigned")).toBeInTheDocument();
+    expect(screen.getByText("状态：已分配摊位")).toBeInTheDocument();
     expect(screen.getByText("报名备注：主营手作咖啡")).toBeInTheDocument();
     expect(screen.getByText("审核备注：摊位需求明确，允许进入分配")).toBeInTheDocument();
     expect(
