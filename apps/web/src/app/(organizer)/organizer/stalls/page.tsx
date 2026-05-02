@@ -131,7 +131,7 @@ export default async function OrganizerStallsPage({
             {applicationsReturnHref ? (
               <section aria-label="来源回跳">
                 <p>当前来自报名申请页。</p>
-                <Link href={applicationsReturnHref}>返回当前市集申请</Link>
+                <Link href={applicationsReturnHref}>返回当前市集报名申请</Link>
               </section>
             ) : null}
             {resolvedSearchParams.from === "markets" ? (
@@ -152,7 +152,7 @@ export default async function OrganizerStallsPage({
                     status: sourceApplicationStatus
                   })}
                 >
-                  查看当前市集申请
+                  查看当前市集报名申请
                 </Link>
                 <Link
                   href={buildDashboardHref({

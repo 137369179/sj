@@ -269,7 +269,7 @@ describe("Organizer stalls page", () => {
       "href",
       "/organizer/stalls?marketId=market_2&status=assigned"
     );
-    expect(screen.getByRole("link", { name: "查看当前市集申请" })).toHaveAttribute(
+    expect(screen.getByRole("link", { name: "查看当前市集报名申请" })).toHaveAttribute(
       "href",
       "/organizer/applications?marketId=market_2"
     );
@@ -411,7 +411,7 @@ describe("Organizer stalls page", () => {
       "href",
       "/organizer/stalls?marketId=market_2&from=markets&marketStatus=published"
     );
-    expect(screen.getByRole("link", { name: "查看当前市集申请" })).toHaveAttribute(
+    expect(screen.getByRole("link", { name: "查看当前市集报名申请" })).toHaveAttribute(
       "href",
       "/organizer/applications?marketId=market_2&from=markets&marketStatus=published"
     );
@@ -475,7 +475,7 @@ describe("Organizer stalls page", () => {
     render(page);
 
     expect(screen.getByText("当前来自报名申请页。")).toBeInTheDocument();
-    expect(screen.getByRole("link", { name: "返回当前市集申请" })).toHaveAttribute(
+    expect(screen.getByRole("link", { name: "返回当前市集报名申请" })).toHaveAttribute(
       "href",
       "/organizer/applications?marketId=market_2&status=approved"
     );
@@ -491,7 +491,7 @@ describe("Organizer stalls page", () => {
       "href",
       "/organizer/stalls?marketId=market_2&from=applications&sourceStatus=approved"
     );
-    expect(screen.getByRole("link", { name: "查看当前市集申请" })).toHaveAttribute(
+    expect(screen.getByRole("link", { name: "查看当前市集报名申请" })).toHaveAttribute(
       "href",
       "/organizer/applications?marketId=market_2&from=applications&status=approved"
     );

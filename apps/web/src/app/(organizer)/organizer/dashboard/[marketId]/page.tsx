@@ -76,7 +76,7 @@ export default async function OrganizerDashboardPage({
               marketStatus: resolvedSearchParams.marketStatus
             })}
           >
-            查看当前市集申请
+            查看当前市集报名申请
           </Link>
           <Link
             href={buildDashboardShortcutHref({
@@ -172,7 +172,7 @@ function buildDashboardReturnContext(input: {
   if (input.from === "applications") {
     return {
       message: "当前来自报名申请页。",
-      linkLabel: "返回当前市集申请",
+      linkLabel: "返回当前市集报名申请",
       href: buildOrganizerApplicationsHref({
         marketId: input.marketId,
         status: getOrganizerApplicationStatus(input.status)
