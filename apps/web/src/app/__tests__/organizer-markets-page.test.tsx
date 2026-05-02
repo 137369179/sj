@@ -56,7 +56,7 @@ describe("Organizer markets page", () => {
     expect(screen.getByText("夏夜面包市集")).toBeInTheDocument();
     expect(screen.getByText("上海 · 已发布")).toBeInTheDocument();
     expect(screen.getByText("2026-06-08 至 2026-06-08")).toBeInTheDocument();
-    expect(screen.getByRole("link", { name: "夏夜面包市集 查看报名" })).toHaveAttribute(
+    expect(screen.getByRole("link", { name: "夏夜面包市集 查看报名申请" })).toHaveAttribute(
       "href",
       "/organizer/applications?marketId=market_2&from=markets"
     );
@@ -135,7 +135,7 @@ describe("Organizer markets page", () => {
     expect(screen.getByText("夏夜面包市集")).toBeInTheDocument();
     expect(screen.queryByText("春日咖啡市集")).not.toBeInTheDocument();
     expect(screen.queryByText("秋日手作市集")).not.toBeInTheDocument();
-    expect(screen.getByRole("link", { name: "夏夜面包市集 查看报名" })).toHaveAttribute(
+    expect(screen.getByRole("link", { name: "夏夜面包市集 查看报名申请" })).toHaveAttribute(
       "href",
       "/organizer/applications?marketId=market_2&from=markets&marketStatus=published"
     );

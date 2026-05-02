@@ -44,7 +44,7 @@ export default async function MarketDetailPage({
         <p>查看基础招募信息后，可继续进入报名页面提交申请。</p>
         {returnToApplications ? (
           <section aria-label="报名回跳">
-            <p>当前来自我的报名页。</p>
+            <p>当前来自我的报名页，可直接返回当前市集的报名记录。</p>
             <Link href={returnToApplications}>返回我的报名</Link>
           </section>
         ) : null}

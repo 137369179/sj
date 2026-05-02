@@ -132,14 +132,14 @@ export default async function OrganizerMarketsPage({
               </p>
               <nav aria-label={`${market.title} 管理入口`}>
                 <Link
-                  aria-label={`${market.title} 查看报名`}
+                  aria-label={`${market.title} 查看报名申请`}
                   href={buildOrganizerMarketsTargetHref({
                     pathname: "/organizer/applications",
                     marketId: market.id,
                     selectedStatus
                   })}
                 >
-                  查看报名
+                  查看报名申请
                 </Link>
                 <Link
                   aria-label={`${market.title} 摊位管理`}
