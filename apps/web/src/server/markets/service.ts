@@ -1,5 +1,7 @@
 import { z } from "zod";
 
+import { db } from "../../lib/db";
+
 export const marketSchema = z.object({
   title: z.string().trim().min(2),
   city: z.string().trim().min(2),
@@ -15,6 +17,12 @@ export type DemoMarket = {
   city: string;
   date: string;
   description: string;
+};
+
+export type OrganizerMarketOption = {
+  id: string;
+  title: string;
+  city: string;
 };
 
 const demoMarkets: DemoMarket[] = [
@@ -65,4 +73,29 @@ export function listDemoMarkets() {
 
 export function getDemoMarketById(marketId: string) {
   return demoMarkets.find((market) => market.id === marketId);
+}
+
+export async function listOrganizerMarketOptions(
+  organizerId: string
+): Promise<OrganizerMarketOption[]> {
+  const markets = await db.market.findMany({
+    where: {
+      organizerId
+    },
+    select: {
+      id: true,
+      title: true,
+      city: true,
+      startsAt: true
+    },
+    orderBy: {
+      startsAt: "desc"
+    }
+  });
+
+  return markets.map(({ id, title, city }) => ({
+    id,
+    title,
+    city
+  }));
 }

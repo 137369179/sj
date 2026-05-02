@@ -1,7 +1,9 @@
 import { revalidatePath } from "next/cache";
+import Link from "next/link";
 
 import { AppShell } from "../../../../components/layout/app-shell";
 import { getSessionUser } from "../../../../lib/auth";
+import { listOrganizerMarketOptions } from "../../../../server/markets/service";
 import { listOrganizerApplications } from "../../../../server/applications/service";
 import {
   assignStall,
@@ -57,11 +59,22 @@ async function assignStallAction(formData: FormData) {
   revalidatePath("/organizer/stalls");
 }
 
-export default async function OrganizerStallsPage() {
+type OrganizerStallsPageProps = {
+  searchParams?: Promise<{
+    status?: string;
+  }>;
+};
+
+export default async function OrganizerStallsPage({
+  searchParams
+}: OrganizerStallsPageProps) {
   const sessionUser = await getSessionUser();
   const isOrganizerSession = sessionUser?.role === "organizer";
   const stalls = isOrganizerSession
     ? await listOrganizerStalls(sessionUser.userId)
+    : [];
+  const marketOptions = isOrganizerSession
+    ? await listOrganizerMarketOptions(sessionUser.userId)
     : [];
   const applications = isOrganizerSession
     ? await listOrganizerApplications(sessionUser.userId)
@@ -69,6 +82,13 @@ export default async function OrganizerStallsPage() {
   const approvedApplications = applications.filter(
     (application) => application.status === "approved"
   );
+  const resolvedSearchParams = (await searchParams) ?? {};
+  const selectedStatus = getSelectedStatus(resolvedSearchParams.status);
+  const filteredStalls =
+    selectedStatus === "all"
+      ? stalls
+      : stalls.filter((stall) => getStallFilterStatus(stall) === selectedStatus);
+  const summary = buildStallSummary(stalls);
 
   return (
     <AppShell>
@@ -81,30 +101,63 @@ export default async function OrganizerStallsPage() {
         ) : null}
 
         {isOrganizerSession ? (
-          <section aria-label="创建摊位">
-            <h3>创建摊位</h3>
-            <form action={createStallAction} aria-label="创建摊位表单">
-              <label>
-                市集 ID
-                <input name="marketId" type="text" />
-              </label>
-              <label>
-                摊位编码
-                <input name="code" type="text" />
-              </label>
-              <label>
-                摊位名称
-                <input name="name" type="text" />
-              </label>
-              <button type="submit">创建摊位</button>
-            </form>
-          </section>
+          <>
+            <section aria-label="摊位摘要">
+              <p>全部摊位：{summary.all}</p>
+              <p>待分配：{summary.unassigned}</p>
+              <p>已分配：{summary.assigned}</p>
+              <p>已停用：{summary.inactive}</p>
+            </section>
+
+            <nav aria-label="摊位筛选">
+              <Link href="/organizer/stalls">全部（{summary.all}）</Link>
+              <Link href="/organizer/stalls?status=unassigned">
+                待分配（{summary.unassigned}）
+              </Link>
+              <Link href="/organizer/stalls?status=assigned">
+                已分配（{summary.assigned}）
+              </Link>
+              <Link href="/organizer/stalls?status=inactive">
+                已停用（{summary.inactive}）
+              </Link>
+            </nav>
+
+            <section aria-label="创建摊位">
+              <h3>创建摊位</h3>
+              <form action={createStallAction} aria-label="创建摊位表单">
+                <label>
+                  选择市集
+                  <select name="marketId" aria-label="选择市集" defaultValue="">
+                    <option value="" disabled>
+                      请选择已创建的市集
+                    </option>
+                    {marketOptions.map((market) => (
+                      <option key={market.id} value={market.id}>
+                        {market.title}（{market.city}）
+                      </option>
+                    ))}
+                  </select>
+                </label>
+                <label>
+                  摊位编码
+                  <input name="code" type="text" />
+                </label>
+                <label>
+                  摊位名称
+                  <input name="name" type="text" />
+                </label>
+                <button type="submit">创建摊位</button>
+              </form>
+            </section>
+          </>
         ) : null}
 
-        {isOrganizerSession && stalls.length === 0 ? <p>当前还没有摊位，请先创建。</p> : null}
+        {isOrganizerSession && filteredStalls.length === 0 ? (
+          <p>当前没有符合筛选条件的摊位。</p>
+        ) : null}
 
         <section aria-label="摊位列表">
-          {stalls.map((stall) => {
+          {filteredStalls.map((stall) => {
             const marketApplications = approvedApplications.filter(
               (application) => application.marketId === stall.marketId
             );
@@ -151,4 +204,33 @@ export default async function OrganizerStallsPage() {
       </main>
     </AppShell>
   );
+}
+
+function getSelectedStatus(status: string | undefined) {
+  if (status === "unassigned" || status === "assigned" || status === "inactive") {
+    return status;
+  }
+
+  return "all";
+}
+
+function getStallFilterStatus(stall: Awaited<ReturnType<typeof listOrganizerStalls>>[number]) {
+  if (!stall.isActive) {
+    return "inactive";
+  }
+
+  if (stall.assignedApplicationId) {
+    return "assigned";
+  }
+
+  return "unassigned";
+}
+
+function buildStallSummary(stalls: Awaited<ReturnType<typeof listOrganizerStalls>>) {
+  return {
+    all: stalls.length,
+    unassigned: stalls.filter((stall) => getStallFilterStatus(stall) === "unassigned").length,
+    assigned: stalls.filter((stall) => getStallFilterStatus(stall) === "assigned").length,
+    inactive: stalls.filter((stall) => getStallFilterStatus(stall) === "inactive").length
+  };
 }
