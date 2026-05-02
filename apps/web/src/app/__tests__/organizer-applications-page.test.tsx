@@ -315,6 +315,53 @@ describe("Organizer applications page", () => {
     );
   });
 
+  it("renders a markets return link when opened from organizer markets", async () => {
+    vi.mocked(getSessionUser).mockResolvedValue({
+      userId: "org_1",
+      role: "organizer"
+    });
+    vi.mocked(listOrganizerMarketOptions).mockResolvedValue([
+      {
+        id: "market_2",
+        title: "夏夜面包市集",
+        city: "上海"
+      }
+    ]);
+    vi.mocked(listOrganizerApplications).mockResolvedValue([
+      {
+        id: "app_2",
+        marketId: "market_2",
+        marketTitle: "夏夜面包市集",
+        marketCity: "上海",
+        vendorId: "vendor_2",
+        vendorName: "木野手作",
+        status: "approved",
+        applicationNote: "主营木作器物",
+        reviewNote: "初审通过",
+        reviewedAt: new Date("2026-05-02T08:30:00.000Z"),
+        reviews: [],
+        attachments: [],
+        createdAt: new Date("2026-05-01T01:00:00.000Z")
+      }
+    ]);
+
+    const page = await OrganizerApplicationsPage({
+      searchParams: Promise.resolve({
+        marketId: "market_2",
+        from: "markets",
+        marketStatus: "published"
+      })
+    });
+
+    render(page);
+
+    expect(screen.getByText("当前来自我的市集页。")).toBeInTheDocument();
+    expect(screen.getByRole("link", { name: "返回我的市集" })).toHaveAttribute(
+      "href",
+      "/organizer/markets?status=published"
+    );
+  });
+
   it("prompts for organizer login when the session identity is missing", async () => {
     vi.mocked(getSessionUser).mockResolvedValue(null);
 

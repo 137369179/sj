@@ -58,15 +58,15 @@ describe("Organizer markets page", () => {
     expect(screen.getByText("2026-06-08 至 2026-06-08")).toBeInTheDocument();
     expect(screen.getByRole("link", { name: "夏夜面包市集 查看报名" })).toHaveAttribute(
       "href",
-      "/organizer/applications?marketId=market_2"
+      "/organizer/applications?marketId=market_2&from=markets"
     );
     expect(screen.getByRole("link", { name: "夏夜面包市集 摊位管理" })).toHaveAttribute(
       "href",
-      "/organizer/stalls?marketId=market_2"
+      "/organizer/stalls?marketId=market_2&from=markets"
     );
     expect(screen.getByRole("link", { name: "夏夜面包市集 查看看板" })).toHaveAttribute(
       "href",
-      "/organizer/dashboard/market_2"
+      "/organizer/dashboard/market_2?from=markets"
     );
     expect(screen.getByText("春日咖啡市集")).toBeInTheDocument();
     expect(screen.getByText("杭州 · 草稿")).toBeInTheDocument();
@@ -135,6 +135,18 @@ describe("Organizer markets page", () => {
     expect(screen.getByText("夏夜面包市集")).toBeInTheDocument();
     expect(screen.queryByText("春日咖啡市集")).not.toBeInTheDocument();
     expect(screen.queryByText("秋日手作市集")).not.toBeInTheDocument();
+    expect(screen.getByRole("link", { name: "夏夜面包市集 查看报名" })).toHaveAttribute(
+      "href",
+      "/organizer/applications?marketId=market_2&from=markets&marketStatus=published"
+    );
+    expect(screen.getByRole("link", { name: "夏夜面包市集 摊位管理" })).toHaveAttribute(
+      "href",
+      "/organizer/stalls?marketId=market_2&from=markets&marketStatus=published"
+    );
+    expect(screen.getByRole("link", { name: "夏夜面包市集 查看看板" })).toHaveAttribute(
+      "href",
+      "/organizer/dashboard/market_2?from=markets&marketStatus=published"
+    );
   });
 
   it("renders empty state for organizer without markets", async () => {

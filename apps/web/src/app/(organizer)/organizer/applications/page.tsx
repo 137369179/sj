@@ -41,6 +41,8 @@ type OrganizerApplicationsPageProps = {
   searchParams?: Promise<{
     status?: string;
     marketId?: string;
+    from?: string;
+    marketStatus?: string;
   }>;
 };
 
@@ -66,6 +68,7 @@ export default async function OrganizerApplicationsPage({
       ? marketScopedApplications
       : marketScopedApplications.filter((application) => application.status === selectedStatus);
   const summary = buildStatusSummary(marketScopedApplications);
+  const organizerMarketsHref = buildOrganizerMarketsHref(resolvedSearchParams.marketStatus);
   const currentMarketTitle =
     selectedMarketId &&
     marketScopedApplications.find((application) => application.marketId === selectedMarketId)
@@ -83,6 +86,12 @@ export default async function OrganizerApplicationsPage({
 
         {isOrganizerSession ? (
           <>
+            {resolvedSearchParams.from === "markets" ? (
+              <section aria-label="来源回跳">
+                <p>当前来自我的市集页。</p>
+                <Link href={organizerMarketsHref}>返回我的市集</Link>
+              </section>
+            ) : null}
             {currentMarketTitle ? <p>当前市集：{currentMarketTitle}</p> : null}
             {selectedMarketId ? (
               <nav aria-label="当前市集快捷操作">
@@ -255,6 +264,14 @@ function buildDashboardHref(input: {
   }
 
   return `/organizer/dashboard/${input.marketId}?${params.toString()}`;
+}
+
+function buildOrganizerMarketsHref(marketStatus: string | undefined) {
+  if (marketStatus === "draft" || marketStatus === "published" || marketStatus === "completed") {
+    return `/organizer/markets?status=${marketStatus}`;
+  }
+
+  return "/organizer/markets";
 }
 
 function buildStatusSummary(

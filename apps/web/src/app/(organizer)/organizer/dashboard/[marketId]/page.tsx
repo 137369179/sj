@@ -12,6 +12,7 @@ type OrganizerDashboardPageProps = {
   searchParams?: Promise<{
     from?: string;
     status?: string;
+    marketStatus?: string;
   }>;
 };
 
@@ -43,7 +44,8 @@ export default async function OrganizerDashboardPage({
   const returnContext = buildDashboardReturnContext({
     marketId: summary.market.id,
     from: resolvedSearchParams.from,
-    status: resolvedSearchParams.status
+    status: resolvedSearchParams.status,
+    marketStatus: resolvedSearchParams.marketStatus
   });
 
   const approvalRateLabel = `${Math.round(summary.metrics.approvalRate * 100)}%`;
@@ -83,7 +85,8 @@ export default async function OrganizerDashboardPage({
                   href={buildDashboardMarketHref({
                     marketId: market.id,
                     from: resolvedSearchParams.from,
-                    status: resolvedSearchParams.status
+                    status: resolvedSearchParams.status,
+                    marketStatus: resolvedSearchParams.marketStatus
                   })}
                 >
                   {isCurrent ? `${market.title}（当前）` : market.title}
@@ -140,7 +143,16 @@ function buildDashboardReturnContext(input: {
   marketId: string;
   from?: string;
   status?: string;
+  marketStatus?: string;
 }) {
+  if (input.from === "markets") {
+    return {
+      message: "当前来自我的市集页。",
+      linkLabel: "返回我的市集",
+      href: buildOrganizerMarketsHref(input.marketStatus)
+    };
+  }
+
   if (input.from === "applications") {
     return {
       message: "当前来自报名申请页。",
@@ -216,8 +228,9 @@ function buildDashboardMarketHref(input: {
   marketId: string;
   from?: string;
   status?: string;
+  marketStatus?: string;
 }) {
-  if (input.from !== "applications" && input.from !== "stalls") {
+  if (input.from !== "applications" && input.from !== "stalls" && input.from !== "markets") {
     return `/organizer/dashboard/${input.marketId}`;
   }
 
@@ -225,9 +238,25 @@ function buildDashboardMarketHref(input: {
     from: input.from
   });
 
+  if (input.from === "markets") {
+    if (typeof input.marketStatus === "string" && input.marketStatus.length > 0) {
+      params.set("marketStatus", input.marketStatus);
+    }
+
+    return `/organizer/dashboard/${input.marketId}?${params.toString()}`;
+  }
+
   if (typeof input.status === "string" && input.status.length > 0) {
     params.set("status", input.status);
   }
 
   return `/organizer/dashboard/${input.marketId}?${params.toString()}`;
+}
+
+function buildOrganizerMarketsHref(marketStatus: string | undefined) {
+  if (marketStatus === "draft" || marketStatus === "published" || marketStatus === "completed") {
+    return `/organizer/markets?status=${marketStatus}`;
+  }
+
+  return "/organizer/markets";
 }

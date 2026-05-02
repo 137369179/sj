@@ -205,6 +205,57 @@ describe("Organizer dashboard page", () => {
     );
   });
 
+  it("renders a markets return link when opened from organizer markets", async () => {
+    vi.mocked(getSessionUser).mockResolvedValue({
+      userId: "org_1",
+      role: "organizer"
+    });
+    vi.mocked(listOrganizerMarketOptions).mockResolvedValue([
+      {
+        id: "market_1",
+        title: "春日咖啡市集",
+        city: "杭州"
+      }
+    ]);
+    vi.mocked(getMarketDashboardSummary).mockResolvedValue({
+      market: {
+        id: "market_1",
+        title: "春日咖啡市集",
+        city: "杭州"
+      },
+      metrics: {
+        totalApplications: 5,
+        pendingReviewCount: 2,
+        approvedCount: 1,
+        rejectedCount: 1,
+        assignedCount: 1,
+        approvalRate: 0.4,
+        totalStalls: 6,
+        activeStalls: 5,
+        occupiedStalls: 3,
+        stallOccupancyRate: 0.6
+      }
+    });
+
+    const page = await OrganizerDashboardPage({
+      params: Promise.resolve({
+        marketId: "market_1"
+      }),
+      searchParams: Promise.resolve({
+        from: "markets",
+        marketStatus: "published"
+      })
+    });
+
+    render(page);
+
+    expect(screen.getByText("当前来自我的市集页。")).toBeInTheDocument();
+    expect(screen.getByRole("link", { name: "返回我的市集" })).toHaveAttribute(
+      "href",
+      "/organizer/markets?status=published"
+    );
+  });
+
   it("prompts for organizer login when the session identity is missing", async () => {
     vi.mocked(getSessionUser).mockResolvedValue(null);
 

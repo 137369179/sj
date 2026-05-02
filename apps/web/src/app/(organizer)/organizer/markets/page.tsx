@@ -133,17 +133,31 @@ export default async function OrganizerMarketsPage({
               <nav aria-label={`${market.title} 管理入口`}>
                 <Link
                   aria-label={`${market.title} 查看报名`}
-                  href={`/organizer/applications?marketId=${market.id}`}
+                  href={buildOrganizerMarketsTargetHref({
+                    pathname: "/organizer/applications",
+                    marketId: market.id,
+                    selectedStatus
+                  })}
                 >
                   查看报名
                 </Link>
                 <Link
                   aria-label={`${market.title} 摊位管理`}
-                  href={`/organizer/stalls?marketId=${market.id}`}
+                  href={buildOrganizerMarketsTargetHref({
+                    pathname: "/organizer/stalls",
+                    marketId: market.id,
+                    selectedStatus
+                  })}
                 >
                   摊位管理
                 </Link>
-                <Link aria-label={`${market.title} 查看看板`} href={`/organizer/dashboard/${market.id}`}>
+                <Link
+                  aria-label={`${market.title} 查看看板`}
+                  href={buildOrganizerDashboardHref({
+                    marketId: market.id,
+                    selectedStatus
+                  })}
+                >
                   查看看板
                 </Link>
               </nav>
@@ -217,4 +231,36 @@ function getMarketStatusLabel(status: string) {
 function normalizeDateTimeInput(value: string) {
   const normalized = new Date(value);
   return Number.isNaN(normalized.getTime()) ? value : normalized.toISOString();
+}
+
+function buildOrganizerMarketsTargetHref(input: {
+  pathname: "/organizer/applications" | "/organizer/stalls";
+  marketId: string;
+  selectedStatus: "all" | "draft" | "published" | "completed";
+}) {
+  const params = new URLSearchParams({
+    marketId: input.marketId,
+    from: "markets"
+  });
+
+  if (input.selectedStatus !== "all") {
+    params.set("marketStatus", input.selectedStatus);
+  }
+
+  return `${input.pathname}?${params.toString()}`;
+}
+
+function buildOrganizerDashboardHref(input: {
+  marketId: string;
+  selectedStatus: "all" | "draft" | "published" | "completed";
+}) {
+  const params = new URLSearchParams({
+    from: "markets"
+  });
+
+  if (input.selectedStatus !== "all") {
+    params.set("marketStatus", input.selectedStatus);
+  }
+
+  return `/organizer/dashboard/${input.marketId}?${params.toString()}`;
 }
