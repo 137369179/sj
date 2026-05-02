@@ -80,7 +80,7 @@ describe("Vendor applications page", () => {
     expect(screen.getByText("2026-05-02 · 拒绝 · 首轮资料不完整")).toBeInTheDocument();
     expect(screen.getByRole("link", { name: "查看春日咖啡市集详情" })).toHaveAttribute(
       "href",
-      "/markets/market_1"
+      "/markets/market_1?from=applications"
     );
     expect(screen.getByRole("link", { name: "license.pdf" })).toHaveAttribute(
       "href",
@@ -274,7 +274,47 @@ describe("Vendor applications page", () => {
       "href",
       "/applications?marketId=market_1"
     );
+    expect(screen.getByRole("link", { name: "查看春日咖啡市集详情" })).toHaveAttribute(
+      "href",
+      "/markets/market_1?from=applications"
+    );
     expect(screen.getByText("春日咖啡市集 · 杭州")).toBeInTheDocument();
     expect(screen.queryByText("夏夜面包市集 · 上海")).not.toBeInTheDocument();
+  });
+
+  it("preserves status context in detail links when drilling into a market from applications", async () => {
+    vi.mocked(getSessionUser).mockResolvedValue({
+      userId: "vendor_1",
+      role: "vendor"
+    });
+    vi.mocked(listVendorApplications).mockResolvedValue([
+      {
+        id: "app_2",
+        marketId: "market_2",
+        marketTitle: "夏夜面包市集",
+        marketCity: "上海",
+        status: "approved",
+        applicationNote: "主营木作器物",
+        reviewNote: "初审通过",
+        reviewedAt: new Date("2026-05-02T08:30:00.000Z"),
+        reviews: [],
+        attachments: [],
+        createdAt: new Date("2026-05-01T01:00:00.000Z"),
+        assignedStallId: null,
+        assignedStallCode: null,
+        assignedStallName: null
+      }
+    ]);
+
+    const page = await VendorApplicationsPage({
+      searchParams: Promise.resolve({ marketId: "market_2", status: "approved" })
+    });
+
+    render(page);
+
+    expect(screen.getByRole("link", { name: "查看夏夜面包市集详情" })).toHaveAttribute(
+      "href",
+      "/markets/market_2?from=applications&status=approved"
+    );
   });
 });

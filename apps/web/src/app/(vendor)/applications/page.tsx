@@ -123,7 +123,12 @@ export default async function VendorApplicationsPage({
               <p>最近审核时间：{application.reviewedAt ? formatDate(application.reviewedAt) : "未审核"}</p>
               <ReviewHistory reviews={application.reviews} />
               <p>
-                <Link href={`/markets/${application.marketId}`}>
+                <Link
+                  href={buildVendorMarketDetailHref({
+                    marketId: application.marketId,
+                    status: selectedStatus
+                  })}
+                >
                   查看{application.marketTitle}详情
                 </Link>
               </p>
@@ -182,6 +187,21 @@ function buildVendorApplicationsHref(input: {
 
   const query = params.toString();
   return query.length > 0 ? `/applications?${query}` : "/applications";
+}
+
+function buildVendorMarketDetailHref(input: {
+  marketId: string;
+  status: "all" | "submitted" | "approved" | "stall_assigned";
+}) {
+  const params = new URLSearchParams({
+    from: "applications"
+  });
+
+  if (input.status !== "all") {
+    params.set("status", input.status);
+  }
+
+  return `/markets/${input.marketId}?${params.toString()}`;
 }
 
 function buildVendorMarketOptions(
