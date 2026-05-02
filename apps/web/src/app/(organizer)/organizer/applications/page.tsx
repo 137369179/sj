@@ -68,6 +68,13 @@ export default async function OrganizerApplicationsPage({
       ? marketScopedApplications
       : marketScopedApplications.filter((application) => application.status === selectedStatus);
   const summary = buildStatusSummary(marketScopedApplications);
+  const stallReturnHref =
+    resolvedSearchParams.from === "stalls"
+      ? buildOrganizerStallsReturnHref({
+          marketId: selectedMarketId,
+          status: getOrganizerStallStatus(resolvedSearchParams.status)
+        })
+      : null;
   const organizerMarketsHref = buildOrganizerMarketsHref(resolvedSearchParams.marketStatus);
   const currentMarketTitle =
     selectedMarketId &&
@@ -86,6 +93,12 @@ export default async function OrganizerApplicationsPage({
 
         {isOrganizerSession ? (
           <>
+            {stallReturnHref ? (
+              <section aria-label="来源回跳">
+                <p>当前来自摊位管理页。</p>
+                <Link href={stallReturnHref}>返回当前市集摊位</Link>
+              </section>
+            ) : null}
             {resolvedSearchParams.from === "markets" ? (
               <section aria-label="来源回跳">
                 <p>当前来自我的市集页。</p>
@@ -100,7 +113,8 @@ export default async function OrganizerApplicationsPage({
                     pathname: "/organizer/stalls",
                     marketId: selectedMarketId,
                     from: resolvedSearchParams.from,
-                    marketStatus: resolvedSearchParams.marketStatus
+                    marketStatus: resolvedSearchParams.marketStatus,
+                    status: resolvedSearchParams.status
                   })}
                 >
                   查看当前市集摊位
@@ -108,8 +122,14 @@ export default async function OrganizerApplicationsPage({
                 <Link
                   href={buildDashboardHref({
                     marketId: selectedMarketId,
-                    from: resolvedSearchParams.from === "markets" ? "markets" : "applications",
-                    status: selectedStatus,
+                    from:
+                      resolvedSearchParams.from === "markets" || resolvedSearchParams.from === "stalls"
+                        ? resolvedSearchParams.from
+                        : "applications",
+                    status:
+                      resolvedSearchParams.from === "stalls"
+                        ? resolvedSearchParams.status
+                        : selectedStatus,
                     marketStatus: resolvedSearchParams.marketStatus
                   })}
                 >
@@ -290,8 +310,8 @@ function buildApplicationsFilterHref(input: {
 
 function buildDashboardHref(input: {
   marketId: string;
-  from: "applications" | "markets";
-  status: "all" | "submitted" | "approved" | "rejected";
+  from: "applications" | "markets" | "stalls";
+  status?: string;
   marketStatus?: string;
 }) {
   const params = new URLSearchParams({
@@ -310,7 +330,19 @@ function buildDashboardHref(input: {
     return `/organizer/dashboard/${input.marketId}?${params.toString()}`;
   }
 
-  if (input.status !== "all") {
+  if (input.from === "stalls") {
+    if (
+      input.status === "unassigned" ||
+      input.status === "assigned" ||
+      input.status === "inactive"
+    ) {
+      params.set("status", input.status);
+    }
+
+    return `/organizer/dashboard/${input.marketId}?${params.toString()}`;
+  }
+
+  if (input.status === "submitted" || input.status === "approved" || input.status === "rejected") {
     params.set("status", input.status);
   }
 
@@ -322,6 +354,7 @@ function buildOrganizerMarketsContextHref(input: {
   marketId: string;
   from?: string;
   marketStatus?: string;
+  status?: string;
 }) {
   const params = new URLSearchParams({
     marketId: input.marketId
@@ -339,6 +372,18 @@ function buildOrganizerMarketsContextHref(input: {
     }
   }
 
+  if (input.from === "stalls") {
+    params.set("from", "stalls");
+
+    if (
+      input.status === "unassigned" ||
+      input.status === "assigned" ||
+      input.status === "inactive"
+    ) {
+      params.set("status", input.status);
+    }
+  }
+
   return `${input.pathname}?${params.toString()}`;
 }
 
@@ -348,6 +393,32 @@ function buildOrganizerMarketsHref(marketStatus: string | undefined) {
   }
 
   return "/organizer/markets";
+}
+
+function getOrganizerStallStatus(status: string | undefined) {
+  if (status === "unassigned" || status === "assigned" || status === "inactive") {
+    return status;
+  }
+
+  return null;
+}
+
+function buildOrganizerStallsReturnHref(input: {
+  marketId: string | null;
+  status: "unassigned" | "assigned" | "inactive" | null;
+}) {
+  const params = new URLSearchParams();
+
+  if (input.marketId) {
+    params.set("marketId", input.marketId);
+  }
+
+  if (input.status) {
+    params.set("status", input.status);
+  }
+
+  const query = params.toString();
+  return query.length > 0 ? `/organizer/stalls?${query}` : "/organizer/stalls";
 }
 
 function buildStatusSummary(
