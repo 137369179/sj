@@ -67,7 +67,9 @@ describe("Organizer applications page", () => {
       }
     ]);
 
-    const page = await OrganizerApplicationsPage();
+    const page = await OrganizerApplicationsPage({
+      searchParams: Promise.resolve({})
+    });
 
     render(page);
 
@@ -90,10 +92,88 @@ describe("Organizer applications page", () => {
     expect(screen.getByRole("button", { name: "拒绝" })).toBeInTheDocument();
   });
 
+  it("renders summary metrics and filters applications by status from search params", async () => {
+    vi.mocked(getSessionUser).mockResolvedValue({
+      userId: "org_1",
+      role: "organizer"
+    });
+    vi.mocked(listOrganizerApplications).mockResolvedValue([
+      {
+        id: "app_1",
+        marketId: "market_1",
+        marketTitle: "春日咖啡市集",
+        marketCity: "杭州",
+        vendorId: "vendor_1",
+        vendorName: "山野咖啡",
+        status: "submitted",
+        applicationNote: "主营手作咖啡",
+        reviewNote: null,
+        reviewedAt: null,
+        reviews: [],
+        attachments: [],
+        createdAt: new Date("2026-05-01T00:00:00.000Z")
+      },
+      {
+        id: "app_2",
+        marketId: "market_1",
+        marketTitle: "春日咖啡市集",
+        marketCity: "杭州",
+        vendorId: "vendor_2",
+        vendorName: "木野手作",
+        status: "approved",
+        applicationNote: "主营木作器物",
+        reviewNote: "初审通过",
+        reviewedAt: new Date("2026-05-02T08:30:00.000Z"),
+        reviews: [],
+        attachments: [],
+        createdAt: new Date("2026-05-01T01:00:00.000Z")
+      },
+      {
+        id: "app_3",
+        marketId: "market_1",
+        marketTitle: "春日咖啡市集",
+        marketCity: "杭州",
+        vendorId: "vendor_3",
+        vendorName: "雨巷面包",
+        status: "rejected",
+        applicationNote: "主营面包甜点",
+        reviewNote: "与本场主题不符",
+        reviewedAt: new Date("2026-05-02T09:00:00.000Z"),
+        reviews: [],
+        attachments: [],
+        createdAt: new Date("2026-05-01T02:00:00.000Z")
+      }
+    ]);
+
+    const page = await OrganizerApplicationsPage({
+      searchParams: Promise.resolve({ status: "submitted" })
+    });
+
+    render(page);
+
+    expect(screen.getByText("全部申请：3")).toBeInTheDocument();
+    expect(screen.getByText("待审核：1")).toBeInTheDocument();
+    expect(screen.getByText("已通过：1")).toBeInTheDocument();
+    expect(screen.getByText("已拒绝：1")).toBeInTheDocument();
+    expect(screen.getByRole("link", { name: "全部（3）" })).toHaveAttribute(
+      "href",
+      "/organizer/applications"
+    );
+    expect(screen.getByRole("link", { name: "待审核（1）" })).toHaveAttribute(
+      "href",
+      "/organizer/applications?status=submitted"
+    );
+    expect(screen.getByText("山野咖啡")).toBeInTheDocument();
+    expect(screen.queryByText("木野手作")).not.toBeInTheDocument();
+    expect(screen.queryByText("雨巷面包")).not.toBeInTheDocument();
+  });
+
   it("prompts for organizer login when the session identity is missing", async () => {
     vi.mocked(getSessionUser).mockResolvedValue(null);
 
-    const page = await OrganizerApplicationsPage();
+    const page = await OrganizerApplicationsPage({
+      searchParams: Promise.resolve({})
+    });
 
     render(page);
 

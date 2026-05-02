@@ -1,4 +1,5 @@
 import { revalidatePath } from "next/cache";
+import Link from "next/link";
 
 import { ReviewHistory } from "../../../../components/applications/review-history";
 import { AppShell } from "../../../../components/layout/app-shell";
@@ -35,12 +36,27 @@ async function reviewApplicationAction(formData: FormData) {
   revalidatePath("/organizer/applications");
 }
 
-export default async function OrganizerApplicationsPage() {
+type OrganizerApplicationsPageProps = {
+  searchParams?: Promise<{
+    status?: string;
+  }>;
+};
+
+export default async function OrganizerApplicationsPage({
+  searchParams
+}: OrganizerApplicationsPageProps) {
   const sessionUser = await getSessionUser();
   const isOrganizerSession = sessionUser?.role === "organizer";
   const applications = isOrganizerSession
     ? await listOrganizerApplications(sessionUser.userId)
     : [];
+  const resolvedSearchParams = (await searchParams) ?? {};
+  const selectedStatus = getSelectedStatus(resolvedSearchParams.status);
+  const filteredApplications =
+    selectedStatus === "all"
+      ? applications
+      : applications.filter((application) => application.status === selectedStatus);
+  const summary = buildStatusSummary(applications);
 
   return (
     <AppShell>
@@ -52,12 +68,36 @@ export default async function OrganizerApplicationsPage() {
           <p>请先以主办方身份登录后查看申请。</p>
         ) : null}
 
-        {isOrganizerSession && applications.length === 0 ? (
+        {isOrganizerSession ? (
+          <>
+            <section aria-label="申请摘要">
+              <p>全部申请：{summary.all}</p>
+              <p>待审核：{summary.submitted}</p>
+              <p>已通过：{summary.approved}</p>
+              <p>已拒绝：{summary.rejected}</p>
+            </section>
+
+            <nav aria-label="状态筛选">
+              <Link href="/organizer/applications">全部（{summary.all}）</Link>
+              <Link href="/organizer/applications?status=submitted">
+                待审核（{summary.submitted}）
+              </Link>
+              <Link href="/organizer/applications?status=approved">
+                已通过（{summary.approved}）
+              </Link>
+              <Link href="/organizer/applications?status=rejected">
+                已拒绝（{summary.rejected}）
+              </Link>
+            </nav>
+          </>
+        ) : null}
+
+        {isOrganizerSession && filteredApplications.length === 0 ? (
           <p>当前没有待处理申请。</p>
         ) : null}
 
         <section aria-label="申请列表">
-          {applications.map((application) => (
+          {filteredApplications.map((application) => (
             <article key={application.id}>
               <h3>{application.vendorName}</h3>
               <p>
@@ -105,4 +145,23 @@ export default async function OrganizerApplicationsPage() {
 
 function formatDate(value: Date) {
   return value.toISOString().slice(0, 10);
+}
+
+function getSelectedStatus(status: string | undefined) {
+  if (status === "submitted" || status === "approved" || status === "rejected") {
+    return status;
+  }
+
+  return "all";
+}
+
+function buildStatusSummary(
+  applications: Awaited<ReturnType<typeof listOrganizerApplications>>
+) {
+  return {
+    all: applications.length,
+    submitted: applications.filter((application) => application.status === "submitted").length,
+    approved: applications.filter((application) => application.status === "approved").length,
+    rejected: applications.filter((application) => application.status === "rejected").length
+  };
 }
