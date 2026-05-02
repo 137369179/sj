@@ -64,6 +64,7 @@ model Application {
   createdAt             DateTime          @default(now())
   market                Market            @relation(fields: [marketId], references: [id])
   vendor                User              @relation("VendorApplications", fields: [vendorId], references: [id])
+  assignedStall         Stall?
 
   @@unique([marketId, vendorId])
 }
@@ -74,7 +75,9 @@ model Stall {
   code                  String
   name                  String
   isActive              Boolean  @default(true)
+  assignedApplicationId String?  @unique
   market                Market   @relation(fields: [marketId], references: [id])
+  assignedApplication   Application? @relation(fields: [assignedApplicationId], references: [id])
 
   @@unique([marketId, code])
 }

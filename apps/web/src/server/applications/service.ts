@@ -50,6 +50,24 @@ type OrganizerApplicationRecord = {
   };
 };
 
+type VendorApplicationRecord = {
+  id: string;
+  marketId: string;
+  status: ApplicationStatus;
+  note: string | null;
+  createdAt: Date;
+  market: {
+    id: string;
+    title: string;
+    city: string;
+  };
+  assignedStall: {
+    id: string;
+    code: string;
+    name: string;
+  } | null;
+};
+
 export type OrganizerApplicationListItem = {
   id: string;
   marketId: string;
@@ -60,6 +78,19 @@ export type OrganizerApplicationListItem = {
   status: ApplicationStatus;
   note: string | null;
   createdAt: Date;
+};
+
+export type VendorApplicationListItem = {
+  id: string;
+  marketId: string;
+  marketTitle: string;
+  marketCity: string;
+  status: ApplicationStatus;
+  note: string | null;
+  createdAt: Date;
+  assignedStallId: string | null;
+  assignedStallCode: string | null;
+  assignedStallName: string | null;
 };
 
 export type ReviewApplicationInput = ApplicationReviewPayload & {
@@ -92,6 +123,23 @@ const organizerApplicationInclude = {
   vendor: {
     select: {
       id: true,
+      name: true
+    }
+  }
+} as const;
+
+const vendorApplicationInclude = {
+  market: {
+    select: {
+      id: true,
+      title: true,
+      city: true
+    }
+  },
+  assignedStall: {
+    select: {
+      id: true,
+      code: true,
       name: true
     }
   }
@@ -141,6 +189,22 @@ export async function listOrganizerApplications(
   });
 
   return applications.map((application) => formatOrganizerApplication(application));
+}
+
+export async function listVendorApplications(
+  vendorId: string
+): Promise<VendorApplicationListItem[]> {
+  const applications = await db.application.findMany({
+    where: {
+      vendorId
+    },
+    include: vendorApplicationInclude,
+    orderBy: {
+      createdAt: "desc"
+    }
+  });
+
+  return applications.map((application) => formatVendorApplication(application));
 }
 
 export async function reviewApplication(input: ReviewApplicationInput) {
@@ -203,5 +267,22 @@ function formatOrganizerApplication(
     status: application.status,
     note: application.note,
     createdAt: application.createdAt
+  };
+}
+
+function formatVendorApplication(
+  application: VendorApplicationRecord
+): VendorApplicationListItem {
+  return {
+    id: application.id,
+    marketId: application.marketId,
+    marketTitle: application.market.title,
+    marketCity: application.market.city,
+    status: application.status,
+    note: application.note,
+    createdAt: application.createdAt,
+    assignedStallId: application.assignedStall?.id ?? null,
+    assignedStallCode: application.assignedStall?.code ?? null,
+    assignedStallName: application.assignedStall?.name ?? null
   };
 }

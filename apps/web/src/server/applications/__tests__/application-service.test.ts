@@ -6,6 +6,7 @@ import {
   buildApplicationPayload,
   buildApplicationReviewPayload,
   listOrganizerApplications,
+  listVendorApplications,
   makeApplicationKey,
   reviewApplication
 } from "../service";
@@ -117,6 +118,70 @@ describe("application service", () => {
         status: "submitted",
         note: "主营手作咖啡",
         createdAt: new Date("2026-05-01T00:00:00.000Z")
+      }
+    ]);
+  });
+
+  it("lists vendor applications with status, note, and assigned stall result", async () => {
+    const findManySpy = vi.spyOn(db.application, "findMany").mockResolvedValue([
+      {
+        id: "app_1",
+        marketId: "market_1",
+        vendorId: "vendor_1",
+        status: "stall_assigned",
+        note: "主营手作咖啡",
+        createdAt: new Date("2026-05-01T00:00:00.000Z"),
+        market: {
+          id: "market_1",
+          title: "春日咖啡市集",
+          city: "杭州"
+        },
+        assignedStall: {
+          id: "stall_1",
+          code: "A-01",
+          name: "主通道 1 号位"
+        }
+      }
+    ] as Awaited<ReturnType<typeof db.application.findMany>>);
+
+    const applications = await listVendorApplications("vendor_1");
+
+    expect(findManySpy).toHaveBeenCalledWith({
+      where: {
+        vendorId: "vendor_1"
+      },
+      include: {
+        market: {
+          select: {
+            id: true,
+            title: true,
+            city: true
+          }
+        },
+        assignedStall: {
+          select: {
+            id: true,
+            code: true,
+            name: true
+          }
+        }
+      },
+      orderBy: {
+        createdAt: "desc"
+      }
+    });
+    expect(applications).toEqual([
+      {
+        id: "app_1",
+        marketId: "market_1",
+        marketTitle: "春日咖啡市集",
+        marketCity: "杭州",
+        status: "stall_assigned",
+        note: "主营手作咖啡",
+        createdAt: new Date("2026-05-01T00:00:00.000Z"),
+        assignedStallId: "stall_1",
+        assignedStallCode: "A-01",
+        assignedStallName: "主通道 1 号位"
       }
     ]);
   });

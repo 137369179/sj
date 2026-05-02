@@ -1,0 +1,292 @@
+import { z } from "zod";
+
+import { db } from "../../lib/db";
+import { buildStallAssignmentNotification, createNotification } from "../notifications/service";
+
+export const stallSchema = z.object({
+  organizerId: z.string().trim().min(1),
+  marketId: z.string().trim().min(1),
+  code: z.string().trim().min(1),
+  name: z.string().trim().min(1),
+  isActive: z.boolean().optional().default(true)
+});
+
+export const stallAssignmentSchema = z.object({
+  organizerId: z.string().trim().min(1),
+  applicationId: z.string().trim().min(1)
+});
+
+export type StallPayload = z.infer<typeof stallSchema>;
+export type StallAssignmentPayload = z.infer<typeof stallAssignmentSchema>;
+
+type OrganizerStallRecord = {
+  id: string;
+  marketId: string;
+  code: string;
+  name: string;
+  isActive: boolean;
+  assignedApplicationId: string | null;
+  market: {
+    id: string;
+    organizerId: string;
+    title: string;
+  };
+  assignedApplication: {
+    id: string;
+    vendor: {
+      id: string;
+      name: string;
+    };
+  } | null;
+};
+
+export type OrganizerStallListItem = {
+  id: string;
+  marketId: string;
+  marketTitle: string;
+  code: string;
+  name: string;
+  isActive: boolean;
+  assignedApplicationId: string | null;
+  assignedVendorId: string | null;
+  assignedVendorName: string | null;
+};
+
+export type AssignStallInput = StallAssignmentPayload & {
+  stallId: string;
+};
+
+export type StallCreationErrorCode = "MARKET_NOT_FOUND" | "FORBIDDEN";
+
+export class StallCreationError extends Error {
+  code: StallCreationErrorCode;
+
+  constructor(code: StallCreationErrorCode) {
+    super(code);
+    this.code = code;
+  }
+}
+
+export type StallAssignmentErrorCode =
+  | "NOT_FOUND"
+  | "FORBIDDEN"
+  | "STALL_UNAVAILABLE"
+  | "INVALID_APPLICATION"
+  | "INVALID_APPLICATION_STATUS";
+
+export class StallAssignmentError extends Error {
+  code: StallAssignmentErrorCode;
+
+  constructor(code: StallAssignmentErrorCode) {
+    super(code);
+    this.code = code;
+  }
+}
+
+const organizerStallInclude = {
+  market: {
+    select: {
+      id: true,
+      organizerId: true,
+      title: true
+    }
+  },
+  assignedApplication: {
+    select: {
+      id: true,
+      vendor: {
+        select: {
+          id: true,
+          name: true
+        }
+      }
+    }
+  }
+} as const;
+
+const stallAssignmentInclude = {
+  market: {
+    select: {
+      id: true,
+      organizerId: true,
+      title: true
+    }
+  }
+} as const;
+
+const assignableApplicationInclude = {
+  vendor: {
+    select: {
+      id: true,
+      name: true
+    }
+  },
+  market: {
+    select: {
+      id: true,
+      organizerId: true,
+      title: true,
+      city: true
+    }
+  }
+} as const;
+
+export function buildStallPayload(input: unknown): StallPayload {
+  return stallSchema.parse(input);
+}
+
+export function buildAssignStallPayload(input: unknown): StallAssignmentPayload {
+  return stallAssignmentSchema.parse(input);
+}
+
+export function canAssignStall(input: {
+  isActive: boolean;
+  assignedApplicationId: string | null;
+}) {
+  return input.isActive && !input.assignedApplicationId;
+}
+
+export async function listOrganizerStalls(
+  organizerId: string
+): Promise<OrganizerStallListItem[]> {
+  const stalls = await db.stall.findMany({
+    where: {
+      market: {
+        organizerId
+      }
+    },
+    include: organizerStallInclude,
+    orderBy: [
+      {
+        marketId: "asc"
+      },
+      {
+        code: "asc"
+      }
+    ]
+  });
+
+  return stalls.map((stall) => formatOrganizerStall(stall));
+}
+
+export async function createStall(input: StallPayload) {
+  const market = await db.market.findUnique({
+    where: {
+      id: input.marketId
+    },
+    select: {
+      id: true,
+      organizerId: true,
+      title: true
+    }
+  });
+
+  if (!market) {
+    throw new StallCreationError("MARKET_NOT_FOUND");
+  }
+
+  if (market.organizerId !== input.organizerId) {
+    throw new StallCreationError("FORBIDDEN");
+  }
+
+  return db.stall.create({
+    data: {
+      marketId: input.marketId,
+      code: input.code,
+      name: input.name,
+      isActive: input.isActive
+    }
+  });
+}
+
+export async function assignStall(input: AssignStallInput) {
+  const stall = await db.stall.findUnique({
+    where: {
+      id: input.stallId
+    },
+    include: stallAssignmentInclude
+  });
+
+  if (!stall) {
+    throw new StallAssignmentError("NOT_FOUND");
+  }
+
+  if (stall.market.organizerId !== input.organizerId) {
+    throw new StallAssignmentError("FORBIDDEN");
+  }
+
+  if (
+    !canAssignStall({
+      isActive: stall.isActive,
+      assignedApplicationId: stall.assignedApplicationId
+    })
+  ) {
+    throw new StallAssignmentError("STALL_UNAVAILABLE");
+  }
+
+  const application = await db.application.findUnique({
+    where: {
+      id: input.applicationId
+    },
+    include: assignableApplicationInclude
+  });
+
+  if (!application || application.market.organizerId !== input.organizerId) {
+    throw new StallAssignmentError("INVALID_APPLICATION");
+  }
+
+  if (application.marketId !== stall.marketId) {
+    throw new StallAssignmentError("INVALID_APPLICATION");
+  }
+
+  if (application.status !== "approved") {
+    throw new StallAssignmentError("INVALID_APPLICATION_STATUS");
+  }
+
+  const updatedStall = await db.stall.update({
+    where: {
+      id: input.stallId
+    },
+    data: {
+      assignedApplicationId: input.applicationId
+    }
+  });
+
+  const updatedApplication = await db.application.update({
+    where: {
+      id: input.applicationId
+    },
+    data: {
+      status: "stall_assigned"
+    }
+  });
+
+  const notification = await createNotification(
+    buildStallAssignmentNotification({
+      userId: application.vendor.id,
+      marketTitle: stall.market.title,
+      stallCode: stall.code,
+      stallName: stall.name
+    })
+  );
+
+  return {
+    stall: updatedStall,
+    application: updatedApplication,
+    notification
+  };
+}
+
+function formatOrganizerStall(stall: OrganizerStallRecord): OrganizerStallListItem {
+  return {
+    id: stall.id,
+    marketId: stall.marketId,
+    marketTitle: stall.market.title,
+    code: stall.code,
+    name: stall.name,
+    isActive: stall.isActive,
+    assignedApplicationId: stall.assignedApplicationId,
+    assignedVendorId: stall.assignedApplication?.vendor.id ?? null,
+    assignedVendorName: stall.assignedApplication?.vendor.name ?? null
+  };
+}

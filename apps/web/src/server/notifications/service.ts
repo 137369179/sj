@@ -15,6 +15,13 @@ export type BuildApplicationReviewNotificationInput = {
   note?: string;
 };
 
+export type BuildStallAssignmentNotificationInput = {
+  userId: string;
+  marketTitle: string;
+  stallCode: string;
+  stallName: string;
+};
+
 export function buildApplicationReviewNotification(
   input: BuildApplicationReviewNotificationInput
 ): CreateNotificationInput {
@@ -32,6 +39,16 @@ export function buildApplicationReviewNotification(
     userId: input.userId,
     title,
     content
+  };
+}
+
+export function buildStallAssignmentNotification(
+  input: BuildStallAssignmentNotificationInput
+): CreateNotificationInput {
+  return {
+    userId: input.userId,
+    title: "摊位分配已确认",
+    content: `你在${input.marketTitle}的申请已完成摊位分配，摊位为${input.stallName}（${input.stallCode}）。`
   };
 }
 

@@ -1,6 +1,9 @@
 import { describe, expect, it } from "vitest";
 
-import { buildApplicationReviewNotification } from "../service";
+import {
+  buildApplicationReviewNotification,
+  buildStallAssignmentNotification
+} from "../service";
 
 describe("notification service", () => {
   it("builds an approval notification with the organizer note", () => {
@@ -29,6 +32,21 @@ describe("notification service", () => {
       userId: "vendor_1",
       title: "申请未通过审核",
       content: "你在春日咖啡市集的申请未通过审核，请调整后重新报名。"
+    });
+  });
+
+  it("builds a stall assignment notification", () => {
+    const notification = buildStallAssignmentNotification({
+      userId: "vendor_1",
+      marketTitle: "春日咖啡市集",
+      stallCode: "A-01",
+      stallName: "主通道 1 号位"
+    });
+
+    expect(notification).toEqual({
+      userId: "vendor_1",
+      title: "摊位分配已确认",
+      content: "你在春日咖啡市集的申请已完成摊位分配，摊位为主通道 1 号位（A-01）。"
     });
   });
 });
