@@ -40,6 +40,12 @@ describe("Organizer applications page", () => {
         status: "submitted",
         applicationNote: "主营手作咖啡",
         reviewNote: "资料已齐全，等待终审",
+        attachments: [
+          {
+            url: "/uploads/license.pdf",
+            originalName: "license.pdf"
+          }
+        ],
         createdAt: new Date("2026-05-01T00:00:00.000Z")
       }
     ]);
@@ -55,6 +61,10 @@ describe("Organizer applications page", () => {
     expect(screen.getByText("状态：待审核")).toBeInTheDocument();
     expect(screen.getByText("报名备注：主营手作咖啡")).toBeInTheDocument();
     expect(screen.getByText("审核备注：资料已齐全，等待终审")).toBeInTheDocument();
+    expect(screen.getByRole("link", { name: "license.pdf" })).toHaveAttribute(
+      "href",
+      "/uploads/license.pdf"
+    );
     expect(screen.getByRole("button", { name: "通过" })).toBeInTheDocument();
     expect(screen.getByRole("button", { name: "拒绝" })).toBeInTheDocument();
   });

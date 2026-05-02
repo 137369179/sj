@@ -129,6 +129,7 @@ describe("application service", () => {
         status: "submitted",
         note: "主营手作咖啡",
         applicationNote: "主营手作咖啡",
+        attachments: [],
         reviewNote: null,
         createdAt: new Date("2026-05-01T00:00:00.000Z")
       }
@@ -145,6 +146,12 @@ describe("application service", () => {
         note: "主营手作咖啡",
         applicationNote: null,
         reviewNote: null,
+        attachmentsJson: [
+          {
+            url: "/uploads/license.pdf",
+            originalName: "license.pdf"
+          }
+        ],
         createdAt: new Date("2026-05-01T00:00:00.000Z"),
         market: {
           id: "market_1",
@@ -194,6 +201,12 @@ describe("application service", () => {
         status: "stall_assigned",
         note: "主营手作咖啡",
         applicationNote: "主营手作咖啡",
+        attachments: [
+          {
+            url: "/uploads/license.pdf",
+            originalName: "license.pdf"
+          }
+        ],
         reviewNote: null,
         createdAt: new Date("2026-05-01T00:00:00.000Z"),
         assignedStallId: "stall_1",

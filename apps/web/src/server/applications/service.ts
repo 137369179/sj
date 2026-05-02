@@ -1,7 +1,11 @@
 import { z } from "zod";
 
 import { db } from "../../lib/db";
-import { storedAttachmentSchema } from "../../lib/storage";
+import {
+  normalizeAttachments,
+  storedAttachmentSchema,
+  type StoredAttachment
+} from "../../lib/storage";
 import {
   buildApplicationReviewNotification,
   createNotification
@@ -39,6 +43,7 @@ type OrganizerApplicationRecord = {
   note: string | null;
   applicationNote: string | null;
   reviewNote: string | null;
+  attachmentsJson?: unknown;
   createdAt: Date;
   market: {
     id: string;
@@ -58,6 +63,7 @@ type VendorApplicationRecord = {
   note: string | null;
   applicationNote: string | null;
   reviewNote: string | null;
+  attachmentsJson?: unknown;
   createdAt: Date;
   market: {
     id: string;
@@ -82,6 +88,7 @@ export type OrganizerApplicationListItem = {
   note: string | null;
   applicationNote: string | null;
   reviewNote: string | null;
+  attachments: StoredAttachment[];
   createdAt: Date;
 };
 
@@ -94,6 +101,7 @@ export type VendorApplicationListItem = {
   note: string | null;
   applicationNote: string | null;
   reviewNote: string | null;
+  attachments: StoredAttachment[];
   createdAt: Date;
   assignedStallId: string | null;
   assignedStallCode: string | null;
@@ -276,6 +284,7 @@ function formatOrganizerApplication(
     note: application.note,
     applicationNote: application.applicationNote ?? application.note,
     reviewNote: application.reviewNote,
+    attachments: normalizeAttachments(application.attachmentsJson),
     createdAt: application.createdAt
   };
 }
@@ -292,6 +301,7 @@ function formatVendorApplication(
     note: application.note,
     applicationNote: application.applicationNote ?? application.note,
     reviewNote: application.reviewNote,
+    attachments: normalizeAttachments(application.attachmentsJson),
     createdAt: application.createdAt,
     assignedStallId: application.assignedStall?.id ?? null,
     assignedStallCode: application.assignedStall?.code ?? null,
