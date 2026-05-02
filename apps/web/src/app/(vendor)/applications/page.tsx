@@ -31,6 +31,7 @@ export default async function VendorApplicationsPage() {
               <p>状态：{getApplicationStatusLabel(application.status)}</p>
               <p>报名备注：{application.applicationNote ?? "无"}</p>
               <p>审核备注：{application.reviewNote ?? "无"}</p>
+              <p>最近审核时间：{application.reviewedAt ? formatDate(application.reviewedAt) : "未审核"}</p>
               <p>报名附件：{application.attachments.length > 0 ? null : "无"}</p>
               {application.attachments.map((attachment) => (
                 <p key={attachment.url}>

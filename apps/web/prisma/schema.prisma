@@ -71,8 +71,21 @@ model Application {
   market                Market            @relation(fields: [marketId], references: [id])
   vendor                User              @relation("VendorApplications", fields: [vendorId], references: [id])
   assignedStall         Stall?
+  reviews               ApplicationReview[]
 
   @@unique([marketId, vendorId])
+}
+
+model ApplicationReview {
+  id                    String   @id @default(cuid())
+  applicationId         String
+  organizerId           String
+  decision              String
+  reviewNote            String?
+  createdAt             DateTime @default(now())
+  application           Application @relation(fields: [applicationId], references: [id])
+
+  @@index([applicationId, createdAt])
 }
 
 model Stall {

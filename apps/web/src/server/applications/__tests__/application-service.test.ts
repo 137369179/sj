@@ -152,6 +152,7 @@ describe("application service", () => {
             originalName: "license.pdf"
           }
         ],
+        reviewedAt: new Date("2026-05-02T08:30:00.000Z"),
         createdAt: new Date("2026-05-01T00:00:00.000Z"),
         market: {
           id: "market_1",
@@ -208,6 +209,7 @@ describe("application service", () => {
           }
         ],
         reviewNote: null,
+        reviewedAt: new Date("2026-05-02T08:30:00.000Z"),
         createdAt: new Date("2026-05-01T00:00:00.000Z"),
         assignedStallId: "stall_1",
         assignedStallCode: "A-01",
@@ -241,8 +243,30 @@ describe("application service", () => {
       vendorId: "vendor_1",
       status: "approved",
       note: "主营手作咖啡",
+      reviewNote: "已录取，摊位后续通知",
+      reviewedAt: new Date("2026-05-01T01:00:00.000Z"),
+      reviewedByUserId: "org_1",
       createdAt: new Date("2026-05-01T00:00:00.000Z")
     } as Awaited<ReturnType<typeof db.application.update>>);
+    const reviewCreateSpy = vi
+      .spyOn(db.applicationReview, "create")
+      .mockResolvedValue({
+        id: "review_1",
+        applicationId: "app_1",
+        organizerId: "org_1",
+        decision: "approve",
+        reviewNote: "已录取，摊位后续通知",
+        createdAt: new Date("2026-05-01T01:00:00.000Z")
+      } as never);
+    const transactionSpy = vi
+      .spyOn(db, "$transaction")
+      .mockImplementation(async (callback) => {
+        if (typeof callback !== "function") {
+          throw new Error("expected interactive transaction");
+        }
+
+        return callback(db);
+      });
     const notificationSpy = vi.spyOn(db.notification, "create").mockResolvedValue({
       id: "notice_1",
       userId: "vendor_1",
@@ -286,6 +310,17 @@ describe("application service", () => {
       },
       data: {
         status: "approved",
+        reviewNote: "已录取，摊位后续通知",
+        reviewedAt: expect.any(Date),
+        reviewedByUserId: "org_1"
+      }
+    });
+    expect(transactionSpy).toHaveBeenCalledTimes(1);
+    expect(reviewCreateSpy).toHaveBeenCalledWith({
+      data: {
+        applicationId: "app_1",
+        organizerId: "org_1",
+        decision: "approve",
         reviewNote: "已录取，摊位后续通知"
       }
     });
@@ -297,6 +332,7 @@ describe("application service", () => {
       }
     });
     expect(result.application.status).toBe("approved");
+    expect(result.review.id).toBe("review_1");
     expect(result.notification.userId).toBe("vendor_1");
   });
 

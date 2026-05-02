@@ -99,6 +99,12 @@ describe("POST /api/applications/[applicationId]/review", () => {
         status: "rejected",
         reviewNote: "资质与本场主题不匹配"
       },
+      review: {
+        id: "review_1",
+        decision: "reject",
+        reviewNote: "资质与本场主题不匹配",
+        createdAt: "2026-05-01T01:00:00.000Z"
+      },
       notification: {
         id: "notice_1",
         userId: "vendor_1",
@@ -140,6 +146,12 @@ describe("POST /api/applications/[applicationId]/review", () => {
         id: "app_1",
         status: "rejected",
         reviewNote: "资质与本场主题不匹配"
+      },
+      review: {
+        id: "review_1",
+        decision: "reject",
+        reviewNote: "资质与本场主题不匹配",
+        createdAt: "2026-05-01T01:00:00.000Z"
       },
       notification: {
         id: "notice_1",

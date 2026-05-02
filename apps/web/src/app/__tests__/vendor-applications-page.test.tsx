@@ -32,6 +32,7 @@ describe("Vendor applications page", () => {
         status: "stall_assigned",
         applicationNote: "主营手作咖啡",
         reviewNote: "摊位需求明确，允许进入分配",
+        reviewedAt: new Date("2026-05-02T08:30:00.000Z"),
         attachments: [
           {
             url: "/uploads/license.pdf",
@@ -55,6 +56,7 @@ describe("Vendor applications page", () => {
     expect(screen.getByText("状态：已分配摊位")).toBeInTheDocument();
     expect(screen.getByText("报名备注：主营手作咖啡")).toBeInTheDocument();
     expect(screen.getByText("审核备注：摊位需求明确，允许进入分配")).toBeInTheDocument();
+    expect(screen.getByText("最近审核时间：2026-05-02")).toBeInTheDocument();
     expect(screen.getByRole("link", { name: "license.pdf" })).toHaveAttribute(
       "href",
       "/uploads/license.pdf"

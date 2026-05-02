@@ -44,6 +44,7 @@ type OrganizerApplicationRecord = {
   applicationNote: string | null;
   reviewNote: string | null;
   attachmentsJson?: unknown;
+  reviewedAt: Date | null;
   createdAt: Date;
   market: {
     id: string;
@@ -64,6 +65,7 @@ type VendorApplicationRecord = {
   applicationNote: string | null;
   reviewNote: string | null;
   attachmentsJson?: unknown;
+  reviewedAt: Date | null;
   createdAt: Date;
   market: {
     id: string;
@@ -89,6 +91,7 @@ export type OrganizerApplicationListItem = {
   applicationNote: string | null;
   reviewNote: string | null;
   attachments: StoredAttachment[];
+  reviewedAt: Date | null;
   createdAt: Date;
 };
 
@@ -102,6 +105,7 @@ export type VendorApplicationListItem = {
   applicationNote: string | null;
   reviewNote: string | null;
   attachments: StoredAttachment[];
+  reviewedAt: Date | null;
   createdAt: Date;
   assignedStallId: string | null;
   assignedStallCode: string | null;
@@ -110,6 +114,15 @@ export type VendorApplicationListItem = {
 
 export type ReviewApplicationInput = ApplicationReviewPayload & {
   applicationId: string;
+};
+
+export type ApplicationReviewAuditRecord = {
+  id: string;
+  applicationId: string;
+  organizerId: string;
+  decision: ApplicationReviewPayload["decision"];
+  reviewNote: string | null;
+  createdAt: Date;
 };
 
 export type ApplicationReviewErrorCode =
@@ -245,14 +258,33 @@ export async function reviewApplication(input: ReviewApplicationInput) {
     throw new ApplicationReviewError("INVALID_STATUS");
   }
 
-  const updatedApplication = await db.application.update({
-    where: {
-      id: input.applicationId
-    },
-    data: {
-      status: nextStatus,
-      reviewNote: input.reviewNote
-    }
+  const reviewTimestamp = new Date();
+  const { updatedApplication, review } = await db.$transaction(async (transaction) => {
+    const updatedApplication = await transaction.application.update({
+      where: {
+        id: input.applicationId
+      },
+      data: {
+        status: nextStatus,
+        reviewNote: input.reviewNote,
+        reviewedAt: reviewTimestamp,
+        reviewedByUserId: input.organizerId
+      }
+    });
+
+    const review = await transaction.applicationReview.create({
+      data: {
+        applicationId: input.applicationId,
+        organizerId: input.organizerId,
+        decision: input.decision,
+        reviewNote: input.reviewNote
+      }
+    });
+
+    return {
+      updatedApplication,
+      review
+    };
   });
 
   const notification = await createNotification(
@@ -266,6 +298,7 @@ export async function reviewApplication(input: ReviewApplicationInput) {
 
   return {
     application: updatedApplication,
+    review,
     notification
   };
 }
@@ -285,6 +318,7 @@ function formatOrganizerApplication(
     applicationNote: application.applicationNote ?? application.note,
     reviewNote: application.reviewNote,
     attachments: normalizeAttachments(application.attachmentsJson),
+    reviewedAt: application.reviewedAt,
     createdAt: application.createdAt
   };
 }
@@ -302,6 +336,7 @@ function formatVendorApplication(
     applicationNote: application.applicationNote ?? application.note,
     reviewNote: application.reviewNote,
     attachments: normalizeAttachments(application.attachmentsJson),
+    reviewedAt: application.reviewedAt,
     createdAt: application.createdAt,
     assignedStallId: application.assignedStall?.id ?? null,
     assignedStallCode: application.assignedStall?.code ?? null,
