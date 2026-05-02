@@ -5,6 +5,7 @@ import { ReviewHistory } from "../../../../components/applications/review-histor
 import { AppShell } from "../../../../components/layout/app-shell";
 import { getApplicationStatusLabel } from "../../../../lib/application-status";
 import { getSessionUser } from "../../../../lib/auth";
+import { listOrganizerMarketOptions } from "../../../../server/markets/service";
 import {
   buildApplicationReviewPayload,
   listOrganizerApplications,
@@ -48,6 +49,9 @@ export default async function OrganizerApplicationsPage({
 }: OrganizerApplicationsPageProps) {
   const sessionUser = await getSessionUser();
   const isOrganizerSession = sessionUser?.role === "organizer";
+  const marketOptions = isOrganizerSession
+    ? await listOrganizerMarketOptions(sessionUser.userId)
+    : [];
   const applications = isOrganizerSession
     ? await listOrganizerApplications(sessionUser.userId)
     : [];
@@ -84,6 +88,25 @@ export default async function OrganizerApplicationsPage({
               <nav aria-label="当前市集快捷操作">
                 <Link href={`/organizer/stalls?marketId=${selectedMarketId}`}>查看当前市集摊位</Link>
                 <Link href={`/organizer/dashboard/${selectedMarketId}`}>查看当前市集看板</Link>
+              </nav>
+            ) : null}
+            {marketOptions.length > 0 ? (
+              <nav aria-label="切换市集">
+                {marketOptions.map((market) => {
+                  const isCurrent = market.id === selectedMarketId;
+
+                  return (
+                    <Link
+                      key={market.id}
+                      href={buildApplicationsFilterHref({
+                        marketId: market.id,
+                        status: selectedStatus === "all" ? undefined : selectedStatus
+                      })}
+                    >
+                      {isCurrent ? `${market.title}（当前）` : market.title}
+                    </Link>
+                  );
+                })}
               </nav>
             ) : null}
             <section aria-label="申请摘要">

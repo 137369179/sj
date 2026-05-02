@@ -123,6 +123,25 @@ export default async function OrganizerStallsPage({
                 <Link href={`/organizer/dashboard/${selectedMarketId}`}>查看当前市集看板</Link>
               </nav>
             ) : null}
+            {marketOptions.length > 0 ? (
+              <nav aria-label="切换市集">
+                {marketOptions.map((market) => {
+                  const isCurrent = market.id === selectedMarketId;
+
+                  return (
+                    <Link
+                      key={market.id}
+                      href={buildStallsFilterHref({
+                        marketId: market.id,
+                        status: selectedStatus === "all" ? undefined : selectedStatus
+                      })}
+                    >
+                      {isCurrent ? `${market.title}（当前）` : market.title}
+                    </Link>
+                  );
+                })}
+              </nav>
+            ) : null}
             <section aria-label="摊位摘要">
               <p>全部摊位：{summary.all}</p>
               <p>待分配：{summary.unassigned}</p>

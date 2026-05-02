@@ -2,6 +2,7 @@ import { render, screen } from "@testing-library/react";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
 import { getSessionUser } from "../../lib/auth";
+import { listOrganizerMarketOptions } from "../../server/markets/service";
 import { listOrganizerApplications } from "../../server/applications/service";
 import OrganizerApplicationsPage from "../(organizer)/organizer/applications/page";
 
@@ -11,6 +12,10 @@ vi.mock("next/cache", () => ({
 
 vi.mock("../../lib/auth", () => ({
   getSessionUser: vi.fn()
+}));
+
+vi.mock("../../server/markets/service", () => ({
+  listOrganizerMarketOptions: vi.fn()
 }));
 
 vi.mock("../../server/applications/service", () => ({
@@ -29,6 +34,13 @@ describe("Organizer applications page", () => {
       userId: "org_1",
       role: "organizer"
     });
+    vi.mocked(listOrganizerMarketOptions).mockResolvedValue([
+      {
+        id: "market_1",
+        title: "春日咖啡市集",
+        city: "杭州"
+      }
+    ]);
     vi.mocked(listOrganizerApplications).mockResolvedValue([
       {
         id: "app_1",
@@ -73,6 +85,7 @@ describe("Organizer applications page", () => {
 
     render(page);
 
+    expect(listOrganizerMarketOptions).toHaveBeenCalledWith("org_1");
     expect(listOrganizerApplications).toHaveBeenCalledWith("org_1");
     expect(screen.getByRole("heading", { name: "报名申请" })).toBeInTheDocument();
     expect(screen.getByText("山野咖啡")).toBeInTheDocument();
@@ -97,6 +110,13 @@ describe("Organizer applications page", () => {
       userId: "org_1",
       role: "organizer"
     });
+    vi.mocked(listOrganizerMarketOptions).mockResolvedValue([
+      {
+        id: "market_1",
+        title: "春日咖啡市集",
+        city: "杭州"
+      }
+    ]);
     vi.mocked(listOrganizerApplications).mockResolvedValue([
       {
         id: "app_1",
@@ -173,6 +193,18 @@ describe("Organizer applications page", () => {
       userId: "org_1",
       role: "organizer"
     });
+    vi.mocked(listOrganizerMarketOptions).mockResolvedValue([
+      {
+        id: "market_1",
+        title: "春日咖啡市集",
+        city: "杭州"
+      },
+      {
+        id: "market_2",
+        title: "夏夜面包市集",
+        city: "上海"
+      }
+    ]);
     vi.mocked(listOrganizerApplications).mockResolvedValue([
       {
         id: "app_1",
@@ -229,6 +261,14 @@ describe("Organizer applications page", () => {
       "href",
       "/organizer/dashboard/market_2"
     );
+    expect(screen.getByRole("link", { name: "春日咖啡市集" })).toHaveAttribute(
+      "href",
+      "/organizer/applications?marketId=market_1"
+    );
+    expect(screen.getByRole("link", { name: "夏夜面包市集（当前）" })).toHaveAttribute(
+      "href",
+      "/organizer/applications?marketId=market_2"
+    );
     expect(screen.getByText("木野手作")).toBeInTheDocument();
     expect(screen.queryByText("山野咖啡")).not.toBeInTheDocument();
   });
@@ -245,6 +285,7 @@ describe("Organizer applications page", () => {
     expect(
       screen.getByText("请先以主办方身份登录后查看申请。")
     ).toBeInTheDocument();
+    expect(listOrganizerMarketOptions).not.toHaveBeenCalled();
     expect(listOrganizerApplications).not.toHaveBeenCalled();
   });
 });

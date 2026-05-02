@@ -277,6 +277,14 @@ describe("Organizer stalls page", () => {
       "href",
       "/organizer/dashboard/market_2"
     );
+    expect(screen.getByRole("link", { name: "春日咖啡市集" })).toHaveAttribute(
+      "href",
+      "/organizer/stalls?marketId=market_1"
+    );
+    expect(screen.getByRole("link", { name: "夏夜面包市集（当前）" })).toHaveAttribute(
+      "href",
+      "/organizer/stalls?marketId=market_2"
+    );
     expect(screen.getByRole("combobox", { name: "选择市集" })).toHaveValue("market_2");
     expect(screen.getByText("面包区 1 号位")).toBeInTheDocument();
     expect(screen.queryByText("主通道 1 号位")).not.toBeInTheDocument();
