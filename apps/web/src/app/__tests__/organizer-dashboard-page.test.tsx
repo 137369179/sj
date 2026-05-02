@@ -288,7 +288,7 @@ describe("Organizer dashboard page", () => {
     render(page);
 
     expect(
-      screen.getByText("请先以主办方身份登录后查看看板。")
+      screen.getByText("请先以主办方身份登录后查看市集看板。")
     ).toBeInTheDocument();
     expect(listOrganizerMarketOptions).not.toHaveBeenCalled();
     expect(screen.getByText("当前市集编号：market_1")).toBeInTheDocument();

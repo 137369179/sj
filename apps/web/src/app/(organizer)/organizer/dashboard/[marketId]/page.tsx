@@ -29,7 +29,7 @@ export default async function OrganizerDashboardPage({
       <AppShell>
         <main aria-labelledby="organizer-dashboard-title">
           <h2 id="organizer-dashboard-title">市集看板</h2>
-          <p>请先以主办方身份登录后查看看板。</p>
+          <p>请先以主办方身份登录后查看市集看板。</p>
           <p>当前市集编号：{marketId}</p>
         </main>
       </AppShell>

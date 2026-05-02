@@ -171,7 +171,7 @@ describe("Organizer applications page", () => {
 
     render(page);
 
-    expect(screen.getByText("全部申请：3")).toBeInTheDocument();
+    expect(screen.getByText("全部报名申请：3")).toBeInTheDocument();
     expect(screen.getByText("待审核：1")).toBeInTheDocument();
     expect(screen.getByText("已通过：1")).toBeInTheDocument();
     expect(screen.getByText("已拒绝：1")).toBeInTheDocument();
@@ -352,6 +352,23 @@ describe("Organizer applications page", () => {
     render(page);
 
     expect(screen.getByText("当前没有符合筛选条件的报名申请。")).toBeInTheDocument();
+  });
+
+  it("renders a default empty state when there is no application yet", async () => {
+    vi.mocked(getSessionUser).mockResolvedValue({
+      userId: "org_1",
+      role: "organizer"
+    });
+    vi.mocked(listOrganizerMarketOptions).mockResolvedValue([]);
+    vi.mocked(listOrganizerApplications).mockResolvedValue([]);
+
+    const page = await OrganizerApplicationsPage({
+      searchParams: Promise.resolve({})
+    });
+
+    render(page);
+
+    expect(screen.getByText("当前还没有报名申请。")).toBeInTheDocument();
   });
 
   it("renders a markets return link when opened from organizer markets", async () => {

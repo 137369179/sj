@@ -161,7 +161,7 @@ export default async function OrganizerApplicationsPage({
               </nav>
             ) : null}
             <section aria-label="申请摘要">
-              <p>全部申请：{summary.all}</p>
+              <p>全部报名申请：{summary.all}</p>
               <p>待审核：{summary.submitted}</p>
               <p>已通过：{summary.approved}</p>
               <p>已拒绝：{summary.rejected}</p>
@@ -218,7 +218,7 @@ export default async function OrganizerApplicationsPage({
         {isOrganizerSession && filteredApplications.length === 0 ? (
           <p>
             {selectedStatus === "all" && !selectedMarketId
-              ? "当前没有待处理申请。"
+              ? "当前还没有报名申请。"
               : "当前没有符合筛选条件的报名申请。"}
           </p>
         ) : null}
