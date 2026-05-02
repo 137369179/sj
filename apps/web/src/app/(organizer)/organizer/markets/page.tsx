@@ -94,10 +94,16 @@ export default async function OrganizerMarketsPage() {
                 {formatDate(market.startsAt)} 至 {formatDate(market.endsAt)}
               </p>
               <nav aria-label={`${market.title} 管理入口`}>
-                <Link aria-label={`${market.title} 查看报名`} href="/organizer/applications">
+                <Link
+                  aria-label={`${market.title} 查看报名`}
+                  href={`/organizer/applications?marketId=${market.id}`}
+                >
                   查看报名
                 </Link>
-                <Link aria-label={`${market.title} 摊位管理`} href="/organizer/stalls">
+                <Link
+                  aria-label={`${market.title} 摊位管理`}
+                  href={`/organizer/stalls?marketId=${market.id}`}
+                >
                   摊位管理
                 </Link>
                 <Link aria-label={`${market.title} 查看看板`} href={`/organizer/dashboard/${market.id}`}>

@@ -56,11 +56,11 @@ describe("Organizer markets page", () => {
     expect(screen.getByText("2026-06-08 至 2026-06-08")).toBeInTheDocument();
     expect(screen.getByRole("link", { name: "夏夜面包市集 查看报名" })).toHaveAttribute(
       "href",
-      "/organizer/applications"
+      "/organizer/applications?marketId=market_2"
     );
     expect(screen.getByRole("link", { name: "夏夜面包市集 摊位管理" })).toHaveAttribute(
       "href",
-      "/organizer/stalls"
+      "/organizer/stalls?marketId=market_2"
     );
     expect(screen.getByRole("link", { name: "夏夜面包市集 查看看板" })).toHaveAttribute(
       "href",
