@@ -25,6 +25,15 @@ export type OrganizerMarketOption = {
   city: string;
 };
 
+export type OrganizerMarketListItem = {
+  id: string;
+  title: string;
+  city: string;
+  status: string;
+  startsAt: Date;
+  endsAt: Date;
+};
+
 const demoMarkets: DemoMarket[] = [
   {
     id: "spring-coffee",
@@ -98,4 +107,25 @@ export async function listOrganizerMarketOptions(
     title,
     city
   }));
+}
+
+export async function listOrganizerMarkets(
+  organizerId: string
+): Promise<OrganizerMarketListItem[]> {
+  return db.market.findMany({
+    where: {
+      organizerId
+    },
+    select: {
+      id: true,
+      title: true,
+      city: true,
+      status: true,
+      startsAt: true,
+      endsAt: true
+    },
+    orderBy: {
+      startsAt: "desc"
+    }
+  });
 }

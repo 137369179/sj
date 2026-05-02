@@ -1,23 +1,26 @@
 import { NextResponse } from "next/server";
 
+import { getSessionUser } from "../../../lib/auth";
 import { db } from "../../../lib/db";
 import { buildMarketPayload } from "../../../server/markets/service";
 
 export async function POST(request: Request) {
-  const body = await request.json();
+  const sessionUser = await getSessionUser();
 
-  if (typeof body.organizerId !== "string" || body.organizerId.trim().length === 0) {
-    return NextResponse.json(
-      { message: "organizerId is required" },
-      { status: 400 }
-    );
+  if (!sessionUser) {
+    return NextResponse.json({ message: "unauthorized" }, { status: 401 });
   }
 
+  if (sessionUser.role !== "organizer" && sessionUser.role !== "admin") {
+    return NextResponse.json({ message: "forbidden" }, { status: 403 });
+  }
+
+  const body = await request.json();
   const payload = buildMarketPayload(body);
 
   const market = await db.market.create({
     data: {
-      organizerId: body.organizerId.trim(),
+      organizerId: sessionUser.userId,
       title: payload.title,
       city: payload.city,
       startsAt: new Date(payload.startsAt),

@@ -4,6 +4,7 @@ import { db } from "../../../lib/db";
 import {
   buildMarketPayload,
   canPublishMarket,
+  listOrganizerMarkets,
   listOrganizerMarketOptions
 } from "../service";
 
@@ -55,6 +56,46 @@ describe("market service", () => {
         id: "market_1",
         title: "春日咖啡市集",
         city: "杭州"
+      }
+    ]);
+  });
+
+  it("lists organizer markets with management fields", async () => {
+    vi.spyOn(db.market, "findMany").mockResolvedValue([
+      {
+        id: "market_2",
+        title: "夏夜面包市集",
+        city: "上海",
+        startsAt: new Date("2026-06-08T10:00:00.000Z"),
+        endsAt: new Date("2026-06-08T18:00:00.000Z"),
+        status: "published"
+      },
+      {
+        id: "market_1",
+        title: "春日咖啡市集",
+        city: "杭州",
+        startsAt: new Date("2026-05-18T10:00:00.000Z"),
+        endsAt: new Date("2026-05-18T18:00:00.000Z"),
+        status: "draft"
+      }
+    ] as Awaited<ReturnType<typeof db.market.findMany>>);
+
+    await expect(listOrganizerMarkets("org_1")).resolves.toEqual([
+      {
+        id: "market_2",
+        title: "夏夜面包市集",
+        city: "上海",
+        status: "published",
+        startsAt: new Date("2026-06-08T10:00:00.000Z"),
+        endsAt: new Date("2026-06-08T18:00:00.000Z")
+      },
+      {
+        id: "market_1",
+        title: "春日咖啡市集",
+        city: "杭州",
+        status: "draft",
+        startsAt: new Date("2026-05-18T10:00:00.000Z"),
+        endsAt: new Date("2026-05-18T18:00:00.000Z")
       }
     ]);
   });

@@ -1,0 +1,94 @@
+import { render, screen } from "@testing-library/react";
+import { beforeEach, describe, expect, it, vi } from "vitest";
+
+import { getSessionUser } from "../../lib/auth";
+import { listOrganizerMarkets } from "../../server/markets/service";
+import OrganizerMarketsPage from "../(organizer)/organizer/markets/page";
+
+vi.mock("../../lib/auth", () => ({
+  getSessionUser: vi.fn()
+}));
+
+vi.mock("../../server/markets/service", () => ({
+  listOrganizerMarkets: vi.fn()
+}));
+
+describe("Organizer markets page", () => {
+  beforeEach(() => {
+    vi.clearAllMocks();
+  });
+
+  it("renders organizer markets from session identity with management links", async () => {
+    vi.mocked(getSessionUser).mockResolvedValue({
+      userId: "org_1",
+      role: "organizer"
+    });
+    vi.mocked(listOrganizerMarkets).mockResolvedValue([
+      {
+        id: "market_2",
+        title: "夏夜面包市集",
+        city: "上海",
+        status: "published",
+        startsAt: new Date("2026-06-08T10:00:00.000Z"),
+        endsAt: new Date("2026-06-08T18:00:00.000Z")
+      },
+      {
+        id: "market_1",
+        title: "春日咖啡市集",
+        city: "杭州",
+        status: "draft",
+        startsAt: new Date("2026-05-18T10:00:00.000Z"),
+        endsAt: new Date("2026-05-18T18:00:00.000Z")
+      }
+    ]);
+
+    const page = await OrganizerMarketsPage();
+
+    render(page);
+
+    expect(listOrganizerMarkets).toHaveBeenCalledWith("org_1");
+    expect(screen.getByRole("heading", { name: "我的市集" })).toBeInTheDocument();
+    expect(screen.getByText("夏夜面包市集")).toBeInTheDocument();
+    expect(screen.getByText("上海 · 已发布")).toBeInTheDocument();
+    expect(screen.getByText("2026-06-08 至 2026-06-08")).toBeInTheDocument();
+    expect(screen.getByRole("link", { name: "夏夜面包市集 查看报名" })).toHaveAttribute(
+      "href",
+      "/organizer/applications"
+    );
+    expect(screen.getByRole("link", { name: "夏夜面包市集 摊位管理" })).toHaveAttribute(
+      "href",
+      "/organizer/stalls"
+    );
+    expect(screen.getByRole("link", { name: "夏夜面包市集 查看看板" })).toHaveAttribute(
+      "href",
+      "/organizer/dashboard/market_2"
+    );
+    expect(screen.getByText("春日咖啡市集")).toBeInTheDocument();
+    expect(screen.getByText("杭州 · 草稿")).toBeInTheDocument();
+  });
+
+  it("renders empty state for organizer without markets", async () => {
+    vi.mocked(getSessionUser).mockResolvedValue({
+      userId: "org_1",
+      role: "organizer"
+    });
+    vi.mocked(listOrganizerMarkets).mockResolvedValue([]);
+
+    const page = await OrganizerMarketsPage();
+
+    render(page);
+
+    expect(screen.getByText("当前还没有市集，请先创建草稿。")).toBeInTheDocument();
+  });
+
+  it("prompts for organizer login when the session identity is missing", async () => {
+    vi.mocked(getSessionUser).mockResolvedValue(null);
+
+    const page = await OrganizerMarketsPage();
+
+    render(page);
+
+    expect(screen.getByText("请先以主办方身份登录后管理市集。")).toBeInTheDocument();
+    expect(listOrganizerMarkets).not.toHaveBeenCalled();
+  });
+});
