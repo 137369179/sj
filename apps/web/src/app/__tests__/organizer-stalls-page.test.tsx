@@ -195,6 +195,84 @@ describe("Organizer stalls page", () => {
     expect(screen.queryByText("侧边区 1 号位")).not.toBeInTheDocument();
   });
 
+  it("filters stalls by marketId and preserves market context in status links", async () => {
+    vi.mocked(getSessionUser).mockResolvedValue({
+      userId: "org_1",
+      role: "organizer"
+    });
+    vi.mocked(listOrganizerMarketOptions).mockResolvedValue([
+      {
+        id: "market_1",
+        title: "春日咖啡市集",
+        city: "杭州"
+      },
+      {
+        id: "market_2",
+        title: "夏夜面包市集",
+        city: "上海"
+      }
+    ]);
+    vi.mocked(listOrganizerStalls).mockResolvedValue([
+      {
+        id: "stall_1",
+        marketId: "market_1",
+        marketTitle: "春日咖啡市集",
+        code: "A-01",
+        name: "主通道 1 号位",
+        isActive: true,
+        assignedApplicationId: null,
+        assignedVendorId: null,
+        assignedVendorName: null
+      },
+      {
+        id: "stall_2",
+        marketId: "market_2",
+        marketTitle: "夏夜面包市集",
+        code: "B-01",
+        name: "面包区 1 号位",
+        isActive: true,
+        assignedApplicationId: "app_2",
+        assignedVendorId: "vendor_2",
+        assignedVendorName: "木野手作"
+      }
+    ]);
+    vi.mocked(listOrganizerApplications).mockResolvedValue([
+      {
+        id: "app_2",
+        marketId: "market_2",
+        marketTitle: "夏夜面包市集",
+        marketCity: "上海",
+        vendorId: "vendor_2",
+        vendorName: "木野手作",
+        status: "approved",
+        applicationNote: "主营木作器物",
+        reviewNote: "可安排面包区",
+        reviewedAt: null,
+        reviews: [],
+        attachments: [],
+        createdAt: new Date("2026-05-01T00:00:00.000Z")
+      }
+    ]);
+
+    const page = await OrganizerStallsPage({
+      searchParams: Promise.resolve({ marketId: "market_2" })
+    });
+
+    render(page);
+
+    expect(screen.getByText("当前市集：夏夜面包市集")).toBeInTheDocument();
+    expect(screen.getByRole("link", { name: "全部（1）" })).toHaveAttribute(
+      "href",
+      "/organizer/stalls?marketId=market_2"
+    );
+    expect(screen.getByRole("link", { name: "已分配（1）" })).toHaveAttribute(
+      "href",
+      "/organizer/stalls?marketId=market_2&status=assigned"
+    );
+    expect(screen.getByText("面包区 1 号位")).toBeInTheDocument();
+    expect(screen.queryByText("主通道 1 号位")).not.toBeInTheDocument();
+  });
+
   it("prompts for organizer login when the session identity is missing", async () => {
     vi.mocked(getSessionUser).mockResolvedValue(null);
 

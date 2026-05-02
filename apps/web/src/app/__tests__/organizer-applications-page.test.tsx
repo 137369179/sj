@@ -168,6 +168,63 @@ describe("Organizer applications page", () => {
     expect(screen.queryByText("雨巷面包")).not.toBeInTheDocument();
   });
 
+  it("filters applications by marketId and preserves the market context in filter links", async () => {
+    vi.mocked(getSessionUser).mockResolvedValue({
+      userId: "org_1",
+      role: "organizer"
+    });
+    vi.mocked(listOrganizerApplications).mockResolvedValue([
+      {
+        id: "app_1",
+        marketId: "market_1",
+        marketTitle: "春日咖啡市集",
+        marketCity: "杭州",
+        vendorId: "vendor_1",
+        vendorName: "山野咖啡",
+        status: "submitted",
+        applicationNote: "主营手作咖啡",
+        reviewNote: null,
+        reviewedAt: null,
+        reviews: [],
+        attachments: [],
+        createdAt: new Date("2026-05-01T00:00:00.000Z")
+      },
+      {
+        id: "app_2",
+        marketId: "market_2",
+        marketTitle: "夏夜面包市集",
+        marketCity: "上海",
+        vendorId: "vendor_2",
+        vendorName: "木野手作",
+        status: "approved",
+        applicationNote: "主营木作器物",
+        reviewNote: "初审通过",
+        reviewedAt: new Date("2026-05-02T08:30:00.000Z"),
+        reviews: [],
+        attachments: [],
+        createdAt: new Date("2026-05-01T01:00:00.000Z")
+      }
+    ]);
+
+    const page = await OrganizerApplicationsPage({
+      searchParams: Promise.resolve({ marketId: "market_2" })
+    });
+
+    render(page);
+
+    expect(screen.getByText("当前市集：夏夜面包市集")).toBeInTheDocument();
+    expect(screen.getByRole("link", { name: "全部（1）" })).toHaveAttribute(
+      "href",
+      "/organizer/applications?marketId=market_2"
+    );
+    expect(screen.getByRole("link", { name: "已通过（1）" })).toHaveAttribute(
+      "href",
+      "/organizer/applications?marketId=market_2&status=approved"
+    );
+    expect(screen.getByText("木野手作")).toBeInTheDocument();
+    expect(screen.queryByText("山野咖啡")).not.toBeInTheDocument();
+  });
+
   it("prompts for organizer login when the session identity is missing", async () => {
     vi.mocked(getSessionUser).mockResolvedValue(null);
 

@@ -48,6 +48,9 @@ describe("Organizer markets page", () => {
 
     expect(listOrganizerMarkets).toHaveBeenCalledWith("org_1");
     expect(screen.getByRole("heading", { name: "我的市集" })).toBeInTheDocument();
+    expect(screen.getByLabelText("开始时间")).toBeInTheDocument();
+    expect(screen.getByLabelText("结束时间")).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "创建草稿" })).toBeInTheDocument();
     expect(screen.getByText("夏夜面包市集")).toBeInTheDocument();
     expect(screen.getByText("上海 · 已发布")).toBeInTheDocument();
     expect(screen.getByText("2026-06-08 至 2026-06-08")).toBeInTheDocument();
@@ -65,6 +68,8 @@ describe("Organizer markets page", () => {
     );
     expect(screen.getByText("春日咖啡市集")).toBeInTheDocument();
     expect(screen.getByText("杭州 · 草稿")).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "发布 春日咖啡市集" })).toBeInTheDocument();
+    expect(screen.queryByRole("button", { name: "发布 夏夜面包市集" })).not.toBeInTheDocument();
   });
 
   it("renders empty state for organizer without markets", async () => {

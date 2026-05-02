@@ -1,8 +1,10 @@
 import { NextResponse } from "next/server";
 
 import { getSessionUser } from "../../../../../lib/auth";
-import { db } from "../../../../../lib/db";
-import { canPublishMarket } from "../../../../../server/markets/service";
+import {
+  MarketPublishError,
+  publishOrganizerMarket
+} from "../../../../../server/markets/service";
 
 export async function POST(
   _request: Request,
@@ -19,24 +21,29 @@ export async function POST(
   }
 
   const { marketId } = await params;
-  const market = await db.market.findUnique({ where: { id: marketId } });
 
-  if (!market) {
-    return NextResponse.json({ message: "market not found" }, { status: 404 });
+  try {
+    const updated = await publishOrganizerMarket({
+      marketId,
+      organizerId: sessionUser.userId
+    });
+
+    return NextResponse.json(updated);
+  } catch (error) {
+    if (error instanceof MarketPublishError) {
+      if (error.code === "NOT_FOUND") {
+        return NextResponse.json({ message: "market not found" }, { status: 404 });
+      }
+
+      if (error.code === "FORBIDDEN") {
+        return NextResponse.json({ message: "forbidden" }, { status: 403 });
+      }
+
+      if (error.code === "INVALID_STATUS") {
+        return NextResponse.json({ message: "cannot publish" }, { status: 400 });
+      }
+    }
+
+    throw error;
   }
-
-  if (market.organizerId !== sessionUser.userId) {
-    return NextResponse.json({ message: "forbidden" }, { status: 403 });
-  }
-
-  if (!canPublishMarket(market.status)) {
-    return NextResponse.json({ message: "cannot publish" }, { status: 400 });
-  }
-
-  const updated = await db.market.update({
-    where: { id: marketId },
-    data: { status: "published" }
-  });
-
-  return NextResponse.json(updated);
 }

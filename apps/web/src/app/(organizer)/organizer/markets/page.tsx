@@ -1,8 +1,48 @@
+import { revalidatePath } from "next/cache";
 import Link from "next/link";
 
 import { AppShell } from "../../../../components/layout/app-shell";
 import { getSessionUser } from "../../../../lib/auth";
-import { listOrganizerMarkets } from "../../../../server/markets/service";
+import {
+  createOrganizerMarket,
+  listOrganizerMarkets,
+  publishOrganizerMarket
+} from "../../../../server/markets/service";
+
+async function createMarketAction(formData: FormData) {
+  "use server";
+
+  const sessionUser = await getSessionUser();
+
+  if (!sessionUser || sessionUser.role !== "organizer") {
+    return;
+  }
+
+  await createOrganizerMarket({
+    organizerId: sessionUser.userId,
+    title: String(formData.get("title") ?? ""),
+    city: String(formData.get("city") ?? ""),
+    startsAt: normalizeDateTimeInput(String(formData.get("startsAt") ?? "")),
+    endsAt: normalizeDateTimeInput(String(formData.get("endsAt") ?? ""))
+  });
+  revalidatePath("/organizer/markets");
+}
+
+async function publishMarketAction(formData: FormData) {
+  "use server";
+
+  const sessionUser = await getSessionUser();
+
+  if (!sessionUser || sessionUser.role !== "organizer") {
+    return;
+  }
+
+  await publishOrganizerMarket({
+    marketId: String(formData.get("marketId") ?? ""),
+    organizerId: sessionUser.userId
+  });
+  revalidatePath("/organizer/markets");
+}
 
 export default async function OrganizerMarketsPage() {
   const sessionUser = await getSessionUser();
@@ -19,7 +59,7 @@ export default async function OrganizerMarketsPage() {
 
         {!isOrganizerSession ? <p>请先以主办方身份登录后管理市集。</p> : null}
 
-        <form aria-label="市集表单">
+        <form action={createMarketAction} aria-label="市集表单">
           <label>
             市集标题
             <input name="title" type="text" />
@@ -28,8 +68,15 @@ export default async function OrganizerMarketsPage() {
             城市
             <input name="city" type="text" />
           </label>
-          <button type="submit">保存草稿</button>
-          <button type="button">发布市集</button>
+          <label>
+            开始时间
+            <input aria-label="开始时间" name="startsAt" type="datetime-local" />
+          </label>
+          <label>
+            结束时间
+            <input aria-label="结束时间" name="endsAt" type="datetime-local" />
+          </label>
+          <button type="submit">创建草稿</button>
         </form>
 
         {isOrganizerSession && markets.length === 0 ? (
@@ -57,6 +104,12 @@ export default async function OrganizerMarketsPage() {
                   查看看板
                 </Link>
               </nav>
+              {market.status === "draft" ? (
+                <form action={publishMarketAction} aria-label={`${market.title} 发布表单`}>
+                  <input name="marketId" type="hidden" value={market.id} />
+                  <button type="submit">{`发布 ${market.title}`}</button>
+                </form>
+              ) : null}
             </article>
           ))}
         </section>
@@ -99,4 +152,9 @@ function getMarketStatusLabel(status: string) {
   }
 
   return status;
+}
+
+function normalizeDateTimeInput(value: string) {
+  const normalized = new Date(value);
+  return Number.isNaN(normalized.getTime()) ? value : normalized.toISOString();
 }

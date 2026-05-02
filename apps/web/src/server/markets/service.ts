@@ -34,6 +34,26 @@ export type OrganizerMarketListItem = {
   endsAt: Date;
 };
 
+export type CreateOrganizerMarketInput = MarketPayload & {
+  organizerId: string;
+};
+
+export type PublishOrganizerMarketInput = {
+  marketId: string;
+  organizerId: string;
+};
+
+export type MarketPublishErrorCode = "NOT_FOUND" | "FORBIDDEN" | "INVALID_STATUS";
+
+export class MarketPublishError extends Error {
+  code: MarketPublishErrorCode;
+
+  constructor(code: MarketPublishErrorCode) {
+    super(code);
+    this.code = code;
+  }
+}
+
 const demoMarkets: DemoMarket[] = [
   {
     id: "spring-coffee",
@@ -126,6 +146,50 @@ export async function listOrganizerMarkets(
     },
     orderBy: {
       startsAt: "desc"
+    }
+  });
+}
+
+export async function createOrganizerMarket(input: CreateOrganizerMarketInput) {
+  const payload = buildMarketPayload(input);
+
+  return db.market.create({
+    data: {
+      organizerId: input.organizerId,
+      title: payload.title,
+      city: payload.city,
+      startsAt: new Date(payload.startsAt),
+      endsAt: new Date(payload.endsAt),
+      status: "draft"
+    }
+  });
+}
+
+export async function publishOrganizerMarket(input: PublishOrganizerMarketInput) {
+  const market = await db.market.findUnique({
+    where: {
+      id: input.marketId
+    }
+  });
+
+  if (!market) {
+    throw new MarketPublishError("NOT_FOUND");
+  }
+
+  if (market.organizerId !== input.organizerId) {
+    throw new MarketPublishError("FORBIDDEN");
+  }
+
+  if (!canPublishMarket(market.status)) {
+    throw new MarketPublishError("INVALID_STATUS");
+  }
+
+  return db.market.update({
+    where: {
+      id: input.marketId
+    },
+    data: {
+      status: "published"
     }
   });
 }

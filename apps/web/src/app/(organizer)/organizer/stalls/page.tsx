@@ -62,6 +62,7 @@ async function assignStallAction(formData: FormData) {
 type OrganizerStallsPageProps = {
   searchParams?: Promise<{
     status?: string;
+    marketId?: string;
   }>;
 };
 
@@ -83,12 +84,23 @@ export default async function OrganizerStallsPage({
     (application) => application.status === "approved"
   );
   const resolvedSearchParams = (await searchParams) ?? {};
+  const selectedMarketId = getSelectedMarketId(resolvedSearchParams.marketId);
+  const marketScopedStalls = selectedMarketId
+    ? stalls.filter((stall) => stall.marketId === selectedMarketId)
+    : stalls;
+  const marketScopedApplications = selectedMarketId
+    ? approvedApplications.filter((application) => application.marketId === selectedMarketId)
+    : approvedApplications;
   const selectedStatus = getSelectedStatus(resolvedSearchParams.status);
   const filteredStalls =
     selectedStatus === "all"
-      ? stalls
-      : stalls.filter((stall) => getStallFilterStatus(stall) === selectedStatus);
-  const summary = buildStallSummary(stalls);
+      ? marketScopedStalls
+      : marketScopedStalls.filter((stall) => getStallFilterStatus(stall) === selectedStatus);
+  const summary = buildStallSummary(marketScopedStalls);
+  const currentMarketTitle =
+    selectedMarketId &&
+    (marketScopedStalls.find((stall) => stall.marketId === selectedMarketId)?.marketTitle ??
+      marketOptions.find((market) => market.id === selectedMarketId)?.title);
 
   return (
     <AppShell>
@@ -102,6 +114,7 @@ export default async function OrganizerStallsPage({
 
         {isOrganizerSession ? (
           <>
+            {currentMarketTitle ? <p>当前市集：{currentMarketTitle}</p> : null}
             <section aria-label="摊位摘要">
               <p>全部摊位：{summary.all}</p>
               <p>待分配：{summary.unassigned}</p>
@@ -110,14 +123,31 @@ export default async function OrganizerStallsPage({
             </section>
 
             <nav aria-label="摊位筛选">
-              <Link href="/organizer/stalls">全部（{summary.all}）</Link>
-              <Link href="/organizer/stalls?status=unassigned">
+              <Link href={buildStallsFilterHref({ marketId: selectedMarketId })}>
+                全部（{summary.all}）
+              </Link>
+              <Link
+                href={buildStallsFilterHref({
+                  marketId: selectedMarketId,
+                  status: "unassigned"
+                })}
+              >
                 待分配（{summary.unassigned}）
               </Link>
-              <Link href="/organizer/stalls?status=assigned">
+              <Link
+                href={buildStallsFilterHref({
+                  marketId: selectedMarketId,
+                  status: "assigned"
+                })}
+              >
                 已分配（{summary.assigned}）
               </Link>
-              <Link href="/organizer/stalls?status=inactive">
+              <Link
+                href={buildStallsFilterHref({
+                  marketId: selectedMarketId,
+                  status: "inactive"
+                })}
+              >
                 已停用（{summary.inactive}）
               </Link>
             </nav>
@@ -158,7 +188,7 @@ export default async function OrganizerStallsPage({
 
         <section aria-label="摊位列表">
           {filteredStalls.map((stall) => {
-            const marketApplications = approvedApplications.filter(
+            const marketApplications = marketScopedApplications.filter(
               (application) => application.marketId === stall.marketId
             );
             const isAssignable =
@@ -212,6 +242,28 @@ function getSelectedStatus(status: string | undefined) {
   }
 
   return "all";
+}
+
+function getSelectedMarketId(marketId: string | undefined) {
+  return typeof marketId === "string" && marketId.length > 0 ? marketId : null;
+}
+
+function buildStallsFilterHref(input: {
+  marketId: string | null;
+  status?: "unassigned" | "assigned" | "inactive";
+}) {
+  const params = new URLSearchParams();
+
+  if (input.marketId) {
+    params.set("marketId", input.marketId);
+  }
+
+  if (input.status) {
+    params.set("status", input.status);
+  }
+
+  const query = params.toString();
+  return query.length > 0 ? `/organizer/stalls?${query}` : "/organizer/stalls";
 }
 
 function getStallFilterStatus(stall: Awaited<ReturnType<typeof listOrganizerStalls>>[number]) {

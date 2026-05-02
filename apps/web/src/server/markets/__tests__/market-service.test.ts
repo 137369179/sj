@@ -4,8 +4,11 @@ import { db } from "../../../lib/db";
 import {
   buildMarketPayload,
   canPublishMarket,
+  createOrganizerMarket,
   listOrganizerMarkets,
-  listOrganizerMarketOptions
+  listOrganizerMarketOptions,
+  MarketPublishError,
+  publishOrganizerMarket
 } from "../service";
 
 describe("market service", () => {
@@ -98,5 +101,101 @@ describe("market service", () => {
         endsAt: new Date("2026-05-18T18:00:00.000Z")
       }
     ]);
+  });
+
+  it("creates an organizer market as draft", async () => {
+    const createSpy = vi.spyOn(db.market, "create").mockResolvedValue({
+      id: "market_1",
+      organizerId: "org_1",
+      title: "春日咖啡市集",
+      city: "杭州",
+      startsAt: new Date("2026-05-18T10:00:00.000Z"),
+      endsAt: new Date("2026-05-18T18:00:00.000Z"),
+      status: "draft"
+    } as Awaited<ReturnType<typeof db.market.create>>);
+
+    await expect(
+      createOrganizerMarket({
+        organizerId: "org_1",
+        title: "春日咖啡市集",
+        city: "杭州",
+        startsAt: "2026-05-18T10:00:00.000Z",
+        endsAt: "2026-05-18T18:00:00.000Z"
+      })
+    ).resolves.toMatchObject({
+      id: "market_1",
+      organizerId: "org_1",
+      status: "draft"
+    });
+
+    expect(createSpy).toHaveBeenCalledWith({
+      data: {
+        organizerId: "org_1",
+        title: "春日咖啡市集",
+        city: "杭州",
+        startsAt: new Date("2026-05-18T10:00:00.000Z"),
+        endsAt: new Date("2026-05-18T18:00:00.000Z"),
+        status: "draft"
+      }
+    });
+  });
+
+  it("publishes a draft market for the same organizer", async () => {
+    vi.spyOn(db.market, "findUnique").mockResolvedValue({
+      id: "market_1",
+      organizerId: "org_1",
+      title: "春日咖啡市集",
+      city: "杭州",
+      startsAt: new Date("2026-05-18T10:00:00.000Z"),
+      endsAt: new Date("2026-05-18T18:00:00.000Z"),
+      status: "draft"
+    } as Awaited<ReturnType<typeof db.market.findUnique>>);
+    const updateSpy = vi.spyOn(db.market, "update").mockResolvedValue({
+      id: "market_1",
+      organizerId: "org_1",
+      title: "春日咖啡市集",
+      city: "杭州",
+      startsAt: new Date("2026-05-18T10:00:00.000Z"),
+      endsAt: new Date("2026-05-18T18:00:00.000Z"),
+      status: "published"
+    } as Awaited<ReturnType<typeof db.market.update>>);
+
+    await expect(
+      publishOrganizerMarket({
+        marketId: "market_1",
+        organizerId: "org_1"
+      })
+    ).resolves.toMatchObject({
+      id: "market_1",
+      status: "published"
+    });
+
+    expect(updateSpy).toHaveBeenCalledWith({
+      where: {
+        id: "market_1"
+      },
+      data: {
+        status: "published"
+      }
+    });
+  });
+
+  it("rejects publishing a market from another organizer", async () => {
+    vi.spyOn(db.market, "findUnique").mockResolvedValue({
+      id: "market_1",
+      organizerId: "org_2",
+      title: "春日咖啡市集",
+      city: "杭州",
+      startsAt: new Date("2026-05-18T10:00:00.000Z"),
+      endsAt: new Date("2026-05-18T18:00:00.000Z"),
+      status: "draft"
+    } as Awaited<ReturnType<typeof db.market.findUnique>>);
+
+    await expect(
+      publishOrganizerMarket({
+        marketId: "market_1",
+        organizerId: "org_1"
+      })
+    ).rejects.toEqual(new MarketPublishError("FORBIDDEN"));
   });
 });
