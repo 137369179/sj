@@ -44,12 +44,27 @@ async function publishMarketAction(formData: FormData) {
   revalidatePath("/organizer/markets");
 }
 
-export default async function OrganizerMarketsPage() {
+type OrganizerMarketsPageProps = {
+  searchParams?: Promise<{
+    status?: string;
+  }>;
+};
+
+export default async function OrganizerMarketsPage({
+  searchParams
+}: OrganizerMarketsPageProps) {
   const sessionUser = await getSessionUser();
   const isOrganizerSession = sessionUser?.role === "organizer";
   const markets = isOrganizerSession
     ? await listOrganizerMarkets(sessionUser.userId)
     : [];
+  const resolvedSearchParams = (await searchParams) ?? {};
+  const selectedStatus = getSelectedMarketStatus(resolvedSearchParams.status);
+  const filteredMarkets =
+    selectedStatus === "all"
+      ? markets
+      : markets.filter((market) => market.status === selectedStatus);
+  const summary = buildMarketSummary(markets);
 
   return (
     <AppShell>
@@ -79,12 +94,34 @@ export default async function OrganizerMarketsPage() {
           <button type="submit">创建草稿</button>
         </form>
 
-        {isOrganizerSession && markets.length === 0 ? (
+        {isOrganizerSession ? (
+          <>
+            <section aria-label="市集摘要">
+              <p>全部市集：{summary.all}</p>
+              <p>草稿：{summary.draft}</p>
+              <p>已发布：{summary.published}</p>
+              <p>已完成：{summary.completed}</p>
+            </section>
+
+            <nav aria-label="市集状态筛选">
+              <Link href="/organizer/markets">全部（{summary.all}）</Link>
+              <Link href="/organizer/markets?status=draft">草稿（{summary.draft}）</Link>
+              <Link href="/organizer/markets?status=published">
+                已发布（{summary.published}）
+              </Link>
+              <Link href="/organizer/markets?status=completed">
+                已完成（{summary.completed}）
+              </Link>
+            </nav>
+          </>
+        ) : null}
+
+        {isOrganizerSession && filteredMarkets.length === 0 ? (
           <p>当前还没有市集，请先创建草稿。</p>
         ) : null}
 
         <section aria-label="市集列表">
-          {markets.map((market) => (
+          {filteredMarkets.map((market) => (
             <article key={market.id}>
               <h3>{market.title}</h3>
               <p>
@@ -126,6 +163,23 @@ export default async function OrganizerMarketsPage() {
 
 function formatDate(value: Date) {
   return value.toISOString().slice(0, 10);
+}
+
+function getSelectedMarketStatus(status: string | undefined) {
+  if (status === "draft" || status === "published" || status === "completed") {
+    return status;
+  }
+
+  return "all";
+}
+
+function buildMarketSummary(markets: Awaited<ReturnType<typeof listOrganizerMarkets>>) {
+  return {
+    all: markets.length,
+    draft: markets.filter((market) => market.status === "draft").length,
+    published: markets.filter((market) => market.status === "published").length,
+    completed: markets.filter((market) => market.status === "completed").length
+  };
 }
 
 function getMarketStatusLabel(status: string) {

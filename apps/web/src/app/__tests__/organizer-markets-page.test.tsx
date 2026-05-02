@@ -42,7 +42,9 @@ describe("Organizer markets page", () => {
       }
     ]);
 
-    const page = await OrganizerMarketsPage();
+    const page = await OrganizerMarketsPage({
+      searchParams: Promise.resolve({})
+    });
 
     render(page);
 
@@ -72,6 +74,69 @@ describe("Organizer markets page", () => {
     expect(screen.queryByRole("button", { name: "发布 夏夜面包市集" })).not.toBeInTheDocument();
   });
 
+  it("renders market summary metrics and filters markets by status from search params", async () => {
+    vi.mocked(getSessionUser).mockResolvedValue({
+      userId: "org_1",
+      role: "organizer"
+    });
+    vi.mocked(listOrganizerMarkets).mockResolvedValue([
+      {
+        id: "market_3",
+        title: "秋日手作市集",
+        city: "南京",
+        status: "completed",
+        startsAt: new Date("2026-07-08T10:00:00.000Z"),
+        endsAt: new Date("2026-07-08T18:00:00.000Z")
+      },
+      {
+        id: "market_2",
+        title: "夏夜面包市集",
+        city: "上海",
+        status: "published",
+        startsAt: new Date("2026-06-08T10:00:00.000Z"),
+        endsAt: new Date("2026-06-08T18:00:00.000Z")
+      },
+      {
+        id: "market_1",
+        title: "春日咖啡市集",
+        city: "杭州",
+        status: "draft",
+        startsAt: new Date("2026-05-18T10:00:00.000Z"),
+        endsAt: new Date("2026-05-18T18:00:00.000Z")
+      }
+    ]);
+
+    const page = await OrganizerMarketsPage({
+      searchParams: Promise.resolve({ status: "published" })
+    });
+
+    render(page);
+
+    expect(screen.getByText("全部市集：3")).toBeInTheDocument();
+    expect(screen.getByText("草稿：1")).toBeInTheDocument();
+    expect(screen.getByText("已发布：1")).toBeInTheDocument();
+    expect(screen.getByText("已完成：1")).toBeInTheDocument();
+    expect(screen.getByRole("link", { name: "全部（3）" })).toHaveAttribute(
+      "href",
+      "/organizer/markets"
+    );
+    expect(screen.getByRole("link", { name: "草稿（1）" })).toHaveAttribute(
+      "href",
+      "/organizer/markets?status=draft"
+    );
+    expect(screen.getByRole("link", { name: "已发布（1）" })).toHaveAttribute(
+      "href",
+      "/organizer/markets?status=published"
+    );
+    expect(screen.getByRole("link", { name: "已完成（1）" })).toHaveAttribute(
+      "href",
+      "/organizer/markets?status=completed"
+    );
+    expect(screen.getByText("夏夜面包市集")).toBeInTheDocument();
+    expect(screen.queryByText("春日咖啡市集")).not.toBeInTheDocument();
+    expect(screen.queryByText("秋日手作市集")).not.toBeInTheDocument();
+  });
+
   it("renders empty state for organizer without markets", async () => {
     vi.mocked(getSessionUser).mockResolvedValue({
       userId: "org_1",
@@ -79,7 +144,9 @@ describe("Organizer markets page", () => {
     });
     vi.mocked(listOrganizerMarkets).mockResolvedValue([]);
 
-    const page = await OrganizerMarketsPage();
+    const page = await OrganizerMarketsPage({
+      searchParams: Promise.resolve({})
+    });
 
     render(page);
 
@@ -89,7 +156,9 @@ describe("Organizer markets page", () => {
   it("prompts for organizer login when the session identity is missing", async () => {
     vi.mocked(getSessionUser).mockResolvedValue(null);
 
-    const page = await OrganizerMarketsPage();
+    const page = await OrganizerMarketsPage({
+      searchParams: Promise.resolve({})
+    });
 
     render(page);
 
