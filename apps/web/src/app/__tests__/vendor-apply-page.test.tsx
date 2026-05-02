@@ -9,6 +9,19 @@ describe("VendorApplyPage", () => {
     vi.stubGlobal("fetch", vi.fn());
   });
 
+  function fillAndSubmitForm() {
+    fireEvent.change(screen.getByLabelText("摊位偏好"), {
+      target: { value: "靠近主通道" }
+    });
+    fireEvent.change(screen.getByLabelText("报名备注"), {
+      target: { value: "主营手作咖啡" }
+    });
+    fireEvent.change(screen.getByLabelText("附件地址"), {
+      target: { value: "https://example.com/license.pdf" }
+    });
+    fireEvent.click(screen.getByRole("button", { name: "提交申请" }));
+  }
+
   it("submits the minimal application form and shows success feedback", async () => {
     vi.mocked(fetch).mockResolvedValue(
       new Response(JSON.stringify({ id: "app_1" }), {
@@ -35,16 +48,7 @@ describe("VendorApplyPage", () => {
       document.querySelector('input[name="marketId"][value="market_1"]')
     ).not.toBeNull();
 
-    fireEvent.change(screen.getByLabelText("摊位偏好"), {
-      target: { value: "靠近主通道" }
-    });
-    fireEvent.change(screen.getByLabelText("报名备注"), {
-      target: { value: "主营手作咖啡" }
-    });
-    fireEvent.change(screen.getByLabelText("附件地址"), {
-      target: { value: "https://example.com/license.pdf" }
-    });
-    fireEvent.click(screen.getByRole("button", { name: "提交申请" }));
+    fillAndSubmitForm();
 
     await waitFor(() => {
       expect(fetch).toHaveBeenCalledWith(
@@ -74,5 +78,74 @@ describe("VendorApplyPage", () => {
       "href",
       "/applications"
     );
+  });
+
+  it("shows a sign-in message when the application API returns unauthorized", async () => {
+    vi.mocked(fetch).mockResolvedValue(
+      new Response(JSON.stringify({ message: "unauthorized" }), {
+        status: 401,
+        headers: {
+          "content-type": "application/json"
+        }
+      })
+    );
+
+    render(
+      await VendorApplyPage({
+        params: Promise.resolve({ marketId: "market_1" })
+      })
+    );
+
+    fillAndSubmitForm();
+
+    expect(
+      await screen.findByText("请先以摊主身份登录后再提交报名。")
+    ).toBeInTheDocument();
+  });
+
+  it("shows a vendor-only message when the application API returns forbidden", async () => {
+    vi.mocked(fetch).mockResolvedValue(
+      new Response(JSON.stringify({ message: "forbidden" }), {
+        status: 403,
+        headers: {
+          "content-type": "application/json"
+        }
+      })
+    );
+
+    render(
+      await VendorApplyPage({
+        params: Promise.resolve({ marketId: "market_1" })
+      })
+    );
+
+    fillAndSubmitForm();
+
+    expect(
+      await screen.findByText("当前账号没有报名权限，请切换为摊主账号。")
+    ).toBeInTheDocument();
+  });
+
+  it("shows a duplicate message when the application API returns conflict", async () => {
+    vi.mocked(fetch).mockResolvedValue(
+      new Response(JSON.stringify({ message: "duplicate application" }), {
+        status: 409,
+        headers: {
+          "content-type": "application/json"
+        }
+      })
+    );
+
+    render(
+      await VendorApplyPage({
+        params: Promise.resolve({ marketId: "market_1" })
+      })
+    );
+
+    fillAndSubmitForm();
+
+    expect(
+      await screen.findByText("你已经提交过该市集的报名，请前往我的报名查看进度。")
+    ).toBeInTheDocument();
   });
 });

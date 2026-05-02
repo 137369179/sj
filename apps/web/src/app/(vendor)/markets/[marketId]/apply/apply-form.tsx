@@ -60,7 +60,8 @@ export function VendorApplyForm({ marketId }: VendorApplyFormProps) {
       });
 
       if (!response.ok) {
-        throw new Error("submit failed");
+        const errorPayload = await readErrorPayload(response);
+        throw new Error(resolveSubmitErrorMessage(response.status, errorPayload));
       }
 
       setSubmitState({
@@ -68,10 +69,11 @@ export function VendorApplyForm({ marketId }: VendorApplyFormProps) {
         message: "报名提交成功，可前往我的报名查看进度。"
       });
       form.reset();
-    } catch {
+    } catch (error) {
       setSubmitState({
         status: "error",
-        message: "报名提交失败，请稍后重试。"
+        message:
+          error instanceof Error ? error.message : "报名提交失败，请稍后重试。"
       });
     }
   }
@@ -132,4 +134,38 @@ export function VendorApplyForm({ marketId }: VendorApplyFormProps) {
 function getAttachmentName(attachmentUrl: string) {
   const segments = attachmentUrl.split("/").filter(Boolean);
   return segments.at(-1) ?? "attachment";
+}
+
+async function readErrorPayload(response: Response) {
+  try {
+    const payload = await response.json();
+    if (
+      payload &&
+      typeof payload === "object" &&
+      "message" in payload &&
+      typeof payload.message === "string"
+    ) {
+      return payload.message;
+    }
+  } catch {
+    return null;
+  }
+
+  return null;
+}
+
+function resolveSubmitErrorMessage(status: number, errorCode: string | null) {
+  if (status === 401 || errorCode === "unauthorized") {
+    return "请先以摊主身份登录后再提交报名。";
+  }
+
+  if (status === 403 || errorCode === "forbidden") {
+    return "当前账号没有报名权限，请切换为摊主账号。";
+  }
+
+  if (status === 409 || errorCode === "duplicate application") {
+    return "你已经提交过该市集的报名，请前往我的报名查看进度。";
+  }
+
+  return "报名提交失败，请稍后重试。";
 }
