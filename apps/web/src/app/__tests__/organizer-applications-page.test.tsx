@@ -315,6 +315,45 @@ describe("Organizer applications page", () => {
     );
   });
 
+  it("renders a filter-specific empty state when no applications match the current selection", async () => {
+    vi.mocked(getSessionUser).mockResolvedValue({
+      userId: "org_1",
+      role: "organizer"
+    });
+    vi.mocked(listOrganizerMarketOptions).mockResolvedValue([
+      {
+        id: "market_1",
+        title: "春日咖啡市集",
+        city: "杭州"
+      }
+    ]);
+    vi.mocked(listOrganizerApplications).mockResolvedValue([
+      {
+        id: "app_1",
+        marketId: "market_1",
+        marketTitle: "春日咖啡市集",
+        marketCity: "杭州",
+        vendorId: "vendor_1",
+        vendorName: "山野咖啡",
+        status: "submitted",
+        applicationNote: "主营手作咖啡",
+        reviewNote: null,
+        reviewedAt: null,
+        reviews: [],
+        attachments: [],
+        createdAt: new Date("2026-05-01T00:00:00.000Z")
+      }
+    ]);
+
+    const page = await OrganizerApplicationsPage({
+      searchParams: Promise.resolve({ marketId: "market_1", status: "approved" })
+    });
+
+    render(page);
+
+    expect(screen.getByText("当前没有符合筛选条件的报名申请。")).toBeInTheDocument();
+  });
+
   it("renders a markets return link when opened from organizer markets", async () => {
     vi.mocked(getSessionUser).mockResolvedValue({
       userId: "org_1",
@@ -455,7 +494,7 @@ describe("Organizer applications page", () => {
     render(page);
 
     expect(
-      screen.getByText("请先以主办方身份登录后查看申请。")
+      screen.getByText("请先以主办方身份登录后查看报名申请。")
     ).toBeInTheDocument();
     expect(listOrganizerMarketOptions).not.toHaveBeenCalled();
     expect(listOrganizerApplications).not.toHaveBeenCalled();

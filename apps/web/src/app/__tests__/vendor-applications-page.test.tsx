@@ -317,4 +317,37 @@ describe("Vendor applications page", () => {
       "/markets/market_2?from=applications&status=approved"
     );
   });
+
+  it("renders a filter-specific empty state when no application matches the current selection", async () => {
+    vi.mocked(getSessionUser).mockResolvedValue({
+      userId: "vendor_1",
+      role: "vendor"
+    });
+    vi.mocked(listVendorApplications).mockResolvedValue([
+      {
+        id: "app_1",
+        marketId: "market_1",
+        marketTitle: "春日咖啡市集",
+        marketCity: "杭州",
+        status: "submitted",
+        applicationNote: "主营手作咖啡",
+        reviewNote: null,
+        reviewedAt: null,
+        reviews: [],
+        attachments: [],
+        createdAt: new Date("2026-05-01T00:00:00.000Z"),
+        assignedStallId: null,
+        assignedStallCode: null,
+        assignedStallName: null
+      }
+    ]);
+
+    const page = await VendorApplicationsPage({
+      searchParams: Promise.resolve({ marketId: "market_1", status: "approved" })
+    });
+
+    render(page);
+
+    expect(screen.getByText("当前没有符合筛选条件的报名记录。")).toBeInTheDocument();
+  });
 });

@@ -109,7 +109,13 @@ export default async function VendorApplicationsPage({
           </>
         ) : null}
 
-        {isVendorSession && filteredApplications.length === 0 ? <p>当前还没有报名记录。</p> : null}
+        {isVendorSession && filteredApplications.length === 0 ? (
+          <p>
+            {selectedStatus === "all" && !selectedMarketId
+              ? "当前还没有报名记录。"
+              : "当前没有符合筛选条件的报名记录。"}
+          </p>
+        ) : null}
 
         <section aria-label="报名列表">
           {filteredApplications.map((application) => (

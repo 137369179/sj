@@ -92,7 +92,7 @@ export default async function OrganizerApplicationsPage({
         <p>查看摊主报名，并完成最小审核闭环。</p>
 
         {!isOrganizerSession ? (
-          <p>请先以主办方身份登录后查看申请。</p>
+          <p>请先以主办方身份登录后查看报名申请。</p>
         ) : null}
 
         {isOrganizerSession ? (
@@ -216,7 +216,11 @@ export default async function OrganizerApplicationsPage({
         ) : null}
 
         {isOrganizerSession && filteredApplications.length === 0 ? (
-          <p>当前没有待处理申请。</p>
+          <p>
+            {selectedStatus === "all" && !selectedMarketId
+              ? "当前没有待处理申请。"
+              : "当前没有符合筛选条件的报名申请。"}
+          </p>
         ) : null}
 
         <section aria-label="申请列表">
