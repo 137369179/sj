@@ -95,12 +95,22 @@ export default async function OrganizerApplicationsPage({
             {currentMarketTitle ? <p>当前市集：{currentMarketTitle}</p> : null}
             {selectedMarketId ? (
               <nav aria-label="当前市集快捷操作">
-                <Link href={`/organizer/stalls?marketId=${selectedMarketId}`}>查看当前市集摊位</Link>
+                <Link
+                  href={buildOrganizerMarketsContextHref({
+                    pathname: "/organizer/stalls",
+                    marketId: selectedMarketId,
+                    from: resolvedSearchParams.from,
+                    marketStatus: resolvedSearchParams.marketStatus
+                  })}
+                >
+                  查看当前市集摊位
+                </Link>
                 <Link
                   href={buildDashboardHref({
                     marketId: selectedMarketId,
-                    from: "applications",
-                    status: selectedStatus
+                    from: resolvedSearchParams.from === "markets" ? "markets" : "applications",
+                    status: selectedStatus,
+                    marketStatus: resolvedSearchParams.marketStatus
                   })}
                 >
                   查看当前市集看板
@@ -252,18 +262,56 @@ function buildApplicationsFilterHref(input: {
 
 function buildDashboardHref(input: {
   marketId: string;
-  from: "applications";
+  from: "applications" | "markets";
   status: "all" | "submitted" | "approved" | "rejected";
+  marketStatus?: string;
 }) {
   const params = new URLSearchParams({
     from: input.from
   });
+
+  if (input.from === "markets") {
+    if (
+      input.marketStatus === "draft" ||
+      input.marketStatus === "published" ||
+      input.marketStatus === "completed"
+    ) {
+      params.set("marketStatus", input.marketStatus);
+    }
+
+    return `/organizer/dashboard/${input.marketId}?${params.toString()}`;
+  }
 
   if (input.status !== "all") {
     params.set("status", input.status);
   }
 
   return `/organizer/dashboard/${input.marketId}?${params.toString()}`;
+}
+
+function buildOrganizerMarketsContextHref(input: {
+  pathname: "/organizer/stalls";
+  marketId: string;
+  from?: string;
+  marketStatus?: string;
+}) {
+  const params = new URLSearchParams({
+    marketId: input.marketId
+  });
+
+  if (input.from === "markets") {
+    params.set("from", "markets");
+
+    if (
+      input.marketStatus === "draft" ||
+      input.marketStatus === "published" ||
+      input.marketStatus === "completed"
+    ) {
+      params.set("marketStatus", input.marketStatus);
+    }
+  }
+
+  return `${input.pathname}?${params.toString()}`;
 }
 
 function buildOrganizerMarketsHref(marketStatus: string | undefined) {

@@ -67,10 +67,24 @@ export default async function OrganizerDashboardPage({
           </section>
         ) : null}
         <nav aria-label="当前市集快捷操作">
-          <Link href={`/organizer/applications?marketId=${summary.market.id}`}>
+          <Link
+            href={buildDashboardShortcutHref({
+              pathname: "/organizer/applications",
+              marketId: summary.market.id,
+              from: resolvedSearchParams.from,
+              marketStatus: resolvedSearchParams.marketStatus
+            })}
+          >
             查看当前市集申请
           </Link>
-          <Link href={`/organizer/stalls?marketId=${summary.market.id}`}>
+          <Link
+            href={buildDashboardShortcutHref({
+              pathname: "/organizer/stalls",
+              marketId: summary.market.id,
+              from: resolvedSearchParams.from,
+              marketStatus: resolvedSearchParams.marketStatus
+            })}
+          >
             查看当前市集摊位
           </Link>
         </nav>
@@ -259,4 +273,29 @@ function buildOrganizerMarketsHref(marketStatus: string | undefined) {
   }
 
   return "/organizer/markets";
+}
+
+function buildDashboardShortcutHref(input: {
+  pathname: "/organizer/applications" | "/organizer/stalls";
+  marketId: string;
+  from?: string;
+  marketStatus?: string;
+}) {
+  const params = new URLSearchParams({
+    marketId: input.marketId
+  });
+
+  if (input.from === "markets") {
+    params.set("from", "markets");
+
+    if (
+      input.marketStatus === "draft" ||
+      input.marketStatus === "published" ||
+      input.marketStatus === "completed"
+    ) {
+      params.set("marketStatus", input.marketStatus);
+    }
+  }
+
+  return `${input.pathname}?${params.toString()}`;
 }

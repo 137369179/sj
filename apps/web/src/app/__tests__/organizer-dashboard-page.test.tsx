@@ -254,6 +254,18 @@ describe("Organizer dashboard page", () => {
       "href",
       "/organizer/markets?status=published"
     );
+    expect(screen.getByRole("link", { name: "查看当前市集申请" })).toHaveAttribute(
+      "href",
+      "/organizer/applications?marketId=market_1&from=markets&marketStatus=published"
+    );
+    expect(screen.getByRole("link", { name: "查看当前市集摊位" })).toHaveAttribute(
+      "href",
+      "/organizer/stalls?marketId=market_1&from=markets&marketStatus=published"
+    );
+    expect(screen.getByRole("link", { name: "春日咖啡市集（当前）" })).toHaveAttribute(
+      "href",
+      "/organizer/dashboard/market_1?from=markets&marketStatus=published"
+    );
   });
 
   it("prompts for organizer login when the session identity is missing", async () => {
