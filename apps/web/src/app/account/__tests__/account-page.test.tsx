@@ -50,6 +50,22 @@ describe("AccountPage", () => {
     expect(screen.getByText("设备会话")).toBeInTheDocument();
   });
 
+  it("shows role upgrade guidance when some roles are still unavailable", async () => {
+    vi.mocked(getSessionUser).mockResolvedValue({
+      userId: "user_1",
+      role: "vendor",
+      activeRole: "vendor",
+      roles: ["vendor"],
+      email: "vendor@example.com",
+      name: "Vendor",
+    });
+
+    render(await AccountPage());
+
+    expect(screen.getByRole("heading", { name: "可开通角色" })).toBeInTheDocument();
+    expect(screen.getByText("当前账号暂未开通主办方能力。")).toBeInTheDocument();
+  });
+
   it("renders passkey and session details from account services", async () => {
     vi.mocked(getSessionUser).mockResolvedValue({
       userId: "user_1",

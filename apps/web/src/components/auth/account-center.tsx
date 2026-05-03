@@ -28,6 +28,12 @@ const ROLE_LABELS: Record<"vendor" | "organizer" | "admin", string> = {
   admin: "平台管理员",
 };
 
+const ROLE_GUIDANCE: Record<"vendor" | "organizer" | "admin", string> = {
+  vendor: "可浏览市集、提交报名并跟进自己的入驻进度。",
+  organizer: "可发布市集、管理摊位与处理报名申请。",
+  admin: "可管理平台组织者、巡检全站数据并处理高权限事务。",
+};
+
 export function AccountCenter({
   user,
   passkeyCount = 0,
@@ -41,6 +47,9 @@ export function AccountCenter({
   const [activeRole, setActiveRole] = useState(user.activeRole ?? user.roles[0]);
   const [passkeyDraftNames, setPasskeyDraftNames] = useState<Record<string, string>>(() =>
     Object.fromEntries(passkeys.map((passkey) => [passkey.id, passkey.name])),
+  );
+  const unavailableRoles = (["vendor", "organizer", "admin"] as const).filter(
+    (role) => !user.roles.includes(role),
   );
 
   async function handleBindPasskey() {
@@ -195,6 +204,20 @@ export function AccountCenter({
           </li>
         ))}
       </ul>
+      {unavailableRoles.length > 0 ? (
+        <>
+          <h3>可开通角色</h3>
+          <ul aria-label="可开通角色列表">
+            {unavailableRoles.map((role) => (
+              <li key={role}>
+                <p>{ROLE_LABELS[role]}</p>
+                <p>{ROLE_GUIDANCE[role]}</p>
+                <p>当前账号暂未开通{ROLE_LABELS[role]}能力。</p>
+              </li>
+            ))}
+          </ul>
+        </>
+      ) : null}
       <h3>已绑定 Passkey</h3>
       <p>{passkeyCount} 个</p>
       {passkeys.length > 0 ? (

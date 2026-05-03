@@ -86,6 +86,26 @@ describe("AccountCenter", () => {
     expect(screen.getByText("当前使用中")).toBeInTheDocument();
   });
 
+  it("renders guidance for roles that are not yet enabled", () => {
+    render(
+      <AccountCenter
+        user={{
+          name: "Vendor",
+          email: "vendor@example.com",
+          roles: ["vendor"],
+          activeRole: "vendor",
+        }}
+        passkeyCount={0}
+        sessionCount={0}
+      />,
+    );
+
+    expect(screen.getByRole("heading", { name: "可开通角色" })).toBeInTheDocument();
+    expect(screen.getByText("主办方")).toBeInTheDocument();
+    expect(screen.getByText("可发布市集、管理摊位与处理报名申请。")).toBeInTheDocument();
+    expect(screen.getByText("当前账号暂未开通主办方能力。")).toBeInTheDocument();
+  });
+
   it("deletes a passkey from the account center", async () => {
     fetchMock.mockResolvedValue({
       ok: true,
