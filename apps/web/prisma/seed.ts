@@ -59,7 +59,16 @@ async function main() {
       role: UserRole.vendor
     }
   });
-  console.log(`Created vendors: ${vendor1.name}, ${vendor2.name}`);
+  const vendor3 = await prisma.user.upsert({
+    where: { phone: "13800000005" },
+    update: {},
+    create: {
+      phone: "13800000005",
+      name: "Vendor - Craft Brews",
+      role: UserRole.vendor
+    }
+  });
+  console.log(`Created vendors: ${vendor1.name}, ${vendor2.name}, ${vendor3.name}`);
 
   // 4. Create Markets
   const market1 = await prisma.market.create({
@@ -73,9 +82,9 @@ async function main() {
       organizerId: organizer1.id,
       stalls: {
         create: [
-          { code: "A01", name: "主入口特展区", isActive: true },
-          { code: "A02", name: "精品咖啡区", isActive: true },
-          { code: "B01", name: "文创周边区", isActive: true }
+          { code: "A01", name: "主入口特展区", isActive: true, price: 800 },
+          { code: "A02", name: "精品咖啡区", isActive: true, price: 500 },
+          { code: "B01", name: "文创周边区", isActive: true, price: 300 }
         ]
       }
     },
@@ -114,11 +123,34 @@ async function main() {
       applicationNote: "我们是做复古服装的"
     }
   });
+  const application3 = await prisma.application.create({
+    data: {
+      marketId: market1.id,
+      vendorId: vendor3.id,
+      status: ApplicationStatus.paid,
+      boothPreference: "人流密集处",
+      applicationNote: "需要大功率用电",
+      order: {
+        create: {
+          vendorId: vendor3.id,
+          amount: 800,
+          status: "paid",
+          paymentMethod: "wechat",
+          paidAt: new Date()
+        }
+      }
+    }
+  });
+
   console.log(`Created applications for vendors`);
 
   // 6. Assign Stall
   await prisma.stall.update({
     where: { id: market1.stalls[0].id },
+    data: { assignedApplicationId: application3.id }
+  });
+  await prisma.stall.update({
+    where: { id: market1.stalls[1].id },
     data: { assignedApplicationId: application2.id }
   });
   await prisma.application.update({

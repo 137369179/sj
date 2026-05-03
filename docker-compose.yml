@@ -3,14 +3,32 @@ version: '3.8'
 services:
   db:
     image: postgres:15-alpine
+    restart: always
     environment:
-      POSTGRES_USER: mrp_user
-      POSTGRES_PASSWORD: mrp_password
-      POSTGRES_DB: mrp_db
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: password
+      POSTGRES_DB: market_recruitment
     ports:
       - "5432:5432"
     volumes:
-      - mrp_pgdata:/var/lib/postgresql/data
+      - db_data:/var/lib/postgresql/data
+
+  web:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    restart: always
+    ports:
+      - "3000:3000"
+    environment:
+      - DATABASE_URL=postgresql://postgres:password@db:5432/market_recruitment?schema=public
+      - JWT_SECRET=your_super_secret_key_for_jwt_session
+      - UPLOAD_DIR=/app/uploads
+    depends_on:
+      - db
+    volumes:
+      - uploads_data:/app/uploads
 
 volumes:
-  mrp_pgdata:
+  db_data:
+  uploads_data:

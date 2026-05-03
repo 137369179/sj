@@ -36,9 +36,9 @@
 - [x] Dashboard 增加各项申请维度的饼图与柱状图分布
 
 ### P3-4 基础设施与运维监控
-- 引入 Prisma 真实数据 Seed 脚本，优化开发期数据填充。
-- Docker 化部署编排（Dockerfile/docker-compose）。
-- 错误追踪与日志系统（Sentry/Datadog 等）。
+- [x] 引入 Prisma 真实数据 Seed 脚本，优化开发期数据填充。
+- [x] Docker 化部署编排（Dockerfile/docker-compose）。
+- [ ] 错误追踪与日志系统（Sentry/Datadog 等，待探索）。
 
 ---
 **交接建议**：
