@@ -3,6 +3,7 @@ import { NextResponse } from "next/server";
 import { createSessionToken, SESSION_COOKIE_NAME } from "../../../../lib/auth";
 import { auth } from "../../../../lib/auth-config";
 import { db } from "../../../../lib/db";
+import { logger } from "../../../../lib/logger";
 
 export async function POST(request: Request) {
   const body = (await request.json()) as { email?: string; password?: string };
@@ -60,6 +61,12 @@ export async function POST(request: Request) {
         path: "/",
         sameSite: "lax",
         maxAge: 60 * 60 * 24 * 7,
+      });
+
+      logger.info("Auth login succeeded", {
+        email,
+        userId: loginUser.id,
+        activeRole,
       });
     }
 

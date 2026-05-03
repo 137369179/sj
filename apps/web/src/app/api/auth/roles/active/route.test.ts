@@ -4,6 +4,7 @@ import { beforeEach, describe, expect, it, vi } from "vitest";
 import { POST } from "./route";
 import { auth } from "../../../../../lib/auth-config";
 import { db } from "../../../../../lib/db";
+import { logger } from "../../../../../lib/logger";
 
 vi.mock("../../../../../lib/auth-config", () => ({
   auth: {
@@ -21,6 +22,14 @@ vi.mock("../../../../../lib/db", () => ({
     userRoleMembership: {
       findFirst: vi.fn(),
     },
+  },
+}));
+
+vi.mock("../../../../../lib/logger", () => ({
+  logger: {
+    info: vi.fn(),
+    warn: vi.fn(),
+    error: vi.fn(),
   },
 }));
 
@@ -49,5 +58,10 @@ describe("POST /api/auth/roles/active", () => {
 
     expect(response.status).toBe(200);
     await expect(response.json()).resolves.toEqual({ ok: true });
+    expect(logger.info).toHaveBeenCalledWith("Auth active role switched", {
+      userId: "user_1",
+      role: "organizer",
+      sessionId: "session_1",
+    });
   });
 });

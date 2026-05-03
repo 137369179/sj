@@ -51,6 +51,10 @@ export function AccountCenter({
   const unavailableRoles = (["vendor", "organizer", "admin"] as const).filter(
     (role) => !user.roles.includes(role),
   );
+  const securityTips = [
+    passkeyCount === 0 ? "建议尽快绑定至少 1 个 Passkey，减少密码泄露后的账号风险。" : null,
+    sessionCount > 1 ? "当前账号存在多个设备会话，建议检查并撤销不再使用的设备。" : null,
+  ].filter((tip): tip is string => tip !== null);
 
   async function handleBindPasskey() {
     setStatus(null);
@@ -213,6 +217,18 @@ export function AccountCenter({
                 <p>{ROLE_LABELS[role]}</p>
                 <p>{ROLE_GUIDANCE[role]}</p>
                 <p>当前账号暂未开通{ROLE_LABELS[role]}能力。</p>
+              </li>
+            ))}
+          </ul>
+        </>
+      ) : null}
+      {securityTips.length > 0 ? (
+        <>
+          <h3>安全提示</h3>
+          <ul aria-label="安全提示列表">
+            {securityTips.map((tip) => (
+              <li key={tip}>
+                <p>{tip}</p>
               </li>
             ))}
           </ul>

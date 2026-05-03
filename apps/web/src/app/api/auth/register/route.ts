@@ -3,6 +3,7 @@ import { isAPIError } from "better-auth/api";
 
 import { auth } from "../../../../lib/auth-config";
 import { db } from "../../../../lib/db";
+import { logger } from "../../../../lib/logger";
 
 export async function POST(request: Request) {
   const body = (await request.json()) as {
@@ -56,6 +57,12 @@ export async function POST(request: Request) {
             role,
             status: "active",
           },
+        });
+
+        logger.info("Auth registration succeeded", {
+          email,
+          role,
+          userId: user.id,
         });
       }
     }

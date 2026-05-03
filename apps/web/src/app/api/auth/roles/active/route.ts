@@ -3,6 +3,7 @@ import { NextResponse } from "next/server";
 import { createSessionToken, SESSION_COOKIE_NAME } from "../../../../../lib/auth";
 import { auth } from "../../../../../lib/auth-config";
 import { db } from "../../../../../lib/db";
+import { logger } from "../../../../../lib/logger";
 import { isUserRole } from "../../../../../lib/roles";
 
 export async function POST(request: Request) {
@@ -46,6 +47,11 @@ export async function POST(request: Request) {
     path: "/",
     sameSite: "lax",
     maxAge: 60 * 60 * 24 * 7,
+  });
+  logger.info("Auth active role switched", {
+    userId: session.user.id,
+    role,
+    sessionId: session.session.id,
   });
   return response;
 }

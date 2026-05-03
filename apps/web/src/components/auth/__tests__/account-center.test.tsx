@@ -106,6 +106,25 @@ describe("AccountCenter", () => {
     expect(screen.getByText("当前账号暂未开通主办方能力。")).toBeInTheDocument();
   });
 
+  it("renders security tips based on the current account posture", () => {
+    render(
+      <AccountCenter
+        user={{
+          name: "Vendor",
+          email: "vendor@example.com",
+          roles: ["vendor"],
+          activeRole: "vendor",
+        }}
+        passkeyCount={0}
+        sessionCount={3}
+      />,
+    );
+
+    expect(screen.getByRole("heading", { name: "安全提示" })).toBeInTheDocument();
+    expect(screen.getByText("建议尽快绑定至少 1 个 Passkey，减少密码泄露后的账号风险。")).toBeInTheDocument();
+    expect(screen.getByText("当前账号存在多个设备会话，建议检查并撤销不再使用的设备。")).toBeInTheDocument();
+  });
+
   it("deletes a passkey from the account center", async () => {
     fetchMock.mockResolvedValue({
       ok: true,
