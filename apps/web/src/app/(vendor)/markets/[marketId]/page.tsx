@@ -39,6 +39,9 @@ export default async function MarketDetailPage({
             <p>
               {market.city} · {formatDate(market.startsAt)} 至 {formatDate(market.endsAt)}
             </p>
+            <p>
+              主办方：{market.organizerName} | 启用摊位：{market.stallsCount} 个
+            </p>
             <p>当前市集正在公开招募中，可继续进入报名页面提交申请。</p>
           </>
         ) : (

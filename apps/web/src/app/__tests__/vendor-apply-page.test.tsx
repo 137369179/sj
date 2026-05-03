@@ -18,12 +18,14 @@ describe("VendorApplyPage", () => {
     vi.stubGlobal("fetch", vi.fn());
     vi.mocked(getPublishedMarketById).mockResolvedValue({
       id: "market_1",
-      title: "春日咖啡市集",
-      city: "杭州",
-      startsAt: new Date("2026-05-18T10:00:00.000Z"),
-      endsAt: new Date("2026-05-18T18:00:00.000Z"),
-      status: "published"
-    });
+        title: "春日咖啡市集",
+        city: "杭州",
+        startsAt: new Date("2026-05-18T10:00:00.000Z"),
+        endsAt: new Date("2026-05-18T18:00:00.000Z"),
+        status: "published",
+        organizerName: "Org 1",
+        stallsCount: 10
+      });
   });
 
   function fillAndSubmitForm(options?: { withFile?: boolean }) {

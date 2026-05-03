@@ -39,6 +39,9 @@ export default async function VendorMarketsPage({
                   <p>
                     {market.city} | {formatDate(market.startsAt)}
                   </p>
+                  <p>
+                    主办方：{market.organizerName} | 启用摊位：{market.stallsCount} 个
+                  </p>
                   <Link href={`/markets/${market.id}`}>查看详情</Link>
                 </article>
               </li>

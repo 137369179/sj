@@ -140,16 +140,20 @@ describe("market service", () => {
         title: "夏夜面包市集",
         city: "上海",
         startsAt: new Date("2026-06-08T10:00:00.000Z"),
-        endsAt: new Date("2026-06-08T18:00:00.000Z")
+        endsAt: new Date("2026-06-08T18:00:00.000Z"),
+        organizer: { name: "Org 2" },
+        _count: { stalls: 5 }
       },
       {
         id: "market_1",
         title: "春日咖啡市集",
         city: "杭州",
         startsAt: new Date("2026-05-18T10:00:00.000Z"),
-        endsAt: new Date("2026-05-18T18:00:00.000Z")
+        endsAt: new Date("2026-05-18T18:00:00.000Z"),
+        organizer: { name: "Org 1" },
+        _count: { stalls: 10 }
       }
-    ] as Awaited<ReturnType<typeof db.market.findMany>>);
+    ] as any);
 
     await expect(
       listPublishedMarkets({
@@ -163,7 +167,9 @@ describe("market service", () => {
         city: "上海",
         startsAt: new Date("2026-06-08T10:00:00.000Z"),
         endsAt: new Date("2026-06-08T18:00:00.000Z"),
-        status: "published"
+        status: "published",
+        organizerName: "Org 2",
+        stallsCount: 5
       }
     ]);
 
@@ -176,7 +182,9 @@ describe("market service", () => {
         title: true,
         city: true,
         startsAt: true,
-        endsAt: true
+        endsAt: true,
+        organizer: { select: { name: true } },
+        _count: { select: { stalls: { where: { isActive: true } } } }
       },
       orderBy: {
         startsAt: "asc"
@@ -191,8 +199,10 @@ describe("market service", () => {
       city: "杭州",
       startsAt: new Date("2026-05-18T10:00:00.000Z"),
       endsAt: new Date("2026-05-18T18:00:00.000Z"),
-      status: "published"
-    } as Awaited<ReturnType<typeof db.market.findFirst>>);
+      status: "published",
+      organizer: { name: "Org 1" },
+      _count: { stalls: 10 }
+    } as any);
 
     await expect(getPublishedMarketById("market_1")).resolves.toEqual({
       id: "market_1",
@@ -200,7 +210,9 @@ describe("market service", () => {
       city: "杭州",
       startsAt: new Date("2026-05-18T10:00:00.000Z"),
       endsAt: new Date("2026-05-18T18:00:00.000Z"),
-      status: "published"
+      status: "published",
+      organizerName: "Org 1",
+      stallsCount: 10
     });
 
     expect(findFirstSpy).toHaveBeenCalledWith({
@@ -214,7 +226,9 @@ describe("market service", () => {
         city: true,
         startsAt: true,
         endsAt: true,
-        status: true
+        status: true,
+        organizer: { select: { name: true } },
+        _count: { select: { stalls: { where: { isActive: true } } } }
       }
     });
   });

@@ -30,7 +30,9 @@ describe("Vendor market pages", () => {
         city: "上海",
         startsAt: new Date("2026-06-06T10:00:00.000Z"),
         endsAt: new Date("2026-06-06T18:00:00.000Z"),
-        status: "published"
+        status: "published",
+        organizerName: "Org 2",
+        stallsCount: 5
       }
     ]);
 
@@ -48,6 +50,7 @@ describe("Vendor market pages", () => {
       keyword: "手作"
     });
     expect(screen.getByText("独立手作品牌周末")).toBeInTheDocument();
+    expect(screen.getByText("主办方：Org 2 | 启用摊位：5 个")).toBeInTheDocument();
     expect(screen.queryByText("春日咖啡市集")).not.toBeInTheDocument();
   });
 
@@ -58,7 +61,9 @@ describe("Vendor market pages", () => {
       city: "杭州",
       startsAt: new Date("2026-05-18T10:00:00.000Z"),
       endsAt: new Date("2026-05-18T18:00:00.000Z"),
-      status: "published"
+      status: "published",
+      organizerName: "Org 1",
+      stallsCount: 10
     });
 
     const page = await MarketDetailPage({
@@ -74,6 +79,7 @@ describe("Vendor market pages", () => {
       screen.getByRole("heading", { name: "春日咖啡市集" })
     ).toBeInTheDocument();
     expect(screen.getByText("杭州 · 2026-05-18 至 2026-05-18")).toBeInTheDocument();
+    expect(screen.getByText("主办方：Org 1 | 启用摊位：10 个")).toBeInTheDocument();
     expect(
       screen.getByRole("link", { name: "立即报名" })
     ).toHaveAttribute("href", "/markets/market_1/apply");
@@ -89,7 +95,9 @@ describe("Vendor market pages", () => {
       city: "杭州",
       startsAt: new Date("2026-05-18T10:00:00.000Z"),
       endsAt: new Date("2026-05-18T18:00:00.000Z"),
-      status: "published"
+      status: "published",
+      organizerName: "Org 1",
+      stallsCount: 10
     });
 
     const page = await MarketDetailPage({

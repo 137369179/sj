@@ -61,6 +61,8 @@ export type PublishedMarketListItem = {
   startsAt: Date;
   endsAt: Date;
   status: "published";
+  organizerName: string;
+  stallsCount: number;
 };
 
 export type CreateOrganizerMarketInput = MarketPayload & {
@@ -146,7 +148,13 @@ export async function listPublishedMarkets(filters: {
       title: true,
       city: true,
       startsAt: true,
-      endsAt: true
+      endsAt: true,
+      organizer: {
+        select: { name: true }
+      },
+      _count: {
+        select: { stalls: { where: { isActive: true } } }
+      }
     },
     orderBy: {
       startsAt: "asc"
@@ -155,8 +163,14 @@ export async function listPublishedMarkets(filters: {
 
   return filterMarkets(
     markets.map((market) => ({
-      ...market,
-      status: "published" as const
+      id: market.id,
+      title: market.title,
+      city: market.city,
+      startsAt: market.startsAt,
+      endsAt: market.endsAt,
+      status: "published" as const,
+      organizerName: market.organizer.name,
+      stallsCount: market._count.stalls
     })),
     filters
   );
@@ -176,7 +190,13 @@ export async function getPublishedMarketById(
       city: true,
       startsAt: true,
       endsAt: true,
-      status: true
+      status: true,
+      organizer: {
+        select: { name: true }
+      },
+      _count: {
+        select: { stalls: { where: { isActive: true } } }
+      }
     }
   });
 
@@ -185,8 +205,14 @@ export async function getPublishedMarketById(
   }
 
   return {
-    ...market,
-    status: "published"
+    id: market.id,
+    title: market.title,
+    city: market.city,
+    startsAt: market.startsAt,
+    endsAt: market.endsAt,
+    status: "published",
+    organizerName: market.organizer.name,
+    stallsCount: market._count.stalls
   };
 }
 
