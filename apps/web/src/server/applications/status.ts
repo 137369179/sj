@@ -3,7 +3,8 @@ export const applicationStatuses = [
   "under_review",
   "approved",
   "rejected",
-  "stall_assigned"
+  "stall_assigned",
+  "paid"
 ] as const;
 
 export type ApplicationStatus = (typeof applicationStatuses)[number];
@@ -13,7 +14,8 @@ const allowedTransitions: Record<ApplicationStatus, ApplicationStatus[]> = {
   under_review: ["approved", "rejected"],
   approved: ["stall_assigned"],
   rejected: [],
-  stall_assigned: []
+  stall_assigned: ["paid"],
+  paid: []
 };
 
 export function canTransitionApplication(

@@ -65,7 +65,12 @@ describe("Vendor applications page", () => {
         createdAt: new Date("2026-05-01T00:00:00.000Z"),
         assignedStallId: "stall_1",
         assignedStallCode: "A-01",
-        assignedStallName: "主通道 1 号位"
+        assignedStallName: "主通道 1 号位",
+        assignedStallPrice: 800,
+        orderId: "order_1",
+        orderAmount: 800,
+        orderStatus: "pending",
+        orderPaidAt: null
       }
     ]);
 
@@ -152,7 +157,11 @@ describe("Vendor applications page", () => {
         createdAt: new Date("2026-05-01T00:00:00.000Z"),
         assignedStallId: null,
         assignedStallCode: null,
-        assignedStallName: null
+        assignedStallPrice: null,
+        orderId: null,
+        orderAmount: null,
+        orderStatus: null,
+        orderPaidAt: null
       },
       {
         id: "app_2",
@@ -169,7 +178,17 @@ describe("Vendor applications page", () => {
         createdAt: new Date("2026-05-01T01:00:00.000Z"),
         assignedStallId: null,
         assignedStallCode: null,
-        assignedStallName: null
+      assignedStallName: null,
+      assignedStallPrice: null,
+      orderId: null,
+      orderAmount: null,
+      orderStatus: null,
+      orderPaidAt: null,
+      assignedStallPrice: null,
+      orderId: null,
+      orderAmount: null,
+      orderStatus: null,
+      orderPaidAt: null
       },
       {
         id: "app_3",

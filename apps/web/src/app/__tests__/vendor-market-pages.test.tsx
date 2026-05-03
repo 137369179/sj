@@ -80,8 +80,8 @@ describe("Vendor market pages", () => {
     });
 
     vi.mocked(listAvailableStallsForMarket).mockResolvedValue([
-      { id: "stall_1", code: "A01", name: "摊位 A01" },
-      { id: "stall_2", code: "A02", name: "摊位 A02" }
+      { id: "stall_1", code: "A01", name: "主展位", price: 1000 },
+      { id: "stall_2", code: "B01", name: "侧展位", price: 500 }
     ]);
 
     const page = await MarketDetailPage({

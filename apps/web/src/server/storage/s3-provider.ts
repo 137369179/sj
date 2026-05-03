@@ -40,7 +40,7 @@ export class S3StorageProvider implements StorageProvider {
 
     return {
       url: `${baseUrl}/${storedName}`,
-      originalName: file.name
+      storedName
     };
   }
 }
