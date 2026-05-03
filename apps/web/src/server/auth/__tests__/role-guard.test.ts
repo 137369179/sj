@@ -5,11 +5,21 @@ import { NextRequest } from "next/server";
 
 import { POST } from "../../../app/api/auth/login/route";
 import { getSessionRole, getSessionUser, createSessionToken, verifySessionToken } from "../../../lib/auth";
+import { db } from "../../../lib/db";
 import { canAccessRoute } from "../../../lib/roles";
 import { middleware } from "../../../middleware";
 
 vi.mock("next/headers", () => ({
   cookies: vi.fn()
+}));
+
+vi.mock("../../../lib/db", () => ({
+  db: {
+    user: {
+      findFirst: vi.fn(),
+      findMany: vi.fn()
+    }
+  }
 }));
 
 describe("canAccessRoute", () => {
@@ -75,7 +85,19 @@ describe("getSessionUser", () => {
 });
 
 describe("POST /api/auth/login", () => {
+  beforeEach(() => {
+    vi.clearAllMocks();
+  });
+
   it("sets the session cookie for a valid payload", async () => {
+    vi.mocked(db.user.findFirst).mockResolvedValue(null);
+    vi.mocked(db.user.findMany).mockResolvedValue([
+      {
+        id: "db_vendor_1",
+        role: "vendor"
+      }
+    ] as any);
+
     const request = new Request("http://localhost/api/auth/login", {
       method: "POST",
       headers: {
@@ -94,7 +116,7 @@ describe("POST /api/auth/login", () => {
     
     const payload = await verifySessionToken(token as string);
     expect(payload?.role).toBe("vendor");
-    expect(payload?.userId).toBe("vendor_1");
+    expect(payload?.userId).toBe("db_vendor_1");
   });
 
   it("rejects an invalid session payload", async () => {
@@ -111,6 +133,41 @@ describe("POST /api/auth/login", () => {
     expect(response.status).toBe(400);
     await expect(response.json()).resolves.toEqual({ message: "invalid session payload" });
   });
+
+  it("rejects a login request when the user does not exist", async () => {
+    vi.mocked(db.user.findFirst).mockResolvedValue(null);
+    vi.mocked(db.user.findMany).mockResolvedValue([]);
+
+    const request = new Request("http://localhost/api/auth/login", {
+      method: "POST",
+      headers: {
+        "content-type": "application/json"
+      },
+      body: JSON.stringify({ role: "vendor", userId: "nonexistent_vendor" })
+    });
+
+    const response = await POST(request);
+
+    expect(response.status).toBe(401);
+    await expect(response.json()).resolves.toEqual({ message: "user not found" });
+  });
+
+  it("returns service unavailable when login identity lookup fails", async () => {
+    vi.mocked(db.user.findFirst).mockRejectedValue(new Error("database unavailable"));
+
+    const request = new Request("http://localhost/api/auth/login", {
+      method: "POST",
+      headers: {
+        "content-type": "application/json"
+      },
+      body: JSON.stringify({ role: "vendor", userId: "vendor_1" })
+    });
+
+    const response = await POST(request);
+
+    expect(response.status).toBe(503);
+    await expect(response.json()).resolves.toEqual({ message: "service unavailable" });
+  });
 });
 
 describe("middleware", () => {
@@ -126,5 +183,21 @@ describe("middleware", () => {
 
     expect(response.status).toBe(307);
     expect(response.headers.get("location")).toBe("http://localhost/");
+  });
+
+  it("preserves the forwarded host when redirecting blocked navigation", async () => {
+    const token = await createSessionToken("vendor_1", "vendor");
+    const request = new NextRequest("http://localhost:3002/organizer/markets", {
+      headers: {
+        cookie: `mrp_session=${token}`,
+        "x-forwarded-host": "127.0.0.1:3002",
+        "x-forwarded-proto": "http"
+      }
+    });
+
+    const response = await middleware(request);
+
+    expect(response.status).toBe(307);
+    expect(response.headers.get("location")).toBe("http://127.0.0.1:3002/");
   });
 });

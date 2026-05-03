@@ -65,6 +65,20 @@ describe("Vendor market pages", () => {
     expect(screen.queryByText("春日咖啡市集")).not.toBeInTheDocument();
   });
 
+  it("renders a graceful fallback when the market list cannot be loaded", async () => {
+    vi.mocked(listPublishedMarkets).mockRejectedValue(new Error("database unavailable"));
+
+    const page = await VendorMarketsPage({
+      searchParams: Promise.resolve({})
+    });
+
+    render(page);
+
+    expect(screen.getByRole("heading", { name: "发现市集" })).toBeInTheDocument();
+    expect(screen.getByRole("alert")).toHaveTextContent("市集列表暂时不可用，请稍后再试。");
+    expect(screen.queryByRole("link", { name: "查看详情" })).not.toBeInTheDocument();
+  });
+
   it("renders base market information on the detail page", async () => {
     vi.mocked(getPublishedMarketById).mockResolvedValue({
       id: "market_1",

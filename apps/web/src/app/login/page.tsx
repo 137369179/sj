@@ -3,6 +3,7 @@ import { cookies } from "next/headers";
 import { getSessionUser, SESSION_COOKIE_NAME, createSessionToken } from "../../lib/auth";
 import { isUserRole } from "../../lib/roles";
 import { AppShell } from "../../components/layout/app-shell";
+import { resolveLoginUser } from "../../server/auth/service";
 
 export default async function LoginPage({
   searchParams
@@ -26,7 +27,19 @@ export default async function LoginPage({
       redirect("/login?error=invalid_input");
     }
 
-    const sessionToken = await createSessionToken(userId, role);
+    let loginUser;
+
+    try {
+      loginUser = await resolveLoginUser(userId, role);
+    } catch (error) {
+      redirect("/login?error=service_unavailable");
+    }
+
+    if (!loginUser) {
+      redirect("/login?error=invalid_input");
+    }
+
+    const sessionToken = await createSessionToken(loginUser.id, role);
     const cookieStore = await cookies();
 
     cookieStore.set(SESSION_COOKIE_NAME, sessionToken, {
@@ -42,14 +55,17 @@ export default async function LoginPage({
   return (
     <AppShell>
       <main aria-labelledby="login-title">
-        <h2 id="login-title">登录 (Stub)</h2>
-        <p>这是一个用于开发和测试的简易登录入口，后续将替换为真实认证系统。</p>
+        <h2 id="login-title">登录</h2>
+        <p>使用已配置的演示账号登录，快速验证摊主、主办方和平台管理员流程。</p>
         <form 
           action={loginAction}
           aria-label="登录表单"
         >
           {resolvedSearchParams.error === "invalid_input" && (
             <p role="alert" style={{ color: "red" }}>输入无效，请提供正确的角色和用户 ID。</p>
+          )}
+          {resolvedSearchParams.error === "service_unavailable" && (
+            <p role="alert" style={{ color: "red" }}>登录服务暂时不可用，请稍后再试。</p>
           )}
           <label>
             角色

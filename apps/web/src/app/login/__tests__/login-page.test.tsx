@@ -24,7 +24,10 @@ describe("LoginPage", () => {
     });
     render(page);
 
-    expect(screen.getByRole("heading", { name: "登录 (Stub)" })).toBeInTheDocument();
+    expect(screen.getByRole("heading", { name: "登录" })).toBeInTheDocument();
+    expect(
+      screen.getByText("使用已配置的演示账号登录，快速验证摊主、主办方和平台管理员流程。")
+    ).toBeInTheDocument();
     expect(screen.getByLabelText("角色")).toBeInTheDocument();
     expect(screen.getByLabelText("用户 ID")).toBeInTheDocument();
     expect(screen.getByRole("button", { name: "登录" })).toBeInTheDocument();
@@ -39,5 +42,16 @@ describe("LoginPage", () => {
     render(page);
 
     expect(screen.getByRole("alert")).toHaveTextContent("输入无效，请提供正确的角色和用户 ID。");
+  });
+
+  it("renders a service unavailable message when login is temporarily unavailable", async () => {
+    vi.mocked(getSessionUser).mockResolvedValue(null);
+
+    const page = await LoginPage({
+      searchParams: Promise.resolve({ error: "service_unavailable" })
+    });
+    render(page);
+
+    expect(screen.getByRole("alert")).toHaveTextContent("登录服务暂时不可用，请稍后再试。");
   });
 });

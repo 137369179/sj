@@ -15,13 +15,23 @@ export default async function VendorMarketsPage({
   }>;
 }) {
   const filters = (await searchParams) ?? {};
-  const featuredMarkets = await listPublishedMarkets(filters);
+  let featuredMarkets: Awaited<ReturnType<typeof listPublishedMarkets>> = [];
+  let loadError = false;
+
+  try {
+    featuredMarkets = await listPublishedMarkets(filters);
+  } catch (error) {
+    loadError = true;
+  }
 
   return (
     <AppShell>
       <main aria-labelledby="vendor-markets-title">
         <h2 id="vendor-markets-title">发现市集</h2>
         <p>浏览公开招募中的活动，并按城市或关键词快速筛选。</p>
+        {loadError ? (
+          <p role="alert">市集列表暂时不可用，请稍后再试。</p>
+        ) : null}
         <form aria-label="市集筛选">
           <div style={{ display: "flex", gap: "1rem", flexWrap: "wrap", marginBottom: "1rem" }}>
             <label>

@@ -12,11 +12,22 @@ export async function middleware(request: NextRequest) {
     const role = payload?.role;
 
     if (isUserRole(role) && !canAccessRoute(role, request.nextUrl.pathname)) {
-      return NextResponse.redirect(new URL("/", request.url));
+      return NextResponse.redirect(getRedirectUrl(request, "/"));
     }
   }
 
   return NextResponse.next();
+}
+
+function getRedirectUrl(request: NextRequest, pathname: string) {
+  const forwardedHost = request.headers.get("x-forwarded-host");
+  const forwardedProto = request.headers.get("x-forwarded-proto");
+
+  if (forwardedHost) {
+    return new URL(`${forwardedProto ?? request.nextUrl.protocol.replace(":", "")}://${forwardedHost}${pathname}`);
+  }
+
+  return new URL(pathname, request.url);
 }
 
 export const config = {
