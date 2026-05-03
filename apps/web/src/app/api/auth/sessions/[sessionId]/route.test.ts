@@ -2,10 +2,10 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
 import { DELETE } from "./route";
-import { auth } from "../../../../../../lib/auth-config";
-import { db } from "../../../../../../lib/db";
+import { auth } from "../../../../../lib/auth-config";
+import { db } from "../../../../../lib/db";
 
-vi.mock("../../../../../../lib/auth-config", () => ({
+vi.mock("../../../../../lib/auth-config", () => ({
   auth: {
     api: {
       getSession: vi.fn(),
@@ -14,7 +14,7 @@ vi.mock("../../../../../../lib/auth-config", () => ({
   },
 }));
 
-vi.mock("../../../../../../lib/db", () => ({
+vi.mock("../../../../../lib/db", () => ({
   db: {
     session: {
       findFirst: vi.fn(),

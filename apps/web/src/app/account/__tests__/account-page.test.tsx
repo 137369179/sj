@@ -71,6 +71,8 @@ describe("AccountPage", () => {
         id: "session_1",
         label: "Chrome on macOS",
         expiresAtLabel: "过期时间 2026-05-10 09:00",
+        createdAtLabel: "登录于 2026-05-03 08:30",
+        ipAddressLabel: "IP 127.0.0.1",
         isCurrent: false,
       },
     ]);
@@ -81,5 +83,7 @@ describe("AccountPage", () => {
     expect(screen.getByText("创建于 2026-05-03 09:00")).toBeInTheDocument();
     expect(screen.getByText("Chrome on macOS")).toBeInTheDocument();
     expect(screen.getByText("过期时间 2026-05-10 09:00")).toBeInTheDocument();
+    expect(screen.getByText("登录于 2026-05-03 08:30")).toBeInTheDocument();
+    expect(screen.getByText("IP 127.0.0.1")).toBeInTheDocument();
   });
 });

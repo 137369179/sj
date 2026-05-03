@@ -33,6 +33,9 @@ export function AccountCenter({
   const [status, setStatus] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [activeRole, setActiveRole] = useState(user.activeRole ?? user.roles[0]);
+  const [passkeyDraftNames, setPasskeyDraftNames] = useState<Record<string, string>>(() =>
+    Object.fromEntries(passkeys.map((passkey) => [passkey.id, passkey.name])),
+  );
 
   async function handleBindPasskey() {
     setStatus(null);
@@ -112,6 +115,43 @@ export function AccountCenter({
     router.refresh();
   }
 
+  async function handleRenamePasskey(passkeyId: string, currentName: string) {
+    const nextName = passkeyDraftNames[passkeyId]?.trim();
+
+    if (!nextName) {
+      setStatus(null);
+      setError("Passkey 名称不能为空。");
+      return;
+    }
+
+    if (nextName === currentName) {
+      setStatus("Passkey 名称未变化。");
+      setError(null);
+      return;
+    }
+
+    setStatus(null);
+    setError(null);
+    const response = await fetch(`/api/auth/passkeys/${passkeyId}`, {
+      method: "PATCH",
+      headers: {
+        "content-type": "application/json",
+      },
+      body: JSON.stringify({ name: nextName }),
+    });
+
+    if (!response.ok) {
+      const result = (await response.json().catch(() => ({ message: "更新 Passkey 名称失败。" }))) as {
+        message?: string;
+      };
+      setError(result.message ?? "更新 Passkey 名称失败。");
+      return;
+    }
+
+    setStatus("Passkey 名称已更新。");
+    router.refresh();
+  }
+
   async function handleRevokeSession(sessionId: string) {
     setStatus(null);
     setError(null);
@@ -144,6 +184,22 @@ export function AccountCenter({
             <li key={passkey.id}>
               <p>{passkey.name}</p>
               {passkey.createdAtLabel ? <p>{passkey.createdAtLabel}</p> : null}
+              <label>
+                <span className="sr-only">Passkey 名称 {passkey.name}</span>
+                <input
+                  aria-label={`Passkey 名称 ${passkey.name}`}
+                  value={passkeyDraftNames[passkey.id] ?? passkey.name}
+                  onChange={(event) =>
+                    setPasskeyDraftNames((current) => ({
+                      ...current,
+                      [passkey.id]: event.target.value,
+                    }))
+                  }
+                />
+              </label>
+              <button type="button" onClick={() => void handleRenamePasskey(passkey.id, passkey.name)}>
+                重命名 {passkey.name}
+              </button>
               <button type="button" onClick={() => void handleDeletePasskey(passkey.id)}>
                 删除 {passkey.name}
               </button>
@@ -161,7 +217,9 @@ export function AccountCenter({
             <li key={session.id}>
               <p>{session.label}</p>
               {session.isCurrent ? <p>当前设备</p> : null}
+              {session.createdAtLabel ? <p>{session.createdAtLabel}</p> : null}
               {session.expiresAtLabel ? <p>{session.expiresAtLabel}</p> : null}
+              {session.ipAddressLabel ? <p>{session.ipAddressLabel}</p> : null}
               {!session.isCurrent ? (
                 <button type="button" onClick={() => void handleRevokeSession(session.id)}>
                   撤销 {session.label}

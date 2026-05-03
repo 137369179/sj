@@ -102,6 +102,48 @@ describe("AccountCenter", () => {
     expect(await screen.findByRole("status")).toHaveTextContent("Passkey 已删除。");
   });
 
+  it("renames a passkey from the account center", async () => {
+    fetchMock.mockResolvedValue({
+      ok: true,
+      json: async () => ({ ok: true }),
+    } satisfies Partial<Response>);
+
+    render(
+      <AccountCenter
+        user={{
+          name: "Organizer",
+          email: "organizer@example.com",
+          roles: ["vendor", "organizer"],
+          activeRole: "organizer",
+        }}
+        passkeyCount={1}
+        passkeys={[
+          {
+            id: "passkey_1",
+            name: "MacBook Pro",
+            createdAtLabel: "创建于 2026-05-03 09:00",
+          },
+        ]}
+        sessionCount={0}
+      />,
+    );
+
+    fireEvent.change(screen.getByLabelText("Passkey 名称 MacBook Pro"), {
+      target: { value: "Office Key" },
+    });
+    fireEvent.click(screen.getByRole("button", { name: "重命名 MacBook Pro" }));
+
+    await waitFor(() => {
+      expect(fetchMock).toHaveBeenCalledWith("/api/auth/passkeys/passkey_1", {
+        method: "PATCH",
+        headers: { "content-type": "application/json" },
+        body: JSON.stringify({ name: "Office Key" }),
+      });
+    });
+
+    expect(await screen.findByRole("status")).toHaveTextContent("Passkey 名称已更新。");
+  });
+
   it("revokes a single session from the account center", async () => {
     fetchMock.mockResolvedValue({
       ok: true,

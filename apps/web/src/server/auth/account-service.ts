@@ -6,6 +6,8 @@ export type AccountSessionSummary = {
   id: string;
   label: string;
   expiresAtLabel?: string;
+  createdAtLabel?: string;
+  ipAddressLabel?: string;
   isCurrent: boolean;
 };
 
@@ -88,7 +90,9 @@ function normalizeSession(
   return {
     id,
     label,
+    createdAtLabel: readDateLabel(record.createdAt, "登录于"),
     expiresAtLabel: readDateLabel(record.expiresAt, "过期时间"),
+    ipAddressLabel: ipAddress ? `IP ${ipAddress}` : undefined,
     isCurrent: currentSessionId === id,
   };
 }
