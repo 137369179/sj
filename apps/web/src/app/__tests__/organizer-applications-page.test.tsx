@@ -95,6 +95,9 @@ describe("Organizer applications page", () => {
     expect(listOrganizerMarketOptions).toHaveBeenCalledWith("org_1");
     expect(listOrganizerApplications).toHaveBeenCalledWith("org_1");
     expect(screen.getByRole("heading", { name: "报名申请" })).toBeInTheDocument();
+    expect(screen.getByText("优先处理申请")).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "候补" })).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "补件" })).toBeInTheDocument();
     expect(screen.getByText("山野咖啡")).toBeInTheDocument();
     expect(screen.getByText("春日咖啡市集 · 杭州")).toBeInTheDocument();
     expect(screen.getByText("状态：待审核")).toBeInTheDocument();

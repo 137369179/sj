@@ -63,6 +63,16 @@
   - 已记录成功注册审计日志
 - `apps/web/src/app/api/auth/roles/active/route.ts`
   - 已记录角色切换审计日志
+- 角色玩法升级第一轮
+  - 已完成共享角色玩法元数据，统一 `ROLE_LABELS`、`ROLE_GUIDANCE`、摊主任务分组和主办方优先事项
+  - 已将摊主端市场列表升级为“机会优先”语义，新增“适合我的招募”、审核周期和主办方信誉提示
+  - 已将摊主端报名页升级为“风险优先”语义，新增报名前确认提示与补件/确认超时说明
+  - 已将摊主端报名列表升级为“待处理事项”语义，并在服务层补充 `taskGroup`
+  - 已将主办方市集页升级为“招募进度总览”语义，首屏展示待审核申请、待确认摊主和空位风险
+  - 已将主办方申请页升级为“优先处理申请”语义，增加候补/补件动作入口占位
+  - 已将主办方看板页升级为“成场风险提醒”语义，强调确认率和空位风险
+- `apps/web/src/components/layout/app-shell.tsx`
+  - 已保持双角色产品入口语义，支持摊主侧“我的报名/我的通知”与主办方端分离导航
 
 ## 测试记录
 
@@ -70,6 +80,10 @@
   - `pnpm --filter web test -- src/app/api/auth/passkeys/[passkeyId]/route.test.ts src/app/api/auth/sessions/[sessionId]/route.test.ts src/components/layout/__tests__/auth-status.test.tsx src/components/auth/__tests__/account-center.test.tsx`
 - 账号中心专项与回归通过：
   - `pnpm --filter web test -- src/app/account/__tests__/account-page.test.tsx src/components/auth/__tests__/account-center.test.tsx`
+- 角色玩法升级专项与回归通过：
+  - `pnpm --filter web test -- src/app/__tests__/vendor-market-pages.test.tsx src/app/__tests__/vendor-apply-page.test.tsx src/app/__tests__/vendor-applications-page.test.tsx`
+  - `pnpm --filter web test -- src/app/__tests__/organizer-markets-page.test.tsx src/app/__tests__/organizer-applications-page.test.tsx src/app/__tests__/organizer-dashboard-page.test.tsx`
+  - `pnpm --filter web test -- src/components/layout/__tests__/app-shell.test.tsx src/server/applications/__tests__/application-service.test.ts`
 - 当前全量 Vitest 回归通过：
   - `pnpm --filter web test`
 - 当前生产构建通过：
@@ -79,4 +93,5 @@
 
 - 认证升级主链路已完成从“演示型登录”到“正式认证基座”的迁移。
 - 注册、登录、邮箱验证、找回密码、角色切换、路由保护、账号中心核心链路均已落地。
+- 角色玩法升级已完成第一轮可见实现，摊主端和主办方端开始从“同一后台不同菜单”转向“机会产品 vs 招商控制台”的差异化体验。
 - 账号中心已经具备基础设备管理能力，但仍有进一步精细化管理空间，详见 `docs/TODO_认证升级.md`。

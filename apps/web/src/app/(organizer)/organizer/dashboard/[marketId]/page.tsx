@@ -91,6 +91,10 @@ export default async function OrganizerDashboardPage({
             查看当前市集摊位
           </Link>
         </nav>
+        <aside aria-label="成场风险提醒" style={{ margin: "1.5rem 0" }}>
+          <h3>成场风险提醒</h3>
+          <p>确认率偏低或空位较多时，优先推进候补补位和摊主确认，避免临近开场仍有空档。</p>
+        </aside>
         {marketOptions.length > 0 ? (
           <nav aria-label="切换市集">
             {marketOptions.map((market) => {

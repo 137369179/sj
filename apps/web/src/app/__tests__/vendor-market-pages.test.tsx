@@ -62,6 +62,9 @@ describe("Vendor market pages", () => {
     expect(screen.getByText("独立手作品牌周末")).toBeInTheDocument();
     expect(screen.getByRole("img", { name: "独立手作品牌周末 缩略图" })).toHaveAttribute("src", "https://example.com/cover2.jpg");
     expect(screen.getByText("主办方：Org 2 | 启用摊位：5 个")).toBeInTheDocument();
+    expect(screen.getByRole("heading", { name: "适合我的招募" })).toBeInTheDocument();
+    expect(screen.getByText(/审核周期/)).toBeInTheDocument();
+    expect(screen.getByText(/主办方信誉/)).toBeInTheDocument();
     expect(screen.queryByText("春日咖啡市集")).not.toBeInTheDocument();
   });
 

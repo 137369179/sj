@@ -32,6 +32,13 @@ export default async function VendorApplyPage({
         <p>市集编号：{marketId}</p>
         <p>{market?.title ?? "当前市集暂不可报名"}</p>
         <p>{market?.city ?? "请返回发现市集查看其他公开招募中的活动。"}</p>
+        {market ? (
+          <section aria-labelledby="vendor-apply-checklist-title" style={{ margin: "1.5rem 0" }}>
+            <h3 id="vendor-apply-checklist-title">报名前先确认</h3>
+            <p>报名截止前可提交，补件和确认逾期将影响本次机会，也会降低后续活动的审核效率。</p>
+            <p>优先完善通用资料和附件，可减少重复填写，让主办方更快判断你是否适合本场市集。</p>
+          </section>
+        ) : null}
         {returnToApplications ? (
           <section aria-label="报名回跳">
             <p>当前来自我的报名页，可直接返回当前市集的报名记录。</p>

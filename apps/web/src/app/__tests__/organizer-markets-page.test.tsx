@@ -81,6 +81,9 @@ describe("Organizer markets page", () => {
 
     expect(listOrganizerMarkets).toHaveBeenCalledWith("org_1");
     expect(screen.getByRole("heading", { name: "我的市集" })).toBeInTheDocument();
+    expect(screen.getByRole("heading", { name: "招募进度总览" })).toBeInTheDocument();
+    expect(screen.getByText("待审核申请")).toBeInTheDocument();
+    expect(screen.getByText("空位风险")).toBeInTheDocument();
     expect(screen.getByLabelText("开始时间")).toBeInTheDocument();
     expect(screen.getByLabelText("结束时间")).toBeInTheDocument();
     expect(screen.getByRole("button", { name: "创建草稿" })).toBeInTheDocument();

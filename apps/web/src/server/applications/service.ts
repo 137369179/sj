@@ -112,6 +112,7 @@ export type VendorApplicationListItem = {
   marketTitle: string;
   marketCity: string;
   status: ApplicationStatus;
+  taskGroup: "pending-action" | "in-progress" | "done";
   note: string | null;
   applicationNote: string | null;
   reviewNote: string | null;
@@ -377,6 +378,7 @@ function formatVendorApplication(
     marketTitle: application.market.title,
     marketCity: application.market.city,
     status: application.status,
+    taskGroup: getVendorApplicationTaskGroup(application.status),
     note: application.note,
     applicationNote: application.applicationNote ?? application.note,
     reviewNote: application.reviewNote,
@@ -394,6 +396,20 @@ function formatVendorApplication(
     orderPaymentMethod: application.order?.paymentMethod ?? null,
     orderPaidAt: application.order?.paidAt ?? null
   };
+}
+
+function getVendorApplicationTaskGroup(
+  status: ApplicationStatus
+): "pending-action" | "in-progress" | "done" {
+  if (status === "submitted") {
+    return "pending-action";
+  }
+
+  if (status === "under_review") {
+    return "in-progress";
+  }
+
+  return "done";
 }
 
 function normalizeReviewRecords(

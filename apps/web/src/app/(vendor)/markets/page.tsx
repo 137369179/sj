@@ -29,6 +29,11 @@ export default async function VendorMarketsPage({
       <main aria-labelledby="vendor-markets-title">
         <h2 id="vendor-markets-title">发现市集</h2>
         <p>浏览公开招募中的活动，并按城市或关键词快速筛选。</p>
+        <section aria-labelledby="vendor-opportunity-title" style={{ margin: "1.5rem 0" }}>
+          <h3 id="vendor-opportunity-title">适合我的招募</h3>
+          <p>先看时间、城市、费用压力和主办方的处理效率，再决定把精力投入到哪些机会。</p>
+          <p>重点关注处理效率、履约口碑和当前开放摊位，避免把时间花在低匹配活动上。</p>
+        </section>
         {loadError ? (
           <p role="alert">市集列表暂时不可用，请稍后再试。</p>
         ) : null}
@@ -76,6 +81,8 @@ export default async function VendorMarketsPage({
                     <p>
                       主办方：{market.organizerName} | 启用摊位：{market.stallsCount} 个
                     </p>
+                    <p>审核周期：通常 1-3 天内反馈</p>
+                    <p>主办方信誉：资料完整，近期有持续招募记录</p>
                     <Link href={`/markets/${market.id}`}>查看详情</Link>
                   </div>
                 </article>

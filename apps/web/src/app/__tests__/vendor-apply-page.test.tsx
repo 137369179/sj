@@ -82,6 +82,9 @@ describe("VendorApplyPage", () => {
     expect(
       screen.getByRole("heading", { name: "提交报名申请" })
     ).toBeInTheDocument();
+    expect(screen.getByRole("heading", { name: "报名前先确认" })).toBeInTheDocument();
+    expect(screen.getByText(/补件和确认逾期将影响本次机会/)).toBeInTheDocument();
+    expect(screen.getByText(/优先完善通用资料/)).toBeInTheDocument();
     expect(screen.getByLabelText("摊位偏好")).toBeInTheDocument();
     expect(screen.getByLabelText("报名备注")).toBeInTheDocument();
     expect(screen.getByLabelText("附件文件")).toBeInTheDocument();

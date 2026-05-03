@@ -117,6 +117,16 @@ export default async function OrganizerMarketsPage({
       <main aria-labelledby="organizer-markets-title">
         <h2 id="organizer-markets-title">我的市集</h2>
         <p>创建草稿、编辑信息，并在准备完成后发布市集。</p>
+        {isOrganizerSession ? (
+          <section aria-labelledby="organizer-overview-title" style={{ margin: "1.5rem 0" }}>
+            <h3 id="organizer-overview-title">招募进度总览</h3>
+            <ul>
+              <li>待审核申请</li>
+              <li>待确认摊主</li>
+              <li>空位风险</li>
+            </ul>
+          </section>
+        ) : null}
 
         {!isOrganizerSession ? <p>请先以主办方身份登录后管理市集。</p> : null}
 

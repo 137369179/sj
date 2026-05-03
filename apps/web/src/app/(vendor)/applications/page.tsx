@@ -50,6 +50,14 @@ export default async function VendorApplicationsPage({
 
         {isVendorSession ? (
           <>
+            <section aria-labelledby="vendor-task-title" style={{ marginBottom: "1.5rem" }}>
+              <h3 id="vendor-task-title">待处理事项</h3>
+              <ul>
+                <li>待补件</li>
+                <li>待确认</li>
+                <li>审核中</li>
+              </ul>
+            </section>
             {currentMarketTitle ? <p>当前市集：{currentMarketTitle}</p> : null}
             <section aria-label="报名摘要">
               <p>全部报名：{summary.all}</p>

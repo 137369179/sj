@@ -91,6 +91,8 @@ describe("Organizer dashboard page", () => {
       organizerId: "org_1"
     });
     expect(screen.getByRole("heading", { name: "市集看板" })).toBeInTheDocument();
+    expect(screen.getByText("成场风险提醒")).toBeInTheDocument();
+    expect(screen.getByText(/确认率偏低或空位较多时/)).toBeInTheDocument();
     expect(screen.getByText("春日咖啡市集 · 杭州")).toBeInTheDocument();
     expect(screen.getByText("总报名数")).toBeInTheDocument();
     expect(screen.getAllByText("5")).toHaveLength(2);

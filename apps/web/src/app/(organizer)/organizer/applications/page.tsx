@@ -138,6 +138,14 @@ export default async function OrganizerApplicationsPage({
 
         {isOrganizerSession ? (
           <>
+            <section aria-label="优先处理申请" style={{ marginBottom: "1.5rem" }}>
+              <h3>优先处理申请</h3>
+              <p>优先处理资料完整、履约稳定且匹配当前市集主题的申请，减少后续补位压力。</p>
+              <div style={{ display: "flex", gap: "0.75rem", flexWrap: "wrap" }}>
+                <button type="button">候补</button>
+                <button type="button">补件</button>
+              </div>
+            </section>
             {stallReturnHref ? (
               <section aria-label="来源回跳">
                 <p>当前来自摊位管理页。</p>

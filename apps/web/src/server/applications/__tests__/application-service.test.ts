@@ -258,6 +258,7 @@ describe("application service", () => {
         marketTitle: "春日咖啡市集",
         marketCity: "杭州",
         status: "stall_assigned",
+        taskGroup: "done",
         note: "主营手作咖啡",
         applicationNote: "主营手作咖啡",
         attachments: [

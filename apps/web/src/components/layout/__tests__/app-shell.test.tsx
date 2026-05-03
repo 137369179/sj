@@ -56,6 +56,8 @@ describe("AppShell", () => {
     expect(brandLink.closest(".shell-header")).not.toBeNull();
     expect(screen.getByRole("link", { name: "摊主端" })).toBeInTheDocument();
     expect(screen.getByRole("link", { name: "主办方端" })).toBeInTheDocument();
+    expect(screen.getByRole("link", { name: "摊主端" })).toHaveAttribute("href", "/markets");
+    expect(screen.getByRole("link", { name: "主办方端" })).toHaveAttribute("href", "/organizer/markets");
     expect(screen.getByRole("link", { name: "主办方端" })).toHaveAttribute(
       "data-prefetch",
       "false"
@@ -77,6 +79,7 @@ describe("AppShell", () => {
       })
     );
 
+    expect(screen.getByRole("link", { name: "我的报名" })).toBeInTheDocument();
     expect(screen.getByRole("link", { name: "主办方端" })).toHaveAttribute(
       "data-prefetch",
       "false"
