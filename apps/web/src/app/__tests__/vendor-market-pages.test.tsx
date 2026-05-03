@@ -1,4 +1,4 @@
-import { render, screen } from "@testing-library/react";
+import { render, screen, within } from "@testing-library/react";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
 import {
@@ -108,9 +108,12 @@ describe("Vendor market pages", () => {
     ).toHaveAttribute("href", "/applications");
     
     expect(screen.getByText("可用摊位一览")).toBeInTheDocument();
-    expect(screen.getByText("A01")).toBeInTheDocument();
-    expect(screen.getByText("- 摊位 A01")).toBeInTheDocument();
-    expect(screen.getByText("A02")).toBeInTheDocument();
+    const stallList = screen.getByRole("region", { name: "可用摊位一览" });
+    const stallItems = within(stallList).getAllByRole("listitem");
+
+    expect(stallItems).toHaveLength(2);
+    expect(stallItems[0]).toHaveTextContent("A01 - 主展位");
+    expect(stallItems[1]).toHaveTextContent("B01 - 侧展位");
   });
 
   it("renders an applications return link when opened from vendor applications", async () => {
