@@ -13,6 +13,10 @@ vi.mock("../../server/applications/service", () => ({
   listVendorApplications: vi.fn()
 }));
 
+vi.mock("../../components/layout/app-shell", () => ({
+  AppShell: ({ children }: { children: React.ReactNode }) => <div data-testid="app-shell">{children}</div>
+}));
+
 describe("Vendor applications page", () => {
   beforeEach(() => {
     vi.clearAllMocks();

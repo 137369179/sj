@@ -1,7 +1,12 @@
 import { render, screen } from "@testing-library/react";
-import { describe, expect, it } from "vitest";
+import { describe, expect, it, vi } from "vitest";
 
 import HomePage from "../page";
+
+// Mock AppShell to avoid testing async components deeply in the page test
+vi.mock("../../components/layout/app-shell", () => ({
+  AppShell: ({ children }: { children: React.ReactNode }) => <div data-testid="app-shell">{children}</div>
+}));
 
 describe("HomePage", () => {
   it("renders the landing page headline and primary actions", () => {

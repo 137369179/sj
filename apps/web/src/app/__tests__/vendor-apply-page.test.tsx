@@ -8,6 +8,10 @@ vi.mock("../../server/markets/service", () => ({
   getPublishedMarketById: vi.fn()
 }));
 
+vi.mock("../../components/layout/app-shell", () => ({
+  AppShell: ({ children }: { children: React.ReactNode }) => <div data-testid="app-shell">{children}</div>
+}));
+
 describe("VendorApplyPage", () => {
   beforeEach(() => {
     vi.clearAllMocks();

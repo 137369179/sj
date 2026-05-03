@@ -13,6 +13,11 @@ vi.mock("../../server/notifications/service", () => ({
   listVendorNotifications: vi.fn()
 }));
 
+// Mock AppShell to avoid testing async components deeply in the page test
+vi.mock("../../components/layout/app-shell", () => ({
+  AppShell: ({ children }: { children: React.ReactNode }) => <div data-testid="app-shell">{children}</div>
+}));
+
 describe("VendorNotificationsPage", () => {
   beforeEach(() => {
     vi.clearAllMocks();

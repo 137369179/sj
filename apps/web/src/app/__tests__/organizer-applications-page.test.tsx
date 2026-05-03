@@ -24,6 +24,10 @@ vi.mock("../../server/applications/service", () => ({
   reviewApplication: vi.fn()
 }));
 
+vi.mock("../../components/layout/app-shell", () => ({
+  AppShell: ({ children }: { children: React.ReactNode }) => <div data-testid="app-shell">{children}</div>
+}));
+
 describe("Organizer applications page", () => {
   beforeEach(() => {
     vi.clearAllMocks();

@@ -18,6 +18,10 @@ vi.mock("../../server/dashboard/service", () => ({
   getMarketDashboardSummary: vi.fn()
 }));
 
+vi.mock("../../components/layout/app-shell", () => ({
+  AppShell: ({ children }: { children: React.ReactNode }) => <div data-testid="app-shell">{children}</div>
+}));
+
 describe("Organizer dashboard page", () => {
   beforeEach(() => {
     vi.clearAllMocks();

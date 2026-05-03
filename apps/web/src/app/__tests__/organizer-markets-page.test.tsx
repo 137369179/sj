@@ -13,6 +13,10 @@ vi.mock("../../server/markets/service", () => ({
   listOrganizerMarkets: vi.fn()
 }));
 
+vi.mock("../../components/layout/app-shell", () => ({
+  AppShell: ({ children }: { children: React.ReactNode }) => <div data-testid="app-shell">{children}</div>
+}));
+
 describe("Organizer markets page", () => {
   beforeEach(() => {
     vi.clearAllMocks();

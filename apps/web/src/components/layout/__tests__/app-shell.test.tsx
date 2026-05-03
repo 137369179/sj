@@ -1,14 +1,26 @@
 import { render, screen } from "@testing-library/react";
-import { describe, expect, it } from "vitest";
+import { describe, expect, it, vi } from "vitest";
 
 import { AppShell } from "../app-shell";
 
+vi.mock("../../../lib/auth", () => ({
+  getSessionUser: vi.fn().mockResolvedValue(null)
+}));
+
+// Provide router mock for AuthStatus
+vi.mock("next/navigation", () => ({
+  useRouter: () => ({
+    push: vi.fn(),
+    refresh: vi.fn()
+  })
+}));
+
 describe("AppShell", () => {
-  it("renders the product name and role navigation", () => {
+  it("renders the product name and role navigation", async () => {
     render(
-      <AppShell>
-        <main>content</main>
-      </AppShell>
+      await AppShell({
+        children: <main>Page Content</main>
+      })
     );
 
     const brandLink = screen.getByRole("link", { name: "市集招募平台" });
@@ -22,6 +34,6 @@ describe("AppShell", () => {
     expect(brandLink.closest(".shell-header")).not.toBeNull();
     expect(screen.getByRole("link", { name: "摊主端" })).toBeInTheDocument();
     expect(screen.getByRole("link", { name: "主办方端" })).toBeInTheDocument();
-    expect(screen.getByText("content")).toBeInTheDocument();
+    expect(screen.getByText("Page Content")).toBeInTheDocument();
   });
 });

@@ -31,7 +31,11 @@ vi.mock("../../server/stalls/service", () => ({
   listOrganizerStalls: vi.fn()
 }));
 
-describe("Organizer stalls page", () => {
+vi.mock("../../components/layout/app-shell", () => ({
+  AppShell: ({ children }: { children: React.ReactNode }) => <div data-testid="app-shell">{children}</div>
+}));
+
+describe("OrganizerStallsPage", () => {
   beforeEach(() => {
     vi.clearAllMocks();
   });

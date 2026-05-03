@@ -1,0 +1,43 @@
+"use client";
+
+import { useRouter } from "next/navigation";
+import { useState } from "react";
+
+export function AuthStatus({
+  sessionUser
+}: {
+  sessionUser: { userId: string; role: string } | null;
+}) {
+  const router = useRouter();
+  const [isLoggingOut, setIsLoggingOut] = useState(false);
+
+  async function handleLogout() {
+    setIsLoggingOut(true);
+    try {
+      await fetch("/api/auth/logout", { method: "POST" });
+      router.refresh();
+    } catch (error) {
+      console.error("Logout failed", error);
+      setIsLoggingOut(false);
+    }
+  }
+
+  if (sessionUser) {
+    return (
+      <div className="auth-status" style={{ display: "flex", gap: "1rem", alignItems: "center" }}>
+        <span aria-label="当前用户">
+          {sessionUser.role === "organizer" ? "主办方" : "摊主"}: {sessionUser.userId}
+        </span>
+        <button onClick={handleLogout} disabled={isLoggingOut}>
+          退出登录
+        </button>
+      </div>
+    );
+  }
+
+  return (
+    <div className="auth-status">
+      <button onClick={() => router.push("/login")}>登录</button>
+    </div>
+  );
+}
