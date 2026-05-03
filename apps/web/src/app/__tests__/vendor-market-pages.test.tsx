@@ -5,12 +5,17 @@ import {
   getPublishedMarketById,
   listPublishedMarkets
 } from "../../server/markets/service";
+import { listAvailableStallsForMarket } from "../../server/stalls/service";
 import MarketDetailPage from "../(vendor)/markets/[marketId]/page";
 import VendorMarketsPage from "../(vendor)/markets/page";
 
 vi.mock("../../server/markets/service", () => ({
-  listPublishedMarkets: vi.fn(),
-  getPublishedMarketById: vi.fn()
+  getPublishedMarketById: vi.fn(),
+  listPublishedMarkets: vi.fn()
+}));
+
+vi.mock("../../server/stalls/service", () => ({
+  listAvailableStallsForMarket: vi.fn()
 }));
 
 vi.mock("../../components/layout/app-shell", () => ({
@@ -74,6 +79,11 @@ describe("Vendor market pages", () => {
       stallsCount: 10
     });
 
+    vi.mocked(listAvailableStallsForMarket).mockResolvedValue([
+      { id: "stall_1", code: "A01", name: "摊位 A01" },
+      { id: "stall_2", code: "A02", name: "摊位 A02" }
+    ]);
+
     const page = await MarketDetailPage({
       params: Promise.resolve({
         marketId: "market_1"
@@ -96,6 +106,11 @@ describe("Vendor market pages", () => {
     expect(
       screen.getByRole("link", { name: "查看我的报名" })
     ).toHaveAttribute("href", "/applications");
+    
+    expect(screen.getByText("可用摊位一览")).toBeInTheDocument();
+    expect(screen.getByText("A01")).toBeInTheDocument();
+    expect(screen.getByText("- 摊位 A01")).toBeInTheDocument();
+    expect(screen.getByText("A02")).toBeInTheDocument();
   });
 
   it("renders an applications return link when opened from vendor applications", async () => {

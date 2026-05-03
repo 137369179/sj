@@ -197,7 +197,8 @@ describe("application service", () => {
           id: "stall_1",
           code: "A-01",
           name: "主通道 1 号位"
-        }
+        },
+        order: null
       }
     ] as unknown as Awaited<ReturnType<typeof db.application.findMany>>);
 
@@ -215,13 +216,6 @@ describe("application service", () => {
             city: true
           }
         },
-        assignedStall: {
-          select: {
-            id: true,
-            code: true,
-            name: true
-          }
-        },
         reviews: {
           select: {
             id: true,
@@ -233,6 +227,23 @@ describe("application service", () => {
           },
           orderBy: {
             createdAt: "desc"
+          }
+        },
+        assignedStall: {
+          select: {
+            id: true,
+            code: true,
+            name: true,
+            price: true
+          }
+        },
+        order: {
+          select: {
+            id: true,
+            amount: true,
+            status: true,
+            paymentMethod: true,
+            paidAt: true
           }
         }
       },
@@ -276,7 +287,13 @@ describe("application service", () => {
         createdAt: new Date("2026-05-01T00:00:00.000Z"),
         assignedStallId: "stall_1",
         assignedStallCode: "A-01",
-        assignedStallName: "主通道 1 号位"
+        assignedStallName: "主通道 1 号位",
+        assignedStallPrice: null,
+        orderId: null,
+        orderAmount: null,
+        orderStatus: null,
+        orderPaymentMethod: null,
+        orderPaidAt: null
       }
     ]);
   });

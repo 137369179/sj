@@ -2,19 +2,50 @@ import { beforeEach, describe, expect, it, vi } from "vitest";
 
 import { db } from "../../../lib/db";
 import {
+  assignStall,
+  createStall,
+  listAvailableStallsForMarket,
+  listOrganizerStalls,
   StallAssignmentError,
   StallCreationError,
-  assignStall,
-  buildAssignStallPayload,
   buildStallPayload,
-  canAssignStall,
-  createStall,
-  listOrganizerStalls
+  buildAssignStallPayload,
+  canAssignStall
 } from "../service";
 
 describe("stall service", () => {
   beforeEach(() => {
-    vi.restoreAllMocks();
+    vi.clearAllMocks();
+  });
+
+  describe("listAvailableStallsForMarket", () => {
+    it("returns active stalls without assigned application", async () => {
+      vi.spyOn(db.stall, "findMany").mockResolvedValue([
+        { id: "stall_1", code: "A01", name: "摊位 A01" },
+        { id: "stall_2", code: "A02", name: "摊位 A02" }
+      ] as any);
+
+      const result = await listAvailableStallsForMarket("market_1");
+
+      expect(db.stall.findMany).toHaveBeenCalledWith({
+        where: {
+          marketId: "market_1",
+          isActive: true,
+          assignedApplicationId: null
+        },
+        select: {
+          id: true,
+          code: true,
+          name: true,
+          price: true
+        },
+        orderBy: {
+          code: "asc"
+        }
+      });
+      expect(result).toHaveLength(2);
+      expect(result[0].code).toBe("A01");
+    });
   });
 
   it("builds a valid stall payload with active default", () => {
@@ -30,6 +61,7 @@ describe("stall service", () => {
       marketId: "market_1",
       code: "A-01",
       name: "主通道 1 号位",
+      price: 0,
       isActive: true
     });
   });
@@ -71,6 +103,7 @@ describe("stall service", () => {
         marketId: "market_1",
         code: "A-01",
         name: "主通道 1 号位",
+        price: 100,
         isActive: true,
         assignedApplicationId: "app_1",
         market: {
@@ -132,6 +165,7 @@ describe("stall service", () => {
         marketTitle: "春日咖啡市集",
         code: "A-01",
         name: "主通道 1 号位",
+        price: 100,
         isActive: true,
         assignedApplicationId: "app_1",
         assignedVendorId: "vendor_1",
@@ -160,7 +194,8 @@ describe("stall service", () => {
       marketId: "market_1",
       code: "A-01",
       name: "主通道 1 号位",
-      isActive: true
+      isActive: true,
+      price: 100
     });
 
     expect(createSpy).toHaveBeenCalledWith({
@@ -168,13 +203,14 @@ describe("stall service", () => {
         marketId: "market_1",
         code: "A-01",
         name: "主通道 1 号位",
-        isActive: true
+        isActive: true,
+        price: 100
       }
     });
     expect(stall.id).toBe("stall_1");
   });
 
-  it("assigns a stall to an approved application and creates a notification", async () => {
+  it("assigns a stall to an approved application, creates a notification, and creates an order if price > 0", async () => {
     const transaction = {
       stall: {
         findUnique: vi
@@ -184,6 +220,7 @@ describe("stall service", () => {
             marketId: "market_1",
             code: "A-01",
             name: "主通道 1 号位",
+            price: 100,
             isActive: true,
             assignedApplicationId: null,
             market: {
@@ -232,6 +269,9 @@ describe("stall service", () => {
             createdAt: new Date("2026-05-01T00:00:00.000Z")
           }),
         updateMany: vi.fn().mockResolvedValue({ count: 1 })
+      },
+      order: {
+        create: vi.fn().mockResolvedValue({ id: "order_1" })
       }
     };
     const transactionSpy = vi
@@ -277,6 +317,14 @@ describe("stall service", () => {
       },
       data: {
         status: "stall_assigned"
+      }
+    });
+    expect(transaction.order.create).toHaveBeenCalledWith({
+      data: {
+        applicationId: "app_1",
+        vendorId: "vendor_1",
+        amount: 100,
+        status: "pending"
       }
     });
     expect(notificationSpy).toHaveBeenCalledWith({

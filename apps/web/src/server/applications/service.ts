@@ -78,6 +78,14 @@ type VendorApplicationRecord = {
     id: string;
     code: string;
     name: string;
+    price: number;
+  } | null;
+  order: {
+    id: string;
+    amount: number;
+    status: string;
+    paymentMethod: string | null;
+    paidAt: Date | null;
   } | null;
 };
 
@@ -114,6 +122,12 @@ export type VendorApplicationListItem = {
   assignedStallId: string | null;
   assignedStallCode: string | null;
   assignedStallName: string | null;
+  assignedStallPrice: number | null;
+  orderId: string | null;
+  orderAmount: number | null;
+  orderStatus: string | null;
+  orderPaymentMethod: string | null;
+  orderPaidAt: Date | null;
 };
 
 export type ReviewApplicationInput = ApplicationReviewPayload & {
@@ -189,7 +203,17 @@ const vendorApplicationInclude = {
     select: {
       id: true,
       code: true,
-      name: true
+      name: true,
+      price: true
+    }
+  },
+  order: {
+    select: {
+      id: true,
+      amount: true,
+      status: true,
+      paymentMethod: true,
+      paidAt: true
     }
   },
   reviews: {
@@ -362,7 +386,13 @@ function formatVendorApplication(
     createdAt: application.createdAt,
     assignedStallId: application.assignedStall?.id ?? null,
     assignedStallCode: application.assignedStall?.code ?? null,
-    assignedStallName: application.assignedStall?.name ?? null
+    assignedStallName: application.assignedStall?.name ?? null,
+    assignedStallPrice: application.assignedStall?.price ?? null,
+    orderId: application.order?.id ?? null,
+    orderAmount: application.order?.amount ?? null,
+    orderStatus: application.order?.status ?? null,
+    orderPaymentMethod: application.order?.paymentMethod ?? null,
+    orderPaidAt: application.order?.paidAt ?? null
   };
 }
 

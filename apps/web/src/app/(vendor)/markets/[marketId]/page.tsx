@@ -2,6 +2,7 @@ import Link from "next/link";
 
 import { AppShell } from "../../../../components/layout/app-shell";
 import { getPublishedMarketById } from "../../../../server/markets/service";
+import { listAvailableStallsForMarket } from "../../../../server/stalls/service";
 
 export default async function MarketDetailPage({
   params,
@@ -15,6 +16,7 @@ export default async function MarketDetailPage({
 }) {
   const { marketId } = await params;
   const market = await getPublishedMarketById(marketId);
+  const availableStalls = market ? await listAvailableStallsForMarket(marketId) : [];
   const resolvedSearchParams = (await searchParams) ?? {};
   const applyHref = buildVendorApplyHref({
     marketId,
@@ -56,6 +58,21 @@ export default async function MarketDetailPage({
               </div>
             )}
             <p style={{ marginTop: "2rem" }}>当前市集正在公开招募中，可继续进入报名页面提交申请。</p>
+
+            <section aria-label="可用摊位一览" style={{ marginTop: "2rem" }}>
+              <h3>可用摊位一览</h3>
+              {availableStalls.length === 0 ? (
+                <p>暂无可供选择的摊位。</p>
+              ) : (
+                <ul style={{ listStyle: "none", padding: 0, display: "grid", gap: "0.5rem", gridTemplateColumns: "repeat(auto-fill, minmax(200px, 1fr))" }}>
+                  {availableStalls.map((stall) => (
+                    <li key={stall.id} style={{ padding: "0.5rem", border: "1px solid #e5e7eb", borderRadius: "4px" }}>
+                      <strong>{stall.code}</strong> - {stall.name}
+                    </li>
+                  ))}
+                </ul>
+              )}
+            </section>
           </>
         ) : (
           <p>当前市集暂不可查看或未公开招募。</p>

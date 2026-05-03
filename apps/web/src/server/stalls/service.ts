@@ -9,6 +9,7 @@ export const stallSchema = z.object({
   marketId: z.string().trim().min(1),
   code: z.string().trim().min(1),
   name: z.string().trim().min(1),
+  price: z.coerce.number().min(0).optional().default(0),
   isActive: z.boolean().optional().default(true)
 });
 
@@ -25,6 +26,7 @@ type OrganizerStallRecord = {
   marketId: string;
   code: string;
   name: string;
+  price: number;
   isActive: boolean;
   assignedApplicationId: string | null;
   market: {
@@ -41,17 +43,50 @@ type OrganizerStallRecord = {
   } | null;
 };
 
+export type VendorStallListItem = {
+  id: string;
+  code: string;
+  name: string;
+  price: number;
+};
+
+export async function listAvailableStallsForMarket(marketId: string): Promise<VendorStallListItem[]> {
+  const stalls = await db.stall.findMany({
+    where: {
+      marketId,
+      isActive: true,
+      assignedApplicationId: null
+    },
+    select: {
+      id: true,
+      code: true,
+      name: true,
+      price: true
+    },
+    orderBy: {
+      code: "asc"
+    }
+  });
+
+  return stalls;
+}
+
 export type OrganizerStallListItem = {
   id: string;
   marketId: string;
   marketTitle: string;
   code: string;
   name: string;
+  price: number;
   isActive: boolean;
   assignedApplicationId: string | null;
   assignedVendorId: string | null;
   assignedVendorName: string | null;
 };
+
+
+
+
 
 export type AssignStallInput = StallAssignmentPayload & {
   stallId: string;
@@ -195,6 +230,7 @@ export async function createStall(input: StallPayload) {
       marketId: input.marketId,
       code: input.code,
       name: input.name,
+      price: input.price,
       isActive: input.isActive
     }
   });
@@ -296,6 +332,17 @@ export async function assignStall(input: AssignStallInput) {
         throw new StallAssignmentError("NOT_FOUND");
       }
 
+      if (stall.price > 0) {
+        await transaction.order.create({
+          data: {
+            applicationId: application.id,
+            vendorId: application.vendor.id,
+            amount: stall.price,
+            status: "pending"
+          }
+        });
+      }
+
       return {
         updatedStall,
         updatedApplication,
@@ -336,6 +383,7 @@ function formatOrganizerStall(stall: OrganizerStallRecord): OrganizerStallListIt
     marketTitle: stall.market.title,
     code: stall.code,
     name: stall.name,
+    price: stall.price,
     isActive: stall.isActive,
     assignedApplicationId: stall.assignedApplicationId,
     assignedVendorId: stall.assignedApplication?.vendor.id ?? null,

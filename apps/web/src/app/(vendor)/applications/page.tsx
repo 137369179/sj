@@ -152,6 +152,23 @@ export default async function VendorApplicationsPage({
                   ? `${application.assignedStallName}（${application.assignedStallCode}）`
                   : "待分配"}
               </p>
+              {application.orderId && (
+                <div style={{ marginTop: "1rem", padding: "1rem", backgroundColor: "#f9fafb", borderRadius: "8px" }}>
+                  <h4>账单与支付</h4>
+                  <p>账单金额：¥{application.orderAmount}</p>
+                  <p>账单状态：{application.orderStatus === "paid" ? "已支付" : "待支付"}</p>
+                  {application.orderStatus === "paid" && application.orderPaidAt ? (
+                    <p>支付时间：{formatDate(application.orderPaidAt)}</p>
+                  ) : null}
+                  {application.orderStatus === "pending" && (
+                    <form action={`/api/payments/${application.orderId}/pay`} method="POST">
+                      <button type="submit" style={{ marginTop: "0.5rem", backgroundColor: "#10b981", color: "white", padding: "0.5rem 1rem", border: "none", borderRadius: "4px", cursor: "pointer" }}>
+                        立即支付
+                      </button>
+                    </form>
+                  )}
+                </div>
+              )}
               <p>提交时间：{formatDate(application.createdAt)}</p>
             </article>
           ))}
