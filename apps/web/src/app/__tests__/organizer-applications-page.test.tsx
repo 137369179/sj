@@ -564,6 +564,53 @@ describe("Organizer applications page", () => {
     expect(screen.getByText("2026-05-03 · 通过 · 摊主已确认候补补位")).toBeInTheDocument();
   });
 
+  it("surfaces vendor waitlist decline results in organizer view", async () => {
+    vi.mocked(getSessionUser).mockResolvedValue({
+      userId: "org_1",
+      role: "organizer"
+    });
+    vi.mocked(listOrganizerMarketOptions).mockResolvedValue([]);
+    vi.mocked(listOrganizerApplications).mockResolvedValue([
+      {
+        id: "app_10",
+        marketId: "market_1",
+        marketTitle: "春日咖啡市集",
+        marketCity: "杭州",
+        vendorId: "vendor_1",
+        vendorName: "山野咖啡",
+        status: "rejected",
+        latestReviewDecision: "reject",
+        followUpState: "idle",
+        note: "主营手作咖啡",
+        applicationNote: "主营手作咖啡",
+        reviewNote: "摊主已放弃候补补位",
+        reviewedAt: new Date("2026-05-03T12:00:00.000Z"),
+        reviews: [
+          {
+            id: "review_reject_1",
+            applicationId: "app_10",
+            organizerId: "org_1",
+            decision: "reject",
+            reviewNote: "摊主已放弃候补补位",
+            createdAt: new Date("2026-05-03T12:00:00.000Z")
+          }
+        ],
+        attachments: [],
+        createdAt: new Date("2026-05-01T00:00:00.000Z")
+      }
+    ] as Awaited<ReturnType<typeof listOrganizerApplications>>);
+
+    const page = await OrganizerApplicationsPage({
+      searchParams: Promise.resolve({})
+    });
+
+    render(page);
+
+    expect(screen.getByText("状态：已拒绝")).toBeInTheDocument();
+    expect(screen.getByText("审核备注：摊主已放弃候补补位")).toBeInTheDocument();
+    expect(screen.getByText("2026-05-03 · 拒绝 · 摊主已放弃候补补位")).toBeInTheDocument();
+  });
+
   it("renders a markets return link when opened from organizer markets", async () => {
     vi.mocked(getSessionUser).mockResolvedValue({
       userId: "org_1",

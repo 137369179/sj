@@ -507,6 +507,89 @@ export async function confirmWaitlistOffer(input: ConfirmWaitlistOfferInput) {
   return result;
 }
 
+export async function declineWaitlistOffer(input: ConfirmWaitlistOfferInput) {
+  const notification = await db.notification.findUnique({
+    where: {
+      id: input.notificationId
+    }
+  });
+
+  if (!notification) {
+    throw new ApplicationReviewError("NOT_FOUND");
+  }
+
+  if (notification.userId !== input.userId) {
+    throw new ApplicationReviewError("FORBIDDEN");
+  }
+
+  const marketTitle = extractWaitlistMarketTitle(notification.content);
+
+  if (notification.title !== "候补补位通知" || !marketTitle) {
+    throw new ApplicationReviewError("INVALID_STATUS");
+  }
+
+  const application = await db.application.findFirst({
+    where: {
+      vendorId: input.userId,
+      status: "under_review",
+      market: {
+        title: marketTitle
+      }
+    },
+    include: organizerApplicationInclude
+  });
+
+  if (!application) {
+    throw new ApplicationReviewError("INVALID_STATUS");
+  }
+
+  const latestReview = normalizeReviewRecords(application.reviews)[0];
+
+  if (!latestReview || latestReview.decision !== "waitlist") {
+    throw new ApplicationReviewError("INVALID_STATUS");
+  }
+
+  const reviewTimestamp = new Date();
+  const result = await db.$transaction(async (transaction) => {
+    const updatedApplication = await transaction.application.update({
+      where: {
+        id: application.id
+      },
+      data: {
+        status: "rejected",
+        reviewNote: "摊主已放弃候补补位",
+        reviewedAt: reviewTimestamp,
+        reviewedByUserId: latestReview.organizerId
+      }
+    });
+
+    const review = await transaction.applicationReview.create({
+      data: {
+        applicationId: application.id,
+        organizerId: latestReview.organizerId,
+        decision: "reject",
+        reviewNote: "摊主已放弃候补补位"
+      }
+    });
+
+    return {
+      application: updatedApplication,
+      review
+    };
+  });
+
+  await db.notification.update({
+    where: {
+      id: notification.id
+    },
+    data: {
+      readAt: notification.readAt ?? reviewTimestamp
+    }
+  });
+
+  return result;
+}
+
 function formatOrganizerApplication(
   application: OrganizerApplicationRecord
 ): OrganizerApplicationListItem {
