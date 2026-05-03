@@ -1,7 +1,7 @@
 import Link from "next/link";
 
 import { AppShell } from "../../../components/layout/app-shell";
-import { filterMarkets, listDemoMarkets } from "../../../server/markets/service";
+import { listPublishedMarkets } from "../../../server/markets/service";
 
 export default async function VendorMarketsPage({
   searchParams
@@ -12,7 +12,7 @@ export default async function VendorMarketsPage({
   }>;
 }) {
   const filters = (await searchParams) ?? {};
-  const featuredMarkets = filterMarkets(listDemoMarkets(), filters);
+  const featuredMarkets = await listPublishedMarkets(filters);
 
   return (
     <AppShell>
@@ -37,7 +37,7 @@ export default async function VendorMarketsPage({
                 <article>
                   <h3>{market.title}</h3>
                   <p>
-                    {market.city} | {market.date}
+                    {market.city} | {formatDate(market.startsAt)}
                   </p>
                   <Link href={`/markets/${market.id}`}>查看详情</Link>
                 </article>
@@ -48,4 +48,8 @@ export default async function VendorMarketsPage({
       </main>
     </AppShell>
   );
+}
+
+function formatDate(value: Date) {
+  return value.toISOString().slice(0, 10);
 }

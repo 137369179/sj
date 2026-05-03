@@ -54,6 +54,15 @@ export type OrganizerMarketListItem = {
   endsAt: Date;
 };
 
+export type PublishedMarketListItem = {
+  id: string;
+  title: string;
+  city: string;
+  startsAt: Date;
+  endsAt: Date;
+  status: "published";
+};
+
 export type CreateOrganizerMarketInput = MarketPayload & {
   organizerId: string;
 };
@@ -122,6 +131,63 @@ export function listDemoMarkets() {
 
 export function getDemoMarketById(marketId: string) {
   return demoMarkets.find((market) => market.id === marketId);
+}
+
+export async function listPublishedMarkets(filters: {
+  city?: string;
+  keyword?: string;
+}): Promise<PublishedMarketListItem[]> {
+  const markets = await db.market.findMany({
+    where: {
+      status: "published"
+    },
+    select: {
+      id: true,
+      title: true,
+      city: true,
+      startsAt: true,
+      endsAt: true
+    },
+    orderBy: {
+      startsAt: "asc"
+    }
+  });
+
+  return filterMarkets(
+    markets.map((market) => ({
+      ...market,
+      status: "published" as const
+    })),
+    filters
+  );
+}
+
+export async function getPublishedMarketById(
+  marketId: string
+): Promise<PublishedMarketListItem | null> {
+  const market = await db.market.findFirst({
+    where: {
+      id: marketId,
+      status: "published"
+    },
+    select: {
+      id: true,
+      title: true,
+      city: true,
+      startsAt: true,
+      endsAt: true,
+      status: true
+    }
+  });
+
+  if (!market) {
+    return null;
+  }
+
+  return {
+    ...market,
+    status: "published"
+  };
 }
 
 export async function listOrganizerMarketOptions(

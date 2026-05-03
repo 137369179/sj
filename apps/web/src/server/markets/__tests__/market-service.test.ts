@@ -5,8 +5,10 @@ import {
   buildMarketPayload,
   canPublishMarket,
   createOrganizerMarket,
+  getPublishedMarketById,
   listOrganizerMarkets,
   listOrganizerMarketOptions,
+  listPublishedMarkets,
   MarketPublishError,
   publishOrganizerMarket
 } from "../service";
@@ -129,6 +131,92 @@ describe("market service", () => {
         endsAt: new Date("2026-05-18T18:00:00.000Z")
       }
     ]);
+  });
+
+  it("lists only published markets for vendors and applies filters", async () => {
+    const findManySpy = vi.spyOn(db.market, "findMany").mockResolvedValue([
+      {
+        id: "market_2",
+        title: "夏夜面包市集",
+        city: "上海",
+        startsAt: new Date("2026-06-08T10:00:00.000Z"),
+        endsAt: new Date("2026-06-08T18:00:00.000Z")
+      },
+      {
+        id: "market_1",
+        title: "春日咖啡市集",
+        city: "杭州",
+        startsAt: new Date("2026-05-18T10:00:00.000Z"),
+        endsAt: new Date("2026-05-18T18:00:00.000Z")
+      }
+    ] as Awaited<ReturnType<typeof db.market.findMany>>);
+
+    await expect(
+      listPublishedMarkets({
+        city: "上海",
+        keyword: "面包"
+      })
+    ).resolves.toEqual([
+      {
+        id: "market_2",
+        title: "夏夜面包市集",
+        city: "上海",
+        startsAt: new Date("2026-06-08T10:00:00.000Z"),
+        endsAt: new Date("2026-06-08T18:00:00.000Z"),
+        status: "published"
+      }
+    ]);
+
+    expect(findManySpy).toHaveBeenCalledWith({
+      where: {
+        status: "published"
+      },
+      select: {
+        id: true,
+        title: true,
+        city: true,
+        startsAt: true,
+        endsAt: true
+      },
+      orderBy: {
+        startsAt: "asc"
+      }
+    });
+  });
+
+  it("returns a published market by id for vendor pages", async () => {
+    const findFirstSpy = vi.spyOn(db.market, "findFirst").mockResolvedValue({
+      id: "market_1",
+      title: "春日咖啡市集",
+      city: "杭州",
+      startsAt: new Date("2026-05-18T10:00:00.000Z"),
+      endsAt: new Date("2026-05-18T18:00:00.000Z"),
+      status: "published"
+    } as Awaited<ReturnType<typeof db.market.findFirst>>);
+
+    await expect(getPublishedMarketById("market_1")).resolves.toEqual({
+      id: "market_1",
+      title: "春日咖啡市集",
+      city: "杭州",
+      startsAt: new Date("2026-05-18T10:00:00.000Z"),
+      endsAt: new Date("2026-05-18T18:00:00.000Z"),
+      status: "published"
+    });
+
+    expect(findFirstSpy).toHaveBeenCalledWith({
+      where: {
+        id: "market_1",
+        status: "published"
+      },
+      select: {
+        id: true,
+        title: true,
+        city: true,
+        startsAt: true,
+        endsAt: true,
+        status: true
+      }
+    });
   });
 
   it("creates an organizer market as draft", async () => {

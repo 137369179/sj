@@ -151,16 +151,24 @@ async function readErrorPayload(response: Response) {
 }
 
 function resolveSubmitErrorMessage(status: number, errorCode: string | null) {
+  if (status === 409 || errorCode === "duplicate application") {
+    return "你已经提交过该市集的报名，请前往我的报名查看进度。";
+  }
+
+  if (status === 404 || errorCode === "market not found") {
+    return "当前市集不存在或已下线，请返回发现市集重新选择。";
+  }
+
+  if (status === 409 || errorCode === "market unavailable") {
+    return "当前市集暂未开放报名，请返回发现市集查看其他公开招募中的活动。";
+  }
+
   if (status === 401 || errorCode === "unauthorized") {
     return "请先以摊主身份登录后再提交报名。";
   }
 
   if (status === 403 || errorCode === "forbidden") {
     return "当前账号没有报名权限，请切换为摊主账号。";
-  }
-
-  if (status === 409 || errorCode === "duplicate application") {
-    return "你已经提交过该市集的报名，请前往我的报名查看进度。";
   }
 
   return "报名提交失败，请稍后重试。";

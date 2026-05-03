@@ -1,12 +1,25 @@
 import { fireEvent, render, screen, waitFor } from "@testing-library/react";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
+import { getPublishedMarketById } from "../../server/markets/service";
 import VendorApplyPage from "../(vendor)/markets/[marketId]/apply/page";
+
+vi.mock("../../server/markets/service", () => ({
+  getPublishedMarketById: vi.fn()
+}));
 
 describe("VendorApplyPage", () => {
   beforeEach(() => {
     vi.clearAllMocks();
     vi.stubGlobal("fetch", vi.fn());
+    vi.mocked(getPublishedMarketById).mockResolvedValue({
+      id: "market_1",
+      title: "春日咖啡市集",
+      city: "杭州",
+      startsAt: new Date("2026-05-18T10:00:00.000Z"),
+      endsAt: new Date("2026-05-18T18:00:00.000Z"),
+      status: "published"
+    });
   });
 
   function fillAndSubmitForm(options?: { withFile?: boolean }) {
@@ -221,5 +234,22 @@ describe("VendorApplyPage", () => {
     expect(
       screen.getByRole("link", { name: "返回我的报名" })
     ).toHaveAttribute("href", "/applications?marketId=market_1&status=approved");
+  });
+
+  it("shows an unavailable message instead of the form when the market is not published", async () => {
+    vi.mocked(getPublishedMarketById).mockResolvedValue(null);
+
+    render(
+      await VendorApplyPage({
+        params: Promise.resolve({ marketId: "missing_market" })
+      })
+    );
+
+    expect(screen.getByText("当前市集未公开招募或不存在，暂时不能提交报名。")).toBeInTheDocument();
+    expect(screen.queryByRole("button", { name: "提交申请" })).not.toBeInTheDocument();
+    expect(screen.getByRole("link", { name: "返回发现市集" })).toHaveAttribute(
+      "href",
+      "/markets"
+    );
   });
 });

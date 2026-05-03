@@ -1,7 +1,7 @@
 import Link from "next/link";
 
 import { AppShell } from "../../../../../components/layout/app-shell";
-import { getDemoMarketById } from "../../../../../server/markets/service";
+import { getPublishedMarketById } from "../../../../../server/markets/service";
 import { VendorApplyForm } from "./apply-form";
 
 export default async function VendorApplyPage({
@@ -15,7 +15,7 @@ export default async function VendorApplyPage({
   }>;
 }) {
   const { marketId } = await params;
-  const market = getDemoMarketById(marketId);
+  const market = await getPublishedMarketById(marketId);
   const resolvedSearchParams = (await searchParams) ?? {};
   const returnToApplications =
     resolvedSearchParams.from === "applications"
@@ -30,18 +30,25 @@ export default async function VendorApplyPage({
       <main aria-labelledby="vendor-apply-title">
         <h2 id="vendor-apply-title">提交报名申请</h2>
         <p>市集编号：{marketId}</p>
-        <p>{market?.title ?? "当前市集"}</p>
-        <p>{market?.city ?? "城市待确认"}</p>
+        <p>{market?.title ?? "当前市集暂不可报名"}</p>
+        <p>{market?.city ?? "请返回发现市集查看其他公开招募中的活动。"}</p>
         {returnToApplications ? (
           <section aria-label="报名回跳">
             <p>当前来自我的报名页，可直接返回当前市集的报名记录。</p>
             <Link href={returnToApplications}>返回我的报名</Link>
           </section>
         ) : null}
-        <VendorApplyForm
-          marketId={marketId}
-          applicationsHref={returnToApplications ?? "/applications"}
-        />
+        {market ? (
+          <VendorApplyForm
+            marketId={marketId}
+            applicationsHref={returnToApplications ?? "/applications"}
+          />
+        ) : (
+          <section aria-label="报名不可用提示">
+            <p>当前市集未公开招募或不存在，暂时不能提交报名。</p>
+            <Link href="/markets">返回发现市集</Link>
+          </section>
+        )}
       </main>
     </AppShell>
   );
