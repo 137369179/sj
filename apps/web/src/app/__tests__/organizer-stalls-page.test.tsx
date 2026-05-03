@@ -35,6 +35,23 @@ vi.mock("../../components/layout/app-shell", () => ({
   AppShell: ({ children }: { children: React.ReactNode }) => <div data-testid="app-shell">{children}</div>
 }));
 
+type MockOrganizerStall = Awaited<ReturnType<typeof listOrganizerStalls>>[number];
+
+function buildOrganizerStall(overrides: Partial<MockOrganizerStall> & Pick<MockOrganizerStall, "id" | "marketId" | "marketTitle" | "code" | "name">): MockOrganizerStall {
+  return {
+    id: overrides.id,
+    marketId: overrides.marketId,
+    marketTitle: overrides.marketTitle,
+    code: overrides.code,
+    name: overrides.name,
+    price: overrides.price ?? 0,
+    isActive: overrides.isActive ?? true,
+    assignedApplicationId: overrides.assignedApplicationId ?? null,
+    assignedVendorId: overrides.assignedVendorId ?? null,
+    assignedVendorName: overrides.assignedVendorName ?? null
+  };
+}
+
 describe("OrganizerStallsPage", () => {
   beforeEach(() => {
     vi.clearAllMocks();
@@ -53,17 +70,13 @@ describe("OrganizerStallsPage", () => {
       }
     ]);
     vi.mocked(listOrganizerStalls).mockResolvedValue([
-      {
+      buildOrganizerStall({
         id: "stall_1",
         marketId: "market_1",
         marketTitle: "春日咖啡市集",
         code: "A-01",
         name: "主通道 1 号位",
-        isActive: true,
-        assignedApplicationId: null,
-        assignedVendorId: null,
-        assignedVendorName: null
-      }
+      })
     ]);
     vi.mocked(listOrganizerApplications).mockResolvedValue([
       {
@@ -120,39 +133,31 @@ describe("OrganizerStallsPage", () => {
       }
     ]);
     vi.mocked(listOrganizerStalls).mockResolvedValue([
-      {
+      buildOrganizerStall({
         id: "stall_1",
         marketId: "market_1",
         marketTitle: "春日咖啡市集",
         code: "A-01",
         name: "主通道 1 号位",
-        isActive: true,
-        assignedApplicationId: null,
-        assignedVendorId: null,
-        assignedVendorName: null
-      },
-      {
+      }),
+      buildOrganizerStall({
         id: "stall_2",
         marketId: "market_1",
         marketTitle: "春日咖啡市集",
         code: "A-02",
         name: "主通道 2 号位",
-        isActive: true,
         assignedApplicationId: "app_2",
         assignedVendorId: "vendor_2",
         assignedVendorName: "木野手作"
-      },
-      {
+      }),
+      buildOrganizerStall({
         id: "stall_3",
         marketId: "market_1",
         marketTitle: "春日咖啡市集",
         code: "B-01",
         name: "侧边区 1 号位",
         isActive: false,
-        assignedApplicationId: null,
-        assignedVendorId: null,
-        assignedVendorName: null
-      }
+      })
     ]);
     vi.mocked(listOrganizerApplications).mockResolvedValue([
       {
@@ -222,28 +227,23 @@ describe("OrganizerStallsPage", () => {
       }
     ]);
     vi.mocked(listOrganizerStalls).mockResolvedValue([
-      {
+      buildOrganizerStall({
         id: "stall_1",
         marketId: "market_1",
         marketTitle: "春日咖啡市集",
         code: "A-01",
         name: "主通道 1 号位",
-        isActive: true,
-        assignedApplicationId: null,
-        assignedVendorId: null,
-        assignedVendorName: null
-      },
-      {
+      }),
+      buildOrganizerStall({
         id: "stall_2",
         marketId: "market_2",
         marketTitle: "夏夜面包市集",
         code: "B-01",
         name: "面包区 1 号位",
-        isActive: true,
         assignedApplicationId: "app_2",
         assignedVendorId: "vendor_2",
         assignedVendorName: "木野手作"
-      }
+      })
     ]);
     vi.mocked(listOrganizerApplications).mockResolvedValue([
       {
@@ -313,17 +313,16 @@ describe("OrganizerStallsPage", () => {
       }
     ]);
     vi.mocked(listOrganizerStalls).mockResolvedValue([
-      {
+      buildOrganizerStall({
         id: "stall_2",
         marketId: "market_2",
         marketTitle: "夏夜面包市集",
         code: "B-01",
         name: "面包区 1 号位",
-        isActive: true,
         assignedApplicationId: "app_2",
         assignedVendorId: "vendor_2",
         assignedVendorName: "木野手作"
-      }
+      })
     ]);
     vi.mocked(listOrganizerApplications).mockResolvedValue([
       {
@@ -369,17 +368,16 @@ describe("OrganizerStallsPage", () => {
       }
     ]);
     vi.mocked(listOrganizerStalls).mockResolvedValue([
-      {
+      buildOrganizerStall({
         id: "stall_2",
         marketId: "market_2",
         marketTitle: "夏夜面包市集",
         code: "B-01",
         name: "面包区 1 号位",
-        isActive: true,
         assignedApplicationId: "app_2",
         assignedVendorId: "vendor_2",
         assignedVendorName: "木野手作"
-      }
+      })
     ]);
     vi.mocked(listOrganizerApplications).mockResolvedValue([
       {
@@ -446,17 +444,16 @@ describe("OrganizerStallsPage", () => {
       }
     ]);
     vi.mocked(listOrganizerStalls).mockResolvedValue([
-      {
+      buildOrganizerStall({
         id: "stall_2",
         marketId: "market_2",
         marketTitle: "夏夜面包市集",
         code: "B-01",
         name: "面包区 1 号位",
-        isActive: true,
         assignedApplicationId: "app_2",
         assignedVendorId: "vendor_2",
         assignedVendorName: "木野手作"
-      }
+      })
     ]);
     vi.mocked(listOrganizerApplications).mockResolvedValue([
       {
@@ -560,17 +557,13 @@ describe("OrganizerStallsPage", () => {
     });
     vi.mocked(listOrganizerMarketOptions).mockResolvedValue([]);
     vi.mocked(listOrganizerStalls).mockResolvedValue([
-      {
+      buildOrganizerStall({
         id: "stall_1",
         marketId: "market_1",
         marketTitle: "春日咖啡市集",
         code: "A01",
         name: "入口大摊",
-        isActive: true,
-        assignedApplicationId: null,
-        assignedVendorId: null,
-        assignedVendorName: null
-      }
+      })
     ]);
     vi.mocked(listOrganizerApplications).mockResolvedValue([
       {

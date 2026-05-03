@@ -61,6 +61,8 @@ describe("GET /api/dashboard/markets/[marketId]", () => {
       },
       metrics: {
         totalApplications: 5,
+        submittedCount: 2,
+        underReviewCount: 0,
         pendingReviewCount: 2,
         approvedCount: 1,
         rejectedCount: 1,
@@ -97,6 +99,8 @@ describe("GET /api/dashboard/markets/[marketId]", () => {
       },
       metrics: {
         totalApplications: 5,
+        submittedCount: 2,
+        underReviewCount: 0,
         pendingReviewCount: 2,
         approvedCount: 1,
         rejectedCount: 1,

@@ -539,6 +539,7 @@ describe("stall service", () => {
         marketId: "market_1",
         code: "A-01",
         name: "主通道 1 号位",
+        price: 0,
         isActive: true
       })
     ).rejects.toMatchObject({

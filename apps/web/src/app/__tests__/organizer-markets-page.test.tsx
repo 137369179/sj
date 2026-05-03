@@ -34,7 +34,8 @@ describe("Organizer markets page", () => {
         city: "杭州",
         startsAt: new Date("2026-05-18T10:00:00.000Z"),
         endsAt: new Date("2026-05-18T18:00:00.000Z"),
-        status: "draft"
+        status: "draft",
+        isPlatformApproved: false
       }
     ]);
 

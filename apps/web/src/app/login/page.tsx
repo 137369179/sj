@@ -7,7 +7,7 @@ import { AppShell } from "../../components/layout/app-shell";
 export default async function LoginPage({
   searchParams
 }: {
-  searchParams?: Promise<{ returnTo?: string }>;
+  searchParams?: Promise<{ returnTo?: string; error?: string }>;
 }) {
   const sessionUser = await getSessionUser();
   const resolvedSearchParams = (await searchParams) ?? {};
@@ -48,7 +48,7 @@ export default async function LoginPage({
           action={loginAction}
           aria-label="登录表单"
         >
-          {searchParams && (await searchParams).error === "invalid_input" && (
+          {resolvedSearchParams.error === "invalid_input" && (
             <p role="alert" style={{ color: "red" }}>输入无效，请提供正确的角色和用户 ID。</p>
           )}
           <label>

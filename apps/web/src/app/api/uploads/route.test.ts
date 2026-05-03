@@ -8,7 +8,7 @@ import { POST } from "./route";
 describe("POST /api/uploads", () => {
   beforeEach(() => {
     vi.clearAllMocks();
-    vi.spyOn(crypto, "randomUUID").mockReturnValue("test-uuid-1234");
+    vi.spyOn(crypto, "randomUUID").mockReturnValue("test-uuid-1234-1234-1234-1234-123456789abc");
   });
 
   it("stores an allowed file and returns attachment metadata", async () => {
@@ -16,7 +16,7 @@ describe("POST /api/uploads", () => {
       process.cwd(),
       "public",
       "uploads",
-      "test-uuid-1234.pdf"
+      "test-uuid-1234-1234-1234-1234-123456789abc.pdf"
     );
     const request = createUploadRequest(
       new File(["file-content"], "license.pdf", { type: "application/pdf" })
@@ -26,7 +26,7 @@ describe("POST /api/uploads", () => {
 
     expect(response.status).toBe(201);
     await expect(response.json()).resolves.toEqual({
-      url: "/uploads/test-uuid-1234.pdf",
+      url: "/uploads/test-uuid-1234-1234-1234-1234-123456789abc.pdf",
       originalName: "license.pdf"
     });
     await expect(fs.readFile(uploadPath)).resolves.toBeInstanceOf(Buffer);

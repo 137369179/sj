@@ -35,9 +35,12 @@ describe("POST /api/markets/[marketId]/publish", () => {
       organizerId: "org_other",
       title: "春日咖啡市集",
       city: "杭州",
+      coverUrl: null,
+      description: null,
       startsAt: new Date("2026-05-18T10:00:00.000Z"),
       endsAt: new Date("2026-05-18T18:00:00.000Z"),
       status: "draft",
+      isPlatformApproved: false,
       organizer: { isVerified: true }
     } as Awaited<ReturnType<typeof db.market.findUnique>>);
 
@@ -59,9 +62,12 @@ describe("POST /api/markets/[marketId]/publish", () => {
       organizerId: "org_session_1",
       title: "春日咖啡市集",
       city: "杭州",
+      coverUrl: null,
+      description: null,
       startsAt: new Date("2026-05-18T10:00:00.000Z"),
       endsAt: new Date("2026-05-18T18:00:00.000Z"),
       status: "draft",
+      isPlatformApproved: false,
       organizer: { isVerified: true }
     } as Awaited<ReturnType<typeof db.market.findUnique>>);
     const updateSpy = vi.spyOn(db.market, "update").mockResolvedValue({
@@ -69,9 +75,12 @@ describe("POST /api/markets/[marketId]/publish", () => {
       organizerId: "org_session_1",
       title: "春日咖啡市集",
       city: "杭州",
+      coverUrl: null,
+      description: null,
       startsAt: new Date("2026-05-18T10:00:00.000Z"),
       endsAt: new Date("2026-05-18T18:00:00.000Z"),
-      status: "published"
+      status: "published",
+      isPlatformApproved: false
     } as Awaited<ReturnType<typeof db.market.update>>);
 
     const response = await POST(new Request("http://localhost/api/markets/market_1/publish"), {
@@ -88,9 +97,12 @@ describe("POST /api/markets/[marketId]/publish", () => {
       organizerId: "org_session_1",
       title: "春日咖啡市集",
       city: "杭州",
+      coverUrl: null,
+      description: null,
       startsAt: "2026-05-18T10:00:00.000Z",
       endsAt: "2026-05-18T18:00:00.000Z",
-      status: "published"
+      status: "published",
+      isPlatformApproved: false
     });
   });
 
@@ -104,9 +116,12 @@ describe("POST /api/markets/[marketId]/publish", () => {
       organizerId: "org_session_1",
       title: "春日咖啡市集",
       city: "杭州",
+      coverUrl: null,
+      description: null,
       startsAt: new Date("2026-05-18T10:00:00.000Z"),
       endsAt: new Date("2026-05-18T18:00:00.000Z"),
       status: "draft",
+      isPlatformApproved: false,
       organizer: { isVerified: false }
     } as Awaited<ReturnType<typeof db.market.findUnique>>);
 

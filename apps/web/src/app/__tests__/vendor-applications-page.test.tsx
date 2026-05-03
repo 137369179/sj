@@ -17,6 +17,36 @@ vi.mock("../../components/layout/app-shell", () => ({
   AppShell: ({ children }: { children: React.ReactNode }) => <div data-testid="app-shell">{children}</div>
 }));
 
+type MockVendorApplication = Awaited<ReturnType<typeof listVendorApplications>>[number];
+
+function buildVendorApplication(
+  overrides: Partial<MockVendorApplication> & Pick<MockVendorApplication, "id" | "marketId" | "marketTitle" | "marketCity" | "status" | "createdAt">
+): MockVendorApplication {
+  return {
+    id: overrides.id,
+    marketId: overrides.marketId,
+    marketTitle: overrides.marketTitle,
+    marketCity: overrides.marketCity,
+    status: overrides.status,
+    note: overrides.note ?? null,
+    applicationNote: overrides.applicationNote ?? null,
+    reviewNote: overrides.reviewNote ?? null,
+    attachments: overrides.attachments ?? [],
+    reviewedAt: overrides.reviewedAt ?? null,
+    reviews: overrides.reviews ?? [],
+    createdAt: overrides.createdAt,
+    assignedStallId: overrides.assignedStallId ?? null,
+    assignedStallCode: overrides.assignedStallCode ?? null,
+    assignedStallName: overrides.assignedStallName ?? null,
+    assignedStallPrice: overrides.assignedStallPrice ?? null,
+    orderId: overrides.orderId ?? null,
+    orderAmount: overrides.orderAmount ?? null,
+    orderStatus: overrides.orderStatus ?? null,
+    orderPaymentMethod: overrides.orderPaymentMethod ?? null,
+    orderPaidAt: overrides.orderPaidAt ?? null
+  };
+}
+
 describe("Vendor applications page", () => {
   beforeEach(() => {
     vi.clearAllMocks();
@@ -28,7 +58,7 @@ describe("Vendor applications page", () => {
       role: "vendor"
     });
     vi.mocked(listVendorApplications).mockResolvedValue([
-      {
+      buildVendorApplication({
         id: "app_1",
         marketId: "market_1",
         marketTitle: "春日咖啡市集",
@@ -70,8 +100,9 @@ describe("Vendor applications page", () => {
         orderId: "order_1",
         orderAmount: 800,
         orderStatus: "pending",
+        orderPaymentMethod: null,
         orderPaidAt: null
-      }
+      })
     ]);
 
     const page = await VendorApplicationsPage({
@@ -142,7 +173,7 @@ describe("Vendor applications page", () => {
       role: "vendor"
     });
     vi.mocked(listVendorApplications).mockResolvedValue([
-      {
+      buildVendorApplication({
         id: "app_1",
         marketId: "market_1",
         marketTitle: "春日咖啡市集",
@@ -157,13 +188,15 @@ describe("Vendor applications page", () => {
         createdAt: new Date("2026-05-01T00:00:00.000Z"),
         assignedStallId: null,
         assignedStallCode: null,
+        assignedStallName: null,
         assignedStallPrice: null,
         orderId: null,
         orderAmount: null,
         orderStatus: null,
+        orderPaymentMethod: null,
         orderPaidAt: null
-      },
-      {
+      }),
+      buildVendorApplication({
         id: "app_2",
         marketId: "market_2",
         marketTitle: "夏夜面包市集",
@@ -183,9 +216,10 @@ describe("Vendor applications page", () => {
         orderId: null,
         orderAmount: null,
         orderStatus: null,
+        orderPaymentMethod: null,
         orderPaidAt: null
-      },
-      {
+      }),
+      buildVendorApplication({
         id: "app_3",
         marketId: "market_3",
         marketTitle: "秋日手作市集",
@@ -201,7 +235,7 @@ describe("Vendor applications page", () => {
         assignedStallId: "stall_3",
         assignedStallCode: "B-03",
         assignedStallName: "内场 3 号位"
-      }
+      })
     ]);
 
     const page = await VendorApplicationsPage({
@@ -253,7 +287,7 @@ describe("Vendor applications page", () => {
       role: "vendor"
     });
     vi.mocked(listVendorApplications).mockResolvedValue([
-      {
+      buildVendorApplication({
         id: "app_1",
         marketId: "market_1",
         marketTitle: "春日咖啡市集",
@@ -269,8 +303,8 @@ describe("Vendor applications page", () => {
         assignedStallId: null,
         assignedStallCode: null,
         assignedStallName: null
-      },
-      {
+      }),
+      buildVendorApplication({
         id: "app_2",
         marketId: "market_2",
         marketTitle: "夏夜面包市集",
@@ -286,7 +320,7 @@ describe("Vendor applications page", () => {
         assignedStallId: null,
         assignedStallCode: null,
         assignedStallName: null
-      }
+      })
     ]);
 
     const page = await VendorApplicationsPage({
@@ -314,7 +348,7 @@ describe("Vendor applications page", () => {
       role: "vendor"
     });
     vi.mocked(listVendorApplications).mockResolvedValue([
-      {
+      buildVendorApplication({
         id: "app_2",
         marketId: "market_2",
         marketTitle: "夏夜面包市集",
@@ -330,7 +364,7 @@ describe("Vendor applications page", () => {
         assignedStallId: null,
         assignedStallCode: null,
         assignedStallName: null
-      }
+      })
     ]);
 
     const page = await VendorApplicationsPage({
@@ -351,7 +385,7 @@ describe("Vendor applications page", () => {
       role: "vendor"
     });
     vi.mocked(listVendorApplications).mockResolvedValue([
-      {
+      buildVendorApplication({
         id: "app_1",
         marketId: "market_1",
         marketTitle: "春日咖啡市集",
@@ -367,7 +401,7 @@ describe("Vendor applications page", () => {
         assignedStallId: null,
         assignedStallCode: null,
         assignedStallName: null
-      }
+      })
     ]);
 
     const page = await VendorApplicationsPage({

@@ -61,6 +61,7 @@ describe("POST /api/stalls", () => {
       marketId: "market_1",
       code: "A-01",
       name: "主通道 1 号位",
+      price: 0,
       isActive: true
     });
     vi.mocked(createStall).mockResolvedValue({
@@ -68,6 +69,7 @@ describe("POST /api/stalls", () => {
       marketId: "market_1",
       code: "A-01",
       name: "主通道 1 号位",
+      price: 0,
       isActive: true,
       assignedApplicationId: null
     });
@@ -98,6 +100,7 @@ describe("POST /api/stalls", () => {
       marketId: "market_1",
       code: "A-01",
       name: "主通道 1 号位",
+      price: 0,
       isActive: true
     });
     expect(response.status).toBe(201);
@@ -106,6 +109,7 @@ describe("POST /api/stalls", () => {
       marketId: "market_1",
       code: "A-01",
       name: "主通道 1 号位",
+      price: 0,
       isActive: true,
       assignedApplicationId: null
     });
@@ -118,6 +122,7 @@ describe("POST /api/stalls", () => {
       marketId: "market_404",
       code: "A-01",
       name: "主通道 1 号位",
+      price: 0,
       isActive: true
     });
     vi.mocked(createStall).mockRejectedValue(

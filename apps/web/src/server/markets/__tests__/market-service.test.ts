@@ -327,9 +327,12 @@ describe("market service", () => {
       organizerId: "org_1",
       title: "春日咖啡市集",
       city: "杭州",
+      coverUrl: null,
+      description: null,
       startsAt: new Date("2026-05-18T10:00:00.000Z"),
       endsAt: new Date("2026-05-18T18:00:00.000Z"),
       status: "draft",
+      isPlatformApproved: false,
       organizer: { isVerified: true }
     } as Awaited<ReturnType<typeof db.market.findUnique>>);
     const updateSpy = vi.spyOn(db.market, "update").mockResolvedValue({
@@ -337,9 +340,12 @@ describe("market service", () => {
       organizerId: "org_1",
       title: "春日咖啡市集",
       city: "杭州",
+      coverUrl: null,
+      description: null,
       startsAt: new Date("2026-05-18T10:00:00.000Z"),
       endsAt: new Date("2026-05-18T18:00:00.000Z"),
-      status: "published"
+      status: "published",
+      isPlatformApproved: false
     } as Awaited<ReturnType<typeof db.market.update>>);
 
     await expect(
@@ -368,9 +374,12 @@ describe("market service", () => {
       organizerId: "org_2",
       title: "春日咖啡市集",
       city: "杭州",
+      coverUrl: null,
+      description: null,
       startsAt: new Date("2026-05-18T10:00:00.000Z"),
       endsAt: new Date("2026-05-18T18:00:00.000Z"),
       status: "draft",
+      isPlatformApproved: false,
       organizer: { isVerified: true }
     } as Awaited<ReturnType<typeof db.market.findUnique>>);
 
@@ -388,9 +397,12 @@ describe("market service", () => {
       organizerId: "org_1",
       title: "春日咖啡市集",
       city: "杭州",
+      coverUrl: null,
+      description: null,
       startsAt: new Date("2026-05-18T10:00:00.000Z"),
       endsAt: new Date("2026-05-18T18:00:00.000Z"),
       status: "draft",
+      isPlatformApproved: false,
       organizer: { isVerified: false }
     } as Awaited<ReturnType<typeof db.market.findUnique>>);
 
