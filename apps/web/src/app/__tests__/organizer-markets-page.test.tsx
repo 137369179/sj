@@ -22,6 +22,30 @@ describe("Organizer markets page", () => {
     vi.clearAllMocks();
   });
 
+  it("renders publish error when the organizer is unverified", async () => {
+    vi.mocked(getSessionUser).mockResolvedValue({
+      userId: "org_session_1",
+      role: "organizer"
+    });
+    vi.mocked(listOrganizerMarkets).mockResolvedValue([
+      {
+        id: "market_1",
+        title: "春日咖啡市集",
+        city: "杭州",
+        startsAt: new Date("2026-05-18T10:00:00.000Z"),
+        endsAt: new Date("2026-05-18T18:00:00.000Z"),
+        status: "draft"
+      }
+    ]);
+
+    const page = await OrganizerMarketsPage({
+      searchParams: Promise.resolve({ publishError: "UNVERIFIED_ORGANIZER" })
+    });
+    render(page);
+
+    expect(screen.getByRole("alert")).toHaveTextContent("发布失败：主办方资质未认证，无法发布市集。请联系平台管理员。");
+  });
+
   it("renders organizer markets from session identity with management links", async () => {
     vi.mocked(getSessionUser).mockResolvedValue({
       userId: "org_1",

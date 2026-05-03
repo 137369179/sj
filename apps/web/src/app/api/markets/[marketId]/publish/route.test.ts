@@ -37,7 +37,8 @@ describe("POST /api/markets/[marketId]/publish", () => {
       city: "杭州",
       startsAt: new Date("2026-05-18T10:00:00.000Z"),
       endsAt: new Date("2026-05-18T18:00:00.000Z"),
-      status: "draft"
+      status: "draft",
+      organizer: { isVerified: true }
     } as Awaited<ReturnType<typeof db.market.findUnique>>);
 
     const response = await POST(new Request("http://localhost/api/markets/market_1/publish"), {
@@ -60,7 +61,8 @@ describe("POST /api/markets/[marketId]/publish", () => {
       city: "杭州",
       startsAt: new Date("2026-05-18T10:00:00.000Z"),
       endsAt: new Date("2026-05-18T18:00:00.000Z"),
-      status: "draft"
+      status: "draft",
+      organizer: { isVerified: true }
     } as Awaited<ReturnType<typeof db.market.findUnique>>);
     const updateSpy = vi.spyOn(db.market, "update").mockResolvedValue({
       id: "market_1",
@@ -90,5 +92,29 @@ describe("POST /api/markets/[marketId]/publish", () => {
       endsAt: "2026-05-18T18:00:00.000Z",
       status: "published"
     });
+  });
+
+  it("rejects publishing a market if the organizer is not verified", async () => {
+    vi.mocked(getSessionUser).mockResolvedValue({
+      userId: "org_session_1",
+      role: "organizer"
+    });
+    vi.spyOn(db.market, "findUnique").mockResolvedValue({
+      id: "market_1",
+      organizerId: "org_session_1",
+      title: "春日咖啡市集",
+      city: "杭州",
+      startsAt: new Date("2026-05-18T10:00:00.000Z"),
+      endsAt: new Date("2026-05-18T18:00:00.000Z"),
+      status: "draft",
+      organizer: { isVerified: false }
+    } as Awaited<ReturnType<typeof db.market.findUnique>>);
+
+    const response = await POST(new Request("http://localhost/api/markets/market_1/publish"), {
+      params: Promise.resolve({ marketId: "market_1" })
+    });
+
+    expect(response.status).toBe(403);
+    await expect(response.json()).resolves.toEqual({ message: "unverified organizer" });
   });
 });

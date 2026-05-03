@@ -74,7 +74,7 @@ export type PublishOrganizerMarketInput = {
   organizerId: string;
 };
 
-export type MarketPublishErrorCode = "NOT_FOUND" | "FORBIDDEN" | "INVALID_STATUS";
+export type MarketPublishErrorCode = "NOT_FOUND" | "FORBIDDEN" | "INVALID_STATUS" | "UNVERIFIED_ORGANIZER";
 
 export class MarketPublishError extends Error {
   code: MarketPublishErrorCode;
@@ -281,6 +281,11 @@ export async function publishOrganizerMarket(input: PublishOrganizerMarketInput)
   const market = await db.market.findUnique({
     where: {
       id: input.marketId
+    },
+    include: {
+      organizer: {
+        select: { isVerified: true }
+      }
     }
   });
 
@@ -290,6 +295,10 @@ export async function publishOrganizerMarket(input: PublishOrganizerMarketInput)
 
   if (market.organizerId !== input.organizerId) {
     throw new MarketPublishError("FORBIDDEN");
+  }
+
+  if (!market.organizer.isVerified) {
+    throw new MarketPublishError("UNVERIFIED_ORGANIZER");
   }
 
   if (!canPublishMarket(market.status)) {

@@ -36,6 +36,7 @@ model User {
   phone                 String         @unique
   role                  UserRole
   name                  String
+  isVerified            Boolean        @default(false)
   createdAt             DateTime       @default(now())
   organizedMarkets      Market[]       @relation("OrganizerMarkets")
   applications          Application[]  @relation("VendorApplications")

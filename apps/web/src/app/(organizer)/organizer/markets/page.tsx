@@ -297,6 +297,10 @@ function getPublishErrorMessage(code: string | undefined) {
     return "发布失败：市集当前状态无法发布，请确保市集包含至少一个摊位。";
   }
 
+  if (code === "UNVERIFIED_ORGANIZER") {
+    return "发布失败：主办方资质未认证，无法发布市集。请联系平台管理员。";
+  }
+
   return null;
 }
 

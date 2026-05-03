@@ -278,7 +278,8 @@ describe("market service", () => {
       city: "杭州",
       startsAt: new Date("2026-05-18T10:00:00.000Z"),
       endsAt: new Date("2026-05-18T18:00:00.000Z"),
-      status: "draft"
+      status: "draft",
+      organizer: { isVerified: true }
     } as Awaited<ReturnType<typeof db.market.findUnique>>);
     const updateSpy = vi.spyOn(db.market, "update").mockResolvedValue({
       id: "market_1",
@@ -318,7 +319,8 @@ describe("market service", () => {
       city: "杭州",
       startsAt: new Date("2026-05-18T10:00:00.000Z"),
       endsAt: new Date("2026-05-18T18:00:00.000Z"),
-      status: "draft"
+      status: "draft",
+      organizer: { isVerified: true }
     } as Awaited<ReturnType<typeof db.market.findUnique>>);
 
     await expect(
@@ -327,5 +329,25 @@ describe("market service", () => {
         organizerId: "org_1"
       })
     ).rejects.toEqual(new MarketPublishError("FORBIDDEN"));
+  });
+
+  it("rejects publishing a market if the organizer is not verified", async () => {
+    vi.spyOn(db.market, "findUnique").mockResolvedValue({
+      id: "market_1",
+      organizerId: "org_1",
+      title: "春日咖啡市集",
+      city: "杭州",
+      startsAt: new Date("2026-05-18T10:00:00.000Z"),
+      endsAt: new Date("2026-05-18T18:00:00.000Z"),
+      status: "draft",
+      organizer: { isVerified: false }
+    } as Awaited<ReturnType<typeof db.market.findUnique>>);
+
+    await expect(
+      publishOrganizerMarket({
+        marketId: "market_1",
+        organizerId: "org_1"
+      })
+    ).rejects.toEqual(new MarketPublishError("UNVERIFIED_ORGANIZER"));
   });
 });
