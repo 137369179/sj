@@ -5,7 +5,9 @@ import { AppShell } from "../../../components/layout/app-shell";
 import { getApplicationStatusLabel } from "../../../lib/application-status";
 import { getSessionUser } from "../../../lib/auth";
 import {
+  getVendorActionLabel,
   getVendorCurrentStepLabel,
+  getVendorReceiptNote,
   getVendorStatusHint,
   getVendorTimingNote,
   VENDOR_APPLICATION_TASK_GROUPS
@@ -177,6 +179,24 @@ export default async function VendorApplicationsPage({
                     application.status,
                     application.latestReviewDecision
                   )}
+                </p>
+                <p>
+                  建议动作：
+                  {getVendorActionLabel({
+                    status: application.status,
+                    latestReviewDecision: application.latestReviewDecision,
+                    reviewedAt: application.reviewedAt,
+                    orderStatus: application.orderStatus
+                  })}
+                </p>
+                <p>
+                  进度回执：
+                  {getVendorReceiptNote({
+                    status: application.status,
+                    latestReviewDecision: application.latestReviewDecision,
+                    reviewedAt: application.reviewedAt,
+                    orderStatus: application.orderStatus
+                  })}
                 </p>
                 {timingNote ? (
                   <p>

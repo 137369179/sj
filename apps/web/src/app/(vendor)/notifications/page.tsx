@@ -46,6 +46,7 @@ export default async function VendorNotificationsPage() {
           <section aria-labelledby="vendor-notification-guidance-title">
             <h3 id="vendor-notification-guidance-title">本周需要关注</h3>
             <p>补件通知请尽快处理，候补通知建议保留档期。</p>
+            <p>建议动作优先级：先处理补件，再持续关注候补结果。</p>
             {timingNote ? <p>{timingNote}</p> : null}
           </section>
         ) : null}

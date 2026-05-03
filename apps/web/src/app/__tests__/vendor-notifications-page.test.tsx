@@ -81,6 +81,7 @@ describe("VendorNotificationsPage", () => {
     expect(screen.getByRole("heading", { name: "本周需要关注" })).toBeInTheDocument();
     expect(screen.getByText("补件通知请尽快处理，候补通知建议保留档期。")).toBeInTheDocument();
     expect(screen.getByText("补件将在 22 小时内截止，请优先处理。")).toBeInTheDocument();
+    expect(screen.getByText("建议动作优先级：先处理补件，再持续关注候补结果。")).toBeInTheDocument();
   });
 
   it("renders empty state when no notifications exist", async () => {

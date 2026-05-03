@@ -1,9 +1,11 @@
 import { afterEach, describe, expect, it, vi } from "vitest";
 
 import {
+  getVendorActionLabel,
   getOrganizerFollowUpLabel,
   getOrganizerFollowUpNote,
   getOrganizerFollowUpState,
+  getVendorReceiptNote,
   getVendorTimingNote,
   ORGANIZER_DASHBOARD_PRIORITIES,
   ROLE_GUIDANCE,
@@ -44,6 +46,54 @@ describe("role-play metadata", () => {
         reviewedAt: new Date("2026-05-02T09:00:00.000Z")
       })
     ).toBe("候补观察期内请保留档期，留意补位通知。");
+  });
+
+  it("derives vendor actions and receipts for supplement, waitlist, and paid states", () => {
+    vi.useFakeTimers();
+    vi.setSystemTime(new Date("2026-05-03T12:00:00.000Z"));
+
+    expect(
+      getVendorActionLabel({
+        status: "under_review",
+        latestReviewDecision: "supplement",
+        reviewedAt: new Date("2026-05-01T18:00:00.000Z")
+      })
+    ).toBe("立即补件");
+    expect(
+      getVendorReceiptNote({
+        status: "under_review",
+        latestReviewDecision: "supplement",
+        reviewedAt: new Date("2026-05-01T18:00:00.000Z")
+      })
+    ).toBe("资料补齐后会重新进入主办方审核队列。");
+
+    expect(
+      getVendorActionLabel({
+        status: "under_review",
+        latestReviewDecision: "waitlist",
+        reviewedAt: new Date("2026-05-02T09:00:00.000Z")
+      })
+    ).toBe("保留档期");
+    expect(
+      getVendorReceiptNote({
+        status: "under_review",
+        latestReviewDecision: "waitlist",
+        reviewedAt: new Date("2026-05-02T09:00:00.000Z")
+      })
+    ).toBe("当前仍在候补观察名单中，如有空位将优先递补。");
+
+    expect(
+      getVendorActionLabel({
+        status: "stall_assigned",
+        orderStatus: "pending"
+      })
+    ).toBe("完成支付");
+    expect(
+      getVendorReceiptNote({
+        status: "stall_assigned",
+        orderStatus: "pending"
+      })
+    ).toBe("摊位已锁定，付款后将正式保留本次档期。");
   });
 
   it("derives organizer follow-up priority and timing notes", () => {

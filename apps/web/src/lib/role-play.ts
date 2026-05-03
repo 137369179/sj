@@ -21,6 +21,13 @@ export type VendorApplicationTaskGroupId =
 
 export type OrganizerFollowUpState = "idle" | "watching" | "urgent";
 
+type VendorProgressInput = {
+  status: string;
+  latestReviewDecision?: string | null;
+  reviewedAt?: Date | string | null;
+  orderStatus?: string | null;
+};
+
 export function getVendorStatusHint(
   status: string,
   latestReviewDecision?: string | null
@@ -121,6 +128,68 @@ export function getVendorTimingNote(input: {
   }
 
   return null;
+}
+
+export function getVendorActionLabel(input: VendorProgressInput) {
+  if (input.status === "under_review" && input.latestReviewDecision === "supplement") {
+    const timingNote = getVendorTimingNote(input);
+
+    if (timingNote?.includes("截止") || timingNote?.includes("超时")) {
+      return "立即补件";
+    }
+
+    return "准备补件";
+  }
+
+  if (input.status === "under_review" && input.latestReviewDecision === "waitlist") {
+    return "保留档期";
+  }
+
+  if (input.status === "stall_assigned" && input.orderStatus === "pending") {
+    return "完成支付";
+  }
+
+  if (input.status === "paid") {
+    return "准备进场";
+  }
+
+  if (input.status === "approved") {
+    return "等待分配";
+  }
+
+  if (input.status === "submitted") {
+    return "等待审核";
+  }
+
+  return "关注进度";
+}
+
+export function getVendorReceiptNote(input: VendorProgressInput) {
+  if (input.status === "under_review" && input.latestReviewDecision === "supplement") {
+    return "资料补齐后会重新进入主办方审核队列。";
+  }
+
+  if (input.status === "under_review" && input.latestReviewDecision === "waitlist") {
+    return "当前仍在候补观察名单中，如有空位将优先递补。";
+  }
+
+  if (input.status === "stall_assigned" && input.orderStatus === "pending") {
+    return "摊位已锁定，付款后将正式保留本次档期。";
+  }
+
+  if (input.status === "paid") {
+    return "报名已锁定，可按摊位安排准备进场。";
+  }
+
+  if (input.status === "approved") {
+    return "你已通过审核，等待主办方完成摊位分配。";
+  }
+
+  if (input.status === "submitted") {
+    return "报名已提交，当前等待主办方首次处理。";
+  }
+
+  return "请留意主办方后续通知。";
 }
 
 export function getOrganizerFollowUpState(input: {

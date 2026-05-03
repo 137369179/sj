@@ -360,12 +360,50 @@ describe("Vendor applications page", () => {
     expect(screen.getByText(/查看分配结果与后续安排/)).toBeInTheDocument();
     expect(screen.getByText("当前处理：待补件")).toBeInTheDocument();
     expect(screen.getByText("当前处理：候补中")).toBeInTheDocument();
+    expect(screen.getByText("建议动作：立即补件")).toBeInTheDocument();
+    expect(screen.getByText("进度回执：资料补齐后会重新进入主办方审核队列。")).toBeInTheDocument();
+    expect(screen.getByText("建议动作：保留档期")).toBeInTheDocument();
+    expect(screen.getByText("进度回执：当前仍在候补观察名单中，如有空位将优先递补。")).toBeInTheDocument();
     expect(screen.getByText("时效提醒：补件将在 6 小时内截止，请优先处理。")).toBeInTheDocument();
     expect(screen.getByText("时效提醒：候补观察期内请保留档期，留意补位通知。")).toBeInTheDocument();
     expect(screen.getByRole("link", { name: "去补件" })).toHaveAttribute(
       "href",
       "/markets/market_2/apply?from=applications&action=supplement&applicationId=app_2"
     );
+  });
+
+  it("shows payment-focused action receipts after stall assignment", async () => {
+    vi.mocked(getSessionUser).mockResolvedValue({
+      userId: "vendor_1",
+      role: "vendor"
+    });
+    vi.mocked(listVendorApplications).mockResolvedValue([
+      buildVendorApplication({
+        id: "app_9",
+        marketId: "market_9",
+        marketTitle: "深夜甜品市集",
+        marketCity: "上海",
+        status: "stall_assigned",
+        createdAt: new Date("2026-05-01T02:00:00.000Z"),
+        assignedStallId: "stall_9",
+        assignedStallCode: "C-09",
+        assignedStallName: "外场 9 号位",
+        orderId: "order_9",
+        orderAmount: 1200,
+        orderStatus: "pending",
+        orderPaymentMethod: null,
+        orderPaidAt: null
+      })
+    ]);
+
+    const page = await VendorApplicationsPage({
+      searchParams: Promise.resolve({})
+    });
+
+    render(page);
+
+    expect(screen.getByText("建议动作：完成支付")).toBeInTheDocument();
+    expect(screen.getByText("进度回执：摊位已锁定，付款后将正式保留本次档期。")).toBeInTheDocument();
   });
 
   it("filters vendor applications by marketId and preserves status context", async () => {
