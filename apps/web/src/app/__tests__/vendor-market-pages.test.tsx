@@ -28,6 +28,7 @@ describe("Vendor market pages", () => {
         id: "market_2",
         title: "独立手作品牌周末",
         city: "上海",
+        coverUrl: "https://example.com/cover2.jpg",
         startsAt: new Date("2026-06-06T10:00:00.000Z"),
         endsAt: new Date("2026-06-06T18:00:00.000Z"),
         status: "published",
@@ -39,7 +40,9 @@ describe("Vendor market pages", () => {
     const page = await VendorMarketsPage({
       searchParams: Promise.resolve({
         city: "上海",
-        keyword: "手作"
+        keyword: "手作",
+        dateFrom: "2026-06-01",
+        dateTo: "2026-06-30"
       })
     });
 
@@ -47,9 +50,12 @@ describe("Vendor market pages", () => {
 
     expect(listPublishedMarkets).toHaveBeenCalledWith({
       city: "上海",
-      keyword: "手作"
+      keyword: "手作",
+      dateFrom: "2026-06-01",
+      dateTo: "2026-06-30"
     });
     expect(screen.getByText("独立手作品牌周末")).toBeInTheDocument();
+    expect(screen.getByRole("img", { name: "独立手作品牌周末 缩略图" })).toHaveAttribute("src", "https://example.com/cover2.jpg");
     expect(screen.getByText("主办方：Org 2 | 启用摊位：5 个")).toBeInTheDocument();
     expect(screen.queryByText("春日咖啡市集")).not.toBeInTheDocument();
   });
@@ -59,6 +65,8 @@ describe("Vendor market pages", () => {
       id: "market_1",
       title: "春日咖啡市集",
       city: "杭州",
+      coverUrl: "https://example.com/cover.jpg",
+      description: "这是一个咖啡市集",
       startsAt: new Date("2026-05-18T10:00:00.000Z"),
       endsAt: new Date("2026-05-18T18:00:00.000Z"),
       status: "published",
@@ -78,6 +86,8 @@ describe("Vendor market pages", () => {
     expect(
       screen.getByRole("heading", { name: "春日咖啡市集" })
     ).toBeInTheDocument();
+    expect(screen.getByRole("img", { name: "春日咖啡市集 海报" })).toHaveAttribute("src", "https://example.com/cover.jpg");
+    expect(screen.getByText("这是一个咖啡市集")).toBeInTheDocument();
     expect(screen.getByText("杭州 · 2026-05-18 至 2026-05-18")).toBeInTheDocument();
     expect(screen.getByText("主办方：Org 1 | 启用摊位：10 个")).toBeInTheDocument();
     expect(

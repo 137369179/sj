@@ -36,13 +36,26 @@ export default async function MarketDetailPage({
         <p>市集编号：{marketId}</p>
         {market ? (
           <>
+            {market.coverUrl && (
+              <img
+                src={market.coverUrl}
+                alt={`${market.title} 海报`}
+                style={{ maxWidth: "100%", height: "auto", borderRadius: "8px", margin: "1rem 0" }}
+              />
+            )}
             <p>
               {market.city} · {formatDate(market.startsAt)} 至 {formatDate(market.endsAt)}
             </p>
             <p>
               主办方：{market.organizerName} | 启用摊位：{market.stallsCount} 个
             </p>
-            <p>当前市集正在公开招募中，可继续进入报名页面提交申请。</p>
+            {market.description && (
+              <div style={{ marginTop: "1rem", whiteSpace: "pre-wrap" }}>
+                <strong>市集介绍：</strong>
+                <p>{market.description}</p>
+              </div>
+            )}
+            <p style={{ marginTop: "2rem" }}>当前市集正在公开招募中，可继续进入报名页面提交申请。</p>
           </>
         ) : (
           <p>当前市集暂不可查看或未公开招募。</p>

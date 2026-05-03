@@ -73,6 +73,8 @@ describe("POST /api/markets", () => {
         organizerId: "org_session_1",
         title: "春日咖啡市集",
         city: "杭州",
+        coverUrl: null,
+        description: null,
         startsAt: new Date("2026-05-18T10:00:00.000Z"),
         endsAt: new Date("2026-05-18T18:00:00.000Z"),
         status: "draft"

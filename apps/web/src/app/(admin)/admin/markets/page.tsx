@@ -37,10 +37,11 @@ export default async function AdminMarketsPage() {
                     borderRadius: "8px",
                     display: "flex",
                     justifyContent: "space-between",
-                    alignItems: "center"
+                    alignItems: "flex-start",
+                    gap: "1rem"
                   }}
                 >
-                  <div>
+                  <div style={{ flex: 1 }}>
                     <h4>
                       {market.title}
                       <span
@@ -63,8 +64,22 @@ export default async function AdminMarketsPage() {
                     <p>
                       摊位：{market._count.stalls} 个 | 报名：{market._count.applications} 份
                     </p>
+                    {market.description && (
+                      <p style={{ marginTop: "0.5rem", color: "#4b5563", fontSize: "0.9rem", whiteSpace: "pre-wrap" }}>
+                        描述: {market.description.slice(0, 100)}{market.description.length > 100 ? "..." : ""}
+                      </p>
+                    )}
                   </div>
-                  <div style={{ display: "flex", gap: "1rem" }}>
+                  {market.coverUrl && (
+                    <div style={{ flexShrink: 0 }}>
+                      <img 
+                        src={market.coverUrl} 
+                        alt="海报" 
+                        style={{ width: "80px", height: "80px", objectFit: "cover", borderRadius: "4px" }} 
+                      />
+                    </div>
+                  )}
+                  <div style={{ display: "flex", gap: "1rem", flexDirection: "column", alignItems: "flex-end" }}>
                     {market.status === "published" && !market.isPlatformApproved && (
                       <form action={approveMarketAction.bind(null, market.id)}>
                         <button type="submit" style={{ backgroundColor: "#10b981", color: "white" }}>

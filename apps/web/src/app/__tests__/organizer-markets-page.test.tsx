@@ -244,7 +244,7 @@ describe("Organizer markets page", () => {
 
     expect(screen.getByText("开始时间不能晚于结束时间")).toBeInTheDocument();
     expect(screen.getByText("结束时间不能早于开始时间")).toBeInTheDocument();
-    expect(screen.getByRole("alert")).toHaveTextContent("创建市集失败，请修正后重试。");
+    expect(screen.getByRole("alert")).toHaveTextContent("请修复以下字段错误后重新提交：");
   });
 
   it("prompts for organizer login when the session identity is missing", async () => {

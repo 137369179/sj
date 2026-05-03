@@ -10,7 +10,8 @@ import {
   listOrganizerMarketOptions,
   listPublishedMarkets,
   MarketPublishError,
-  publishOrganizerMarket
+  publishOrganizerMarket,
+  updateOrganizerMarket
 } from "../service";
 
 describe("market service", () => {
@@ -139,6 +140,8 @@ describe("market service", () => {
         id: "market_2",
         title: "夏夜面包市集",
         city: "上海",
+        coverUrl: "https://example.com/cover2.jpg",
+        description: "Desc 2",
         startsAt: new Date("2026-06-08T10:00:00.000Z"),
         endsAt: new Date("2026-06-08T18:00:00.000Z"),
         organizer: { name: "Org 2" },
@@ -148,6 +151,8 @@ describe("market service", () => {
         id: "market_1",
         title: "春日咖啡市集",
         city: "杭州",
+        coverUrl: "https://example.com/cover1.jpg",
+        description: "Desc 1",
         startsAt: new Date("2026-05-18T10:00:00.000Z"),
         endsAt: new Date("2026-05-18T18:00:00.000Z"),
         organizer: { name: "Org 1" },
@@ -165,6 +170,8 @@ describe("market service", () => {
         id: "market_2",
         title: "夏夜面包市集",
         city: "上海",
+        coverUrl: "https://example.com/cover2.jpg",
+        description: "Desc 2",
         startsAt: new Date("2026-06-08T10:00:00.000Z"),
         endsAt: new Date("2026-06-08T18:00:00.000Z"),
         status: "published",
@@ -182,6 +189,8 @@ describe("market service", () => {
         id: true,
         title: true,
         city: true,
+        coverUrl: true,
+        description: true,
         startsAt: true,
         endsAt: true,
         organizer: { select: { name: true } },
@@ -198,6 +207,8 @@ describe("market service", () => {
       id: "market_1",
       title: "春日咖啡市集",
       city: "杭州",
+      coverUrl: "https://example.com/cover1.jpg",
+      description: "Desc 1",
       startsAt: new Date("2026-05-18T10:00:00.000Z"),
       endsAt: new Date("2026-05-18T18:00:00.000Z"),
       status: "published",
@@ -209,6 +220,8 @@ describe("market service", () => {
       id: "market_1",
       title: "春日咖啡市集",
       city: "杭州",
+      coverUrl: "https://example.com/cover1.jpg",
+      description: "Desc 1",
       startsAt: new Date("2026-05-18T10:00:00.000Z"),
       endsAt: new Date("2026-05-18T18:00:00.000Z"),
       status: "published",
@@ -226,6 +239,8 @@ describe("market service", () => {
         id: true,
         title: true,
         city: true,
+        coverUrl: true,
+        description: true,
         startsAt: true,
         endsAt: true,
         status: true,
@@ -265,9 +280,43 @@ describe("market service", () => {
         organizerId: "org_1",
         title: "春日咖啡市集",
         city: "杭州",
+        coverUrl: null,
+        description: null,
         startsAt: new Date("2026-05-18T10:00:00.000Z"),
         endsAt: new Date("2026-05-18T18:00:00.000Z"),
         status: "draft"
+      }
+    });
+  });
+
+  it("updates an existing draft market", async () => {
+    vi.spyOn(db.market, "findUnique").mockResolvedValue({
+      id: "market_1",
+      organizerId: "org_1",
+      status: "draft"
+    } as any);
+
+    const updateSpy = vi.spyOn(db.market, "update").mockResolvedValue({} as any);
+
+    await updateOrganizerMarket("market_1", {
+      organizerId: "org_1",
+      title: "更新后的咖啡市集",
+      city: "杭州",
+      coverUrl: "https://example.com/cover2.jpg",
+      description: "Desc 2",
+      startsAt: "2026-05-18T10:00:00.000Z",
+      endsAt: "2026-05-18T18:00:00.000Z"
+    });
+
+    expect(updateSpy).toHaveBeenCalledWith({
+      where: { id: "market_1" },
+      data: {
+        title: "更新后的咖啡市集",
+        city: "杭州",
+        coverUrl: "https://example.com/cover2.jpg",
+        description: "Desc 2",
+        startsAt: new Date("2026-05-18T10:00:00.000Z"),
+        endsAt: new Date("2026-05-18T18:00:00.000Z")
       }
     });
   });

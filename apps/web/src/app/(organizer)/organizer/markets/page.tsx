@@ -4,6 +4,7 @@ import { redirect } from "next/navigation";
 import { ZodError } from "zod";
 
 import { AppShell } from "../../../../components/layout/app-shell";
+import { storage } from "../../../../server/storage";
 import { getSessionUser } from "../../../../lib/auth";
 import { getMarketStatusLabel } from "../../../../lib/market-status";
 import {
@@ -23,10 +24,19 @@ async function createMarketAction(formData: FormData) {
   }
 
   try {
+    let coverUrl = String(formData.get("coverUrl") ?? "");
+    const coverFile = formData.get("coverFile");
+    if (coverFile instanceof File && coverFile.size > 0) {
+      const uploadResult = await storage.upload(coverFile);
+      coverUrl = uploadResult.url;
+    }
+
     await createOrganizerMarket({
       organizerId: sessionUser.userId,
       title: String(formData.get("title") ?? ""),
       city: String(formData.get("city") ?? ""),
+      coverUrl: coverUrl,
+      description: String(formData.get("description") ?? ""),
       startsAt: normalizeDateTimeInput(String(formData.get("startsAt") ?? "")),
       endsAt: normalizeDateTimeInput(String(formData.get("endsAt") ?? ""))
     });
@@ -37,6 +47,8 @@ async function createMarketAction(formData: FormData) {
         buildCreateMarketErrorHref({
           titleError: getFirstFieldError(error, "title"),
           cityError: getFirstFieldError(error, "city"),
+          coverUrlError: getFirstFieldError(error, "coverUrl"),
+          descriptionError: getFirstFieldError(error, "description"),
           startsAtError: getFirstFieldError(error, "startsAt"),
           endsAtError: getFirstFieldError(error, "endsAt")
         })
@@ -123,6 +135,16 @@ export default async function OrganizerMarketsPage({
                     <a href="#input-city">城市：{createMarketErrors.city}</a>
                   </li>
                 ) : null}
+                {createMarketErrors.coverUrl ? (
+                  <li>
+                    <a href="#input-coverUrl">市集海报：{createMarketErrors.coverUrl}</a>
+                  </li>
+                ) : null}
+                {createMarketErrors.description ? (
+                  <li>
+                    <a href="#input-description">市集描述：{createMarketErrors.description}</a>
+                  </li>
+                ) : null}
                 {createMarketErrors.startsAt ? (
                   <li>
                     <a href="#input-startsAt">开始时间：{createMarketErrors.startsAt}</a>
@@ -156,6 +178,36 @@ export default async function OrganizerMarketsPage({
             />
           </label>
           {createMarketErrors.city ? <p className="field-error">{createMarketErrors.city}</p> : null}
+          <label>
+            市集海报图片 (可选)
+            <input
+              id="input-coverFile"
+              name="coverFile"
+              type="file"
+              accept="image/jpeg,image/png,image/webp"
+            />
+          </label>
+          <label style={{ display: "none" }}>
+            市集海报 URL (可选)
+            <input
+              id="input-coverUrl"
+              aria-invalid={createMarketErrors.coverUrl ? "true" : "false"}
+              name="coverUrl"
+              type="url"
+              placeholder="https://..."
+            />
+          </label>
+          {createMarketErrors.coverUrl ? <p className="field-error">{createMarketErrors.coverUrl}</p> : null}
+          <label>
+            市集描述 (可选)
+            <textarea
+              id="input-description"
+              aria-invalid={createMarketErrors.description ? "true" : "false"}
+              name="description"
+              rows={4}
+            />
+          </label>
+          {createMarketErrors.description ? <p className="field-error">{createMarketErrors.description}</p> : null}
           <label>
             开始时间
             <input
@@ -332,6 +384,8 @@ function getFirstFieldError(error: ZodError, field: string) {
 function buildCreateMarketErrorHref(input: {
   titleError?: string;
   cityError?: string;
+  coverUrlError?: string;
+  descriptionError?: string;
   startsAtError?: string;
   endsAtError?: string;
 }) {
@@ -345,6 +399,14 @@ function buildCreateMarketErrorHref(input: {
     params.set("cityError", input.cityError);
   }
 
+  if (input.coverUrlError) {
+    params.set("coverUrlError", input.coverUrlError);
+  }
+
+  if (input.descriptionError) {
+    params.set("descriptionError", input.descriptionError);
+  }
+
   if (input.startsAtError) {
     params.set("startsAtError", input.startsAtError);
   }
@@ -356,26 +418,28 @@ function buildCreateMarketErrorHref(input: {
   return `/organizer/markets?${params.toString()}`;
 }
 
-function getCreateMarketErrors(searchParams: {
+function getCreateMarketErrors(params: {
   titleError?: string;
   cityError?: string;
+  coverUrlError?: string;
+  descriptionError?: string;
   startsAtError?: string;
   endsAtError?: string;
 }) {
-  const errors = {
-    title: searchParams.titleError,
-    city: searchParams.cityError,
-    startsAt: searchParams.startsAtError,
-    endsAt: searchParams.endsAtError
-  };
+  const errors: Record<string, string> = {};
 
-  return {
-    ...errors,
-    formError:
-      errors.title || errors.city || errors.startsAt || errors.endsAt
-        ? "创建市集失败，请修正后重试。"
-        : null
-  };
+  if (params.titleError) errors.title = params.titleError;
+  if (params.cityError) errors.city = params.cityError;
+  if (params.coverUrlError) errors.coverUrl = params.coverUrlError;
+  if (params.descriptionError) errors.description = params.descriptionError;
+  if (params.startsAtError) errors.startsAt = params.startsAtError;
+  if (params.endsAtError) errors.endsAt = params.endsAtError;
+
+  if (Object.keys(errors).length > 0) {
+    errors.formError = "请修复以下字段错误后重新提交：";
+  }
+
+  return errors;
 }
 
 function buildOrganizerMarketsTargetHref(input: {

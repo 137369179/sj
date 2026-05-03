@@ -6,6 +6,8 @@ export const marketSchema = z
   .object({
     title: z.string().trim().min(2),
     city: z.string().trim().min(2),
+    coverUrl: z.string().url().optional().or(z.literal("")),
+    description: z.string().optional(),
     startsAt: z.string().datetime(),
     endsAt: z.string().datetime()
   })
@@ -59,9 +61,11 @@ export type PublishedMarketListItem = {
   id: string;
   title: string;
   city: string;
+  coverUrl?: string | null;
+  description?: string | null;
   startsAt: Date;
   endsAt: Date;
-  status: "published";
+  status?: string;
   organizerName: string;
   stallsCount: number;
 };
@@ -111,11 +115,13 @@ export function canPublishMarket(status: string) {
   return status === "draft";
 }
 
-export function filterMarkets<T extends { city: string; title: string }>(
+export function filterMarkets<T extends { city: string; title: string; startsAt: Date; endsAt: Date }>(
   markets: T[],
   filters: {
     city?: string;
     keyword?: string;
+    dateFrom?: string;
+    dateTo?: string;
   }
 ) {
   return markets.filter((market) => {
@@ -124,7 +130,18 @@ export function filterMarkets<T extends { city: string; title: string }>(
       ? market.title.includes(filters.keyword)
       : true;
 
-    return cityMatched && keywordMatched;
+    let dateMatched = true;
+    if (filters.dateFrom) {
+      dateMatched = dateMatched && market.endsAt.getTime() >= new Date(filters.dateFrom).getTime();
+    }
+    if (filters.dateTo) {
+      // Add one day to dateTo to include the entire day
+      const toDate = new Date(filters.dateTo);
+      toDate.setDate(toDate.getDate() + 1);
+      dateMatched = dateMatched && market.startsAt.getTime() < toDate.getTime();
+    }
+
+    return cityMatched && keywordMatched && dateMatched;
   });
 }
 
@@ -139,6 +156,8 @@ export function getDemoMarketById(marketId: string) {
 export async function listPublishedMarkets(filters: {
   city?: string;
   keyword?: string;
+  dateFrom?: string;
+  dateTo?: string;
 }): Promise<PublishedMarketListItem[]> {
   const markets = await db.market.findMany({
     where: {
@@ -149,6 +168,8 @@ export async function listPublishedMarkets(filters: {
       id: true,
       title: true,
       city: true,
+      coverUrl: true,
+      description: true,
       startsAt: true,
       endsAt: true,
       organizer: {
@@ -164,15 +185,17 @@ export async function listPublishedMarkets(filters: {
   });
 
   return filterMarkets(
-    markets.map((market) => ({
-      id: market.id,
-      title: market.title,
-      city: market.city,
-      startsAt: market.startsAt,
-      endsAt: market.endsAt,
-      status: "published" as const,
-      organizerName: market.organizer.name,
-      stallsCount: market._count.stalls
+    markets.map((m) => ({
+      id: m.id,
+      title: m.title,
+      city: m.city,
+      coverUrl: m.coverUrl,
+      description: m.description,
+      startsAt: m.startsAt,
+      endsAt: m.endsAt,
+      status: "published",
+      organizerName: m.organizer.name,
+      stallsCount: m._count.stalls
     })),
     filters
   );
@@ -191,6 +214,8 @@ export async function getPublishedMarketById(
       id: true,
       title: true,
       city: true,
+      coverUrl: true,
+      description: true,
       startsAt: true,
       endsAt: true,
       status: true,
@@ -211,9 +236,11 @@ export async function getPublishedMarketById(
     id: market.id,
     title: market.title,
     city: market.city,
+    coverUrl: market.coverUrl,
+    description: market.description,
     startsAt: market.startsAt,
     endsAt: market.endsAt,
-    status: "published",
+    status: market.status,
     organizerName: market.organizer.name,
     stallsCount: market._count.stalls
   };
@@ -268,12 +295,13 @@ export async function listOrganizerMarkets(
 
 export async function createOrganizerMarket(input: CreateOrganizerMarketInput) {
   const payload = buildMarketPayload(input);
-
   return db.market.create({
     data: {
       organizerId: input.organizerId,
       title: payload.title,
       city: payload.city,
+      coverUrl: payload.coverUrl || null,
+      description: payload.description || null,
       startsAt: new Date(payload.startsAt),
       endsAt: new Date(payload.endsAt),
       status: "draft"
@@ -318,3 +346,40 @@ export async function publishOrganizerMarket(input: PublishOrganizerMarketInput)
     }
   });
 }
+
+export async function updateOrganizerMarket(
+  marketId: string,
+  input: MarketPayload & { organizerId: string }
+) {
+  const payload = buildMarketPayload(input);
+
+  const market = await db.market.findUnique({
+    where: { id: marketId }
+  });
+
+  if (!market) {
+    throw new Error("Market not found");
+  }
+
+  if (market.organizerId !== input.organizerId) {
+    throw new Error("Forbidden");
+  }
+
+  if (market.status !== "draft") {
+    throw new Error("Only draft markets can be edited");
+  }
+
+  return db.market.update({
+    where: { id: marketId },
+    data: {
+      title: payload.title,
+      city: payload.city,
+      coverUrl: payload.coverUrl || null,
+      description: payload.description || null,
+      startsAt: new Date(payload.startsAt),
+      endsAt: new Date(payload.endsAt)
+    }
+  });
+}
+
+

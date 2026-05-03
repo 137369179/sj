@@ -48,6 +48,8 @@ model Market {
   organizerId           String
   title                 String
   city                  String
+  coverUrl              String?
+  description           String?        @db.Text
   startsAt              DateTime
   endsAt                DateTime
   status                MarketStatus   @default(draft)
