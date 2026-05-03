@@ -34,11 +34,11 @@
 - Modify: `apps/web/src/app/__tests__/vendor-applications-page.test.tsx`
 - Modify: `apps/web/src/app/api/dashboard/markets/[marketId]/route.test.ts`
 
-- [ ] **Step 1: 给审核记录夹具补 `applicationId`**
-- [ ] **Step 2: 给 application list item 夹具补 `note`**
-- [ ] **Step 3: 给 stalls 相关 application fixture 补 `attachments` / `reviews` / `reviewedAt`**
-- [ ] **Step 4: 给 dashboard route metrics fixture 补 `totalStalls` / `activeStalls` / `occupiedStalls` / `stallOccupancyRate`**
-- [ ] **Step 5: 运行 `pnpm --filter web exec tsc --noEmit`，确认错误减少且落点转移到服务层**
+- [x] **Step 1: 给审核记录夹具补 `applicationId`**
+- [x] **Step 2: 给 application list item 夹具补 `note`**
+- [x] **Step 3: 给 stalls 相关 application fixture 补 `attachments` / `reviews` / `reviewedAt`**
+- [x] **Step 4: 给 dashboard route metrics fixture 补 `totalStalls` / `activeStalls` / `occupiedStalls` / `stallOccupancyRate`**
+- [x] **Step 5: 运行 `pnpm --filter web exec tsc --noEmit`，确认错误减少且落点转移到服务层**
 
 ### Task 2: 补齐服务层与 service tests 的显式类型
 
@@ -51,10 +51,10 @@
 - Modify: `apps/web/src/server/stalls/__tests__/stall-service.test.ts`
 - Modify: `apps/web/src/server/dashboard/__tests__/dashboard-service.test.ts`
 
-- [ ] **Step 1: 给 `map()` / 解构回调参数补显式类型**
-- [ ] **Step 2: 给交互式 transaction callback 补参数类型**
-- [ ] **Step 3: 去掉和当前 Vitest/TS 不兼容的多余泛型断言**
-- [ ] **Step 4: 再跑 `pnpm --filter web exec tsc --noEmit`，确认通过**
+- [x] **Step 1: 给 `map()` / 解构回调参数补显式类型**
+- [x] **Step 2: 给交互式 transaction callback 补参数类型**
+- [x] **Step 3: 去掉和当前 Vitest/TS 不兼容的多余泛型断言**
+- [x] **Step 4: 再跑 `pnpm --filter web exec tsc --noEmit`，确认通过**
 
 ### Task 3: 全量回归与专项收尾
 
@@ -62,17 +62,18 @@
 - Create: `docs/ACCEPTANCE_typecheck-recovery-minimum-closure.md`
 - Create: `docs/TODO_typecheck-recovery-minimum-closure.md`
 
-- [ ] **Step 1: 跑全量测试**
+- [x] **Step 1: 跑全量测试**
 Run: `pnpm --filter web exec vitest run`
 Expected: PASS
 
-- [ ] **Step 2: 跑类型检查**
+- [x] **Step 2: 跑类型检查**
 Run: `pnpm --filter web exec tsc --noEmit`
 Expected: PASS
 
-- [ ] **Step 3: 补专项验收与 TODO 文档**
+- [x] **Step 3: 补专项验收与 TODO 文档**
 
 ## 自检
+
 
 - Spec coverage
   - 测试夹具类型修正：Task 1 覆盖
