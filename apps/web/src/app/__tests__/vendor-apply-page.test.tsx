@@ -1,8 +1,18 @@
 import { fireEvent, render, screen, waitFor } from "@testing-library/react";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
+import { getSessionUser } from "../../lib/auth";
+import { listVendorApplications } from "../../server/applications/service";
 import { getPublishedMarketById } from "../../server/markets/service";
 import VendorApplyPage from "../(vendor)/markets/[marketId]/apply/page";
+
+vi.mock("../../lib/auth", () => ({
+  getSessionUser: vi.fn()
+}));
+
+vi.mock("../../server/applications/service", () => ({
+  listVendorApplications: vi.fn()
+}));
 
 vi.mock("../../server/markets/service", () => ({
   getPublishedMarketById: vi.fn()
@@ -16,6 +26,11 @@ describe("VendorApplyPage", () => {
   beforeEach(() => {
     vi.clearAllMocks();
     vi.stubGlobal("fetch", vi.fn());
+    vi.mocked(getSessionUser).mockResolvedValue({
+      userId: "vendor_1",
+      role: "vendor"
+    });
+    vi.mocked(listVendorApplications).mockResolvedValue([]);
     vi.mocked(getPublishedMarketById).mockResolvedValue({
       id: "market_1",
         title: "春日咖啡市集",
@@ -256,6 +271,47 @@ describe("VendorApplyPage", () => {
         }
       })
     );
+    vi.mocked(listVendorApplications).mockResolvedValue([
+      {
+        id: "app_2",
+        marketId: "market_1",
+        marketTitle: "春日咖啡市集",
+        marketCity: "杭州",
+        status: "under_review",
+        taskGroup: "pending-action",
+        latestReviewDecision: "supplement",
+        note: "主营手作咖啡",
+        applicationNote: "主营手作咖啡",
+        reviewNote: "请补充近三次摆摊照片",
+        attachments: [
+          {
+            url: "/uploads/menu.pdf",
+            originalName: "menu.pdf"
+          }
+        ],
+        reviewedAt: new Date("2026-05-02T09:00:00.000Z"),
+        reviews: [
+          {
+            id: "review_3",
+            applicationId: "app_2",
+            organizerId: "org_1",
+            decision: "supplement",
+            reviewNote: "请补充近三次摆摊照片",
+            createdAt: new Date("2026-05-02T09:00:00.000Z")
+          }
+        ],
+        createdAt: new Date("2026-05-01T00:00:00.000Z"),
+        assignedStallId: null,
+        assignedStallCode: null,
+        assignedStallName: null,
+        assignedStallPrice: null,
+        orderId: null,
+        orderAmount: null,
+        orderStatus: null,
+        orderPaymentMethod: null,
+        orderPaidAt: null
+      }
+    ]);
 
     render(
       await VendorApplyPage({
@@ -269,6 +325,12 @@ describe("VendorApplyPage", () => {
     );
 
     expect(screen.getByText("当前正在补件，请根据主办方要求更新资料后再次提交。")).toBeInTheDocument();
+    expect(screen.getByText("本次补件要求：请补充近三次摆摊照片")).toBeInTheDocument();
+    expect(screen.getByText("当前已提交资料")).toBeInTheDocument();
+    expect(screen.getByRole("link", { name: "menu.pdf" })).toHaveAttribute(
+      "href",
+      "/uploads/menu.pdf"
+    );
     expect(screen.getByRole("button", { name: "提交补件" })).toBeInTheDocument();
 
     fillAndSubmitForm({ submitLabel: "提交补件" });

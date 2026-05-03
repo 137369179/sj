@@ -1,6 +1,8 @@
 import Link from "next/link";
 
 import { AppShell } from "../../../../../components/layout/app-shell";
+import { getSessionUser } from "../../../../../lib/auth";
+import { listVendorApplications } from "../../../../../server/applications/service";
 import { getPublishedMarketById } from "../../../../../server/markets/service";
 import { VendorApplyForm } from "./apply-form";
 
@@ -32,6 +34,15 @@ export default async function VendorApplyPage({
     resolvedSearchParams.applicationId.length > 0
       ? resolvedSearchParams.applicationId
       : null;
+  const sessionUser = supplementApplicationId ? await getSessionUser() : null;
+  const supplementApplication =
+    supplementApplicationId && sessionUser?.role === "vendor"
+      ? (await listVendorApplications(sessionUser.userId)).find(
+          (application) =>
+            application.id === supplementApplicationId &&
+            application.latestReviewDecision === "supplement"
+        ) ?? null
+      : null;
 
   return (
     <AppShell>
@@ -56,6 +67,9 @@ export default async function VendorApplyPage({
         {supplementApplicationId ? (
           <section aria-label="补件提示" style={{ marginBottom: "1rem" }}>
             <p>当前正在补件，请根据主办方要求更新资料后再次提交。</p>
+            {supplementApplication?.reviewNote ? (
+              <p>本次补件要求：{supplementApplication.reviewNote}</p>
+            ) : null}
           </section>
         ) : null}
         {market ? (
@@ -64,6 +78,8 @@ export default async function VendorApplyPage({
             applicationsHref={returnToApplications ?? "/applications"}
             applicationId={supplementApplicationId ?? undefined}
             mode={supplementApplicationId ? "supplement" : "create"}
+            initialApplicationNote={supplementApplication?.applicationNote ?? undefined}
+            existingAttachments={supplementApplication?.attachments ?? []}
           />
         ) : (
           <section aria-label="报名不可用提示">

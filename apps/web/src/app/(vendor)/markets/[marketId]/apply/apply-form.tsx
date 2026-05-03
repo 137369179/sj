@@ -8,6 +8,12 @@ type VendorApplyFormProps = {
   applicationsHref: string;
   applicationId?: string;
   mode?: "create" | "supplement";
+  initialBoothPreference?: string;
+  initialApplicationNote?: string;
+  existingAttachments?: Array<{
+    url: string;
+    originalName: string;
+  }>;
 };
 
 type SubmitState =
@@ -24,7 +30,10 @@ export function VendorApplyForm({
   marketId,
   applicationsHref,
   applicationId,
-  mode = "create"
+  mode = "create",
+  initialBoothPreference,
+  initialApplicationNote,
+  existingAttachments = []
 }: VendorApplyFormProps) {
   const [submitState, setSubmitState] = useState<SubmitState>({
     status: "idle",
@@ -112,6 +121,7 @@ export function VendorApplyForm({
             aria-label="摊位偏好"
             required
             rows={3}
+            defaultValue={initialBoothPreference}
           />
         </label>
         <label>
@@ -120,6 +130,7 @@ export function VendorApplyForm({
             name="applicationNote"
             aria-label="报名备注"
             rows={4}
+            defaultValue={initialApplicationNote}
           />
         </label>
         <label>
@@ -135,6 +146,20 @@ export function VendorApplyForm({
           {submitLabel}
         </button>
       </form>
+      {existingAttachments.length > 0 ? (
+        <section aria-label="已提交资料" style={{ marginTop: "1rem" }}>
+          <p>当前已提交资料</p>
+          <ul>
+            {existingAttachments.map((attachment) => (
+              <li key={attachment.url}>
+                <a href={attachment.url} target="_blank" rel="noreferrer">
+                  {attachment.originalName}
+                </a>
+              </li>
+            ))}
+          </ul>
+        </section>
+      ) : null}
       <p>开发期已接通本地最小上传链路，后续再升级到对象存储。</p>
       <Link href={applicationsHref}>查看我的报名</Link>
       {submitState.message ? (

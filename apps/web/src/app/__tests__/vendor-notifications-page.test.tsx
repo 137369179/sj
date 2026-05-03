@@ -47,6 +47,35 @@ describe("VendorNotificationsPage", () => {
     expect(screen.getByRole("button", { name: "标记为已读" })).toBeInTheDocument();
   });
 
+  it("surfaces focused guidance when supplement and waitlist notifications exist", async () => {
+    vi.mocked(getSessionUser).mockResolvedValue({
+      userId: "vendor_1",
+      role: "vendor"
+    });
+    vi.mocked(listVendorNotifications).mockResolvedValue([
+      {
+        id: "n_1",
+        title: "申请需要补充资料",
+        content: "你在春日咖啡市集的申请需要补充资料后继续审核。",
+        isRead: false,
+        createdAt: new Date("2026-05-01T10:00:00Z")
+      },
+      {
+        id: "n_2",
+        title: "申请已进入候补",
+        content: "你在夏夜面包市集的申请当前进入候补名单，如有空位将优先通知。",
+        isRead: false,
+        createdAt: new Date("2026-05-01T11:00:00Z")
+      }
+    ]);
+
+    const page = await VendorNotificationsPage();
+    render(page);
+
+    expect(screen.getByRole("heading", { name: "本周需要关注" })).toBeInTheDocument();
+    expect(screen.getByText("补件通知请尽快处理，候补通知建议保留档期。")).toBeInTheDocument();
+  });
+
   it("renders empty state when no notifications exist", async () => {
     vi.mocked(getSessionUser).mockResolvedValue({
       userId: "vendor_1",
