@@ -4,6 +4,10 @@ import { ReviewHistory } from "../../../components/applications/review-history";
 import { AppShell } from "../../../components/layout/app-shell";
 import { getApplicationStatusLabel } from "../../../lib/application-status";
 import { getSessionUser } from "../../../lib/auth";
+import {
+  getVendorStatusHint,
+  VENDOR_APPLICATION_TASK_GROUPS
+} from "../../../lib/role-play";
 import { listVendorApplications } from "../../../server/applications/service";
 
 type VendorApplicationsPageProps = {
@@ -37,6 +41,7 @@ export default async function VendorApplicationsPage({
     marketScopedApplications.find((application) => application.marketId === selectedMarketId)
       ?.marketTitle;
   const marketOptions = buildVendorMarketOptions(applications);
+  const applicationsByTaskGroup = buildVendorApplicationsByTaskGroup(filteredApplications);
 
   return (
     <AppShell>
@@ -57,6 +62,28 @@ export default async function VendorApplicationsPage({
                 <li>待确认</li>
                 <li>审核中</li>
               </ul>
+              <div style={{ display: "grid", gap: "1rem", marginTop: "1rem" }}>
+                {VENDOR_APPLICATION_TASK_GROUPS.map((group) => {
+                  const groupedApplications = applicationsByTaskGroup[group.id];
+
+                  if (groupedApplications.length === 0) {
+                    return null;
+                  }
+
+                  return (
+                    <section key={group.id} aria-label={group.label}>
+                      <h4>{group.label}</h4>
+                      <ul>
+                        {groupedApplications.map((application) => (
+                          <li key={application.id}>
+                            {application.marketTitle}：{getVendorStatusHint(application.status)}
+                          </li>
+                        ))}
+                      </ul>
+                    </section>
+                  );
+                })}
+              </div>
             </section>
             {currentMarketTitle ? <p>当前市集：{currentMarketTitle}</p> : null}
             <section aria-label="报名摘要">
@@ -261,5 +288,15 @@ function buildVendorStatusSummary(
     approved: applications.filter((application) => application.status === "approved").length,
     stallAssigned: applications.filter((application) => application.status === "stall_assigned")
       .length
+  };
+}
+
+function buildVendorApplicationsByTaskGroup(
+  applications: Awaited<ReturnType<typeof listVendorApplications>>
+) {
+  return {
+    "pending-action": applications.filter((application) => application.taskGroup === "pending-action"),
+    "in-progress": applications.filter((application) => application.taskGroup === "in-progress"),
+    done: applications.filter((application) => application.taskGroup === "done")
   };
 }

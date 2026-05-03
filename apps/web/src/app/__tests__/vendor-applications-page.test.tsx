@@ -28,6 +28,13 @@ function buildVendorApplication(
     marketTitle: overrides.marketTitle,
     marketCity: overrides.marketCity,
     status: overrides.status,
+    taskGroup:
+      overrides.taskGroup ??
+      (overrides.status === "submitted"
+        ? "pending-action"
+        : overrides.status === "under_review"
+          ? "in-progress"
+          : "done"),
     note: overrides.note ?? null,
     applicationNote: overrides.applicationNote ?? null,
     reviewNote: overrides.reviewNote ?? null,
@@ -282,6 +289,55 @@ describe("Vendor applications page", () => {
     expect(screen.getByText("夏夜面包市集 · 上海")).toBeInTheDocument();
     expect(screen.queryByText("春日咖啡市集 · 杭州")).not.toBeInTheDocument();
     expect(screen.queryByText("秋日手作市集 · 南京")).not.toBeInTheDocument();
+  });
+
+  it("groups vendor applications by task group and shows next-step hints", async () => {
+    vi.mocked(getSessionUser).mockResolvedValue({
+      userId: "vendor_1",
+      role: "vendor"
+    });
+    vi.mocked(listVendorApplications).mockResolvedValue([
+      buildVendorApplication({
+        id: "app_1",
+        marketId: "market_1",
+        marketTitle: "春日咖啡市集",
+        marketCity: "杭州",
+        status: "submitted",
+        createdAt: new Date("2026-05-01T00:00:00.000Z")
+      }),
+      buildVendorApplication({
+        id: "app_2",
+        marketId: "market_2",
+        marketTitle: "夏夜面包市集",
+        marketCity: "上海",
+        status: "under_review",
+        createdAt: new Date("2026-05-01T01:00:00.000Z")
+      }),
+      buildVendorApplication({
+        id: "app_3",
+        marketId: "market_3",
+        marketTitle: "秋日手作市集",
+        marketCity: "南京",
+        status: "stall_assigned",
+        createdAt: new Date("2026-05-01T02:00:00.000Z"),
+        assignedStallId: "stall_3",
+        assignedStallCode: "B-03",
+        assignedStallName: "内场 3 号位"
+      })
+    ]);
+
+    const page = await VendorApplicationsPage({
+      searchParams: Promise.resolve({})
+    });
+
+    render(page);
+
+    expect(screen.getByRole("heading", { name: "优先处理" })).toBeInTheDocument();
+    expect(screen.getByRole("heading", { name: "处理中" })).toBeInTheDocument();
+    expect(screen.getByRole("heading", { name: "已完成" })).toBeInTheDocument();
+    expect(screen.getByText(/等待主办方处理/)).toBeInTheDocument();
+    expect(screen.getByText(/审核中，请耐心等待/)).toBeInTheDocument();
+    expect(screen.getByText(/查看分配结果与后续安排/)).toBeInTheDocument();
   });
 
   it("filters vendor applications by marketId and preserves status context", async () => {

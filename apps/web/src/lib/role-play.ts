@@ -16,6 +16,33 @@ export const VENDOR_APPLICATION_TASK_GROUPS = [
   { id: "done", label: "已完成" },
 ] as const;
 
+export type VendorApplicationTaskGroupId =
+  (typeof VENDOR_APPLICATION_TASK_GROUPS)[number]["id"];
+
+export function getVendorStatusHint(status: string) {
+  if (status === "submitted") {
+    return "等待主办方处理";
+  }
+
+  if (status === "under_review") {
+    return "审核中，请耐心等待";
+  }
+
+  if (status === "approved") {
+    return "留意主办方后续确认与分配通知";
+  }
+
+  if (status === "stall_assigned" || status === "paid") {
+    return "查看分配结果与后续安排";
+  }
+
+  if (status === "rejected") {
+    return "查看结果说明并准备下一次报名";
+  }
+
+  return "关注最新进度更新";
+}
+
 export const ORGANIZER_DASHBOARD_PRIORITIES = [
   "待审核申请",
   "待确认摊主",
