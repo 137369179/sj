@@ -178,17 +178,12 @@ describe("Vendor applications page", () => {
         createdAt: new Date("2026-05-01T01:00:00.000Z"),
         assignedStallId: null,
         assignedStallCode: null,
-      assignedStallName: null,
-      assignedStallPrice: null,
-      orderId: null,
-      orderAmount: null,
-      orderStatus: null,
-      orderPaidAt: null,
-      assignedStallPrice: null,
-      orderId: null,
-      orderAmount: null,
-      orderStatus: null,
-      orderPaidAt: null
+        assignedStallName: null,
+        assignedStallPrice: null,
+        orderId: null,
+        orderAmount: null,
+        orderStatus: null,
+        orderPaidAt: null
       },
       {
         id: "app_3",
