@@ -46,6 +46,7 @@
 - `apps/web/src/app/account/page.tsx`
   - 已接入真实账号中心数据聚合
 - `apps/web/src/components/auth/account-center.tsx`
+  - 已支持已开通角色概览与当前工作角色说明
   - 已支持绑定 Passkey、切换角色、退出其他设备
   - 已支持删除单个 Passkey
   - 已支持重命名单个 Passkey
