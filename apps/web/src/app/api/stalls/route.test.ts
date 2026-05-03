@@ -1,4 +1,5 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
+import { ZodError } from "zod";
 
 import { getSessionRole } from "../../../lib/auth";
 import {
@@ -140,5 +141,45 @@ describe("POST /api/stalls", () => {
 
     expect(response.status).toBe(404);
     await expect(response.json()).resolves.toEqual({ message: "market not found" });
+  });
+
+  it("returns field errors when the stall payload is invalid", async () => {
+    vi.mocked(getSessionRole).mockResolvedValue("organizer");
+    vi.mocked(buildStallPayload).mockImplementation(() => {
+      throw new ZodError([
+        {
+          code: "too_small",
+          minimum: 1,
+          type: "string",
+          inclusive: true,
+          exact: false,
+          message: "摊位编码不能为空",
+          path: ["code"]
+        }
+      ]);
+    });
+
+    const request = new Request("http://localhost/api/stalls", {
+      method: "POST",
+      headers: {
+        "content-type": "application/json"
+      },
+      body: JSON.stringify({
+        organizerId: "org_1",
+        marketId: "market_1",
+        code: "",
+        name: "主通道 1 号位"
+      })
+    });
+
+    const response = await POST(request);
+
+    expect(response.status).toBe(422);
+    await expect(response.json()).resolves.toEqual({
+      message: "validation failed",
+      fieldErrors: {
+        code: ["摊位编码不能为空"]
+      }
+    });
   });
 });

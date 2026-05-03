@@ -1,4 +1,5 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
+import { ZodError } from "zod";
 
 import { getSessionUser } from "../../../../../lib/auth";
 import {
@@ -187,5 +188,47 @@ describe("POST /api/stalls/[stallId]/assign", () => {
 
     expect(response.status).toBe(409);
     await expect(response.json()).resolves.toEqual({ message: "stall unavailable" });
+  });
+
+  it("returns field errors when the assignment payload is invalid", async () => {
+    vi.mocked(getSessionUser).mockResolvedValue({
+      userId: "org_session_1",
+      role: "organizer"
+    });
+    vi.mocked(buildAssignStallPayload).mockImplementation(() => {
+      throw new ZodError([
+        {
+          code: "too_small",
+          minimum: 1,
+          type: "string",
+          inclusive: true,
+          exact: false,
+          message: "申请 ID 不能为空",
+          path: ["applicationId"]
+        }
+      ]);
+    });
+
+    const request = new Request("http://localhost/api/stalls/stall_1/assign", {
+      method: "POST",
+      headers: {
+        "content-type": "application/json"
+      },
+      body: JSON.stringify({
+        applicationId: ""
+      })
+    });
+
+    const response = await POST(request, {
+      params: Promise.resolve({ stallId: "stall_1" })
+    });
+
+    expect(response.status).toBe(422);
+    await expect(response.json()).resolves.toEqual({
+      message: "validation failed",
+      fieldErrors: {
+        applicationId: ["申请 ID 不能为空"]
+      }
+    });
   });
 });

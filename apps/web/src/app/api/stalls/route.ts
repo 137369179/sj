@@ -1,4 +1,5 @@
 import { NextResponse } from "next/server";
+import { ZodError } from "zod";
 
 import { getSessionRole } from "../../../lib/auth";
 import {
@@ -14,14 +15,23 @@ export async function POST(request: Request) {
     return NextResponse.json({ message: "forbidden" }, { status: 403 });
   }
 
-  const body = await request.json();
-  const payload = buildStallPayload(body);
-
   try {
+    const body = await request.json();
+    const payload = buildStallPayload(body);
     const stall = await createStall(payload);
 
     return NextResponse.json(stall, { status: 201 });
   } catch (error) {
+    if (error instanceof ZodError) {
+      return NextResponse.json(
+        {
+          message: "validation failed",
+          fieldErrors: error.flatten().fieldErrors
+        },
+        { status: 422 }
+      );
+    }
+
     if (error instanceof StallCreationError) {
       switch (error.code) {
         case "MARKET_NOT_FOUND":

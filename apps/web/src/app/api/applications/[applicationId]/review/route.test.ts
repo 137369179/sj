@@ -1,4 +1,5 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
+import { ZodError } from "zod";
 
 import { getSessionUser } from "../../../../../lib/auth";
 import {
@@ -184,6 +185,46 @@ describe("POST /api/applications/[applicationId]/review", () => {
         content: "你在春日咖啡市集的申请未通过审核，请调整后重新报名。",
         readAt: null,
         createdAt: "2026-05-01T01:00:00.000Z"
+      }
+    });
+  });
+
+  it("returns field errors when the review payload is invalid", async () => {
+    vi.mocked(getSessionUser).mockResolvedValue({
+      userId: "organizer_session_1",
+      role: "organizer"
+    });
+    vi.mocked(buildApplicationReviewPayload).mockImplementation(() => {
+      throw new ZodError([
+        {
+          code: "invalid_enum_value",
+          options: ["approve", "reject"],
+          received: "hold",
+          message: "审核决定无效",
+          path: ["decision"]
+        }
+      ]);
+    });
+
+    const request = new Request("http://localhost/api/applications/app_1/review", {
+      method: "POST",
+      headers: {
+        "content-type": "application/json"
+      },
+      body: JSON.stringify({
+        decision: "hold"
+      })
+    });
+
+    const response = await POST(request, {
+      params: Promise.resolve({ applicationId: "app_1" })
+    });
+
+    expect(response.status).toBe(422);
+    await expect(response.json()).resolves.toEqual({
+      message: "validation failed",
+      fieldErrors: {
+        decision: ["审核决定无效"]
       }
     });
   });

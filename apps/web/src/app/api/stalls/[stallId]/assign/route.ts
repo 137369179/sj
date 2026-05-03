@@ -1,4 +1,5 @@
 import { NextResponse } from "next/server";
+import { ZodError } from "zod";
 
 import { getSessionUser } from "../../../../../lib/auth";
 import {
@@ -17,11 +18,10 @@ export async function POST(
     return NextResponse.json({ message: "forbidden" }, { status: 403 });
   }
 
-  const { stallId } = await params;
-  const body = await request.json();
-  const payload = buildAssignStallPayload(body);
-
   try {
+    const { stallId } = await params;
+    const body = await request.json();
+    const payload = buildAssignStallPayload(body);
     const result = await assignStall({
       stallId,
       ...payload,
@@ -30,6 +30,16 @@ export async function POST(
 
     return NextResponse.json(result);
   } catch (error) {
+    if (error instanceof ZodError) {
+      return NextResponse.json(
+        {
+          message: "validation failed",
+          fieldErrors: error.flatten().fieldErrors
+        },
+        { status: 422 }
+      );
+    }
+
     if (error instanceof StallAssignmentError) {
       switch (error.code) {
         case "NOT_FOUND":
