@@ -89,6 +89,47 @@ export function getVendorCurrentStepLabel(
   return "处理中";
 }
 
+export function getVendorTimingNote(input: {
+  latestReviewDecision?: string | null;
+  reviewedAt?: Date | string | null;
+}) {
+  const reviewedAt = normalizeDate(input.reviewedAt);
+
+  if (!reviewedAt) {
+    return null;
+  }
+
+  if (input.latestReviewDecision === "supplement") {
+    const deadline = new Date(reviewedAt.getTime() + 48 * 60 * 60 * 1000);
+    const remainingHours = Math.ceil((deadline.getTime() - Date.now()) / (60 * 60 * 1000));
+
+    if (remainingHours <= 0) {
+      return "补件已超时，请立即处理并联系主办方确认是否仍可继续审核。";
+    }
+
+    if (remainingHours <= 24) {
+      return `补件将在 ${remainingHours} 小时内截止，请优先处理。`;
+    }
+
+    return "建议在 48 小时内完成补件，避免影响本次审核。";
+  }
+
+  if (input.latestReviewDecision === "waitlist") {
+    return "候补观察期内请保留档期，留意补位通知。";
+  }
+
+  return null;
+}
+
+function normalizeDate(value?: Date | string | null) {
+  if (!value) {
+    return null;
+  }
+
+  const date = value instanceof Date ? value : new Date(value);
+  return Number.isNaN(date.getTime()) ? null : date;
+}
+
 export const ORGANIZER_DASHBOARD_PRIORITIES = [
   "待审核申请",
   "待确认摊主",

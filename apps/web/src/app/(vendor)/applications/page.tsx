@@ -7,6 +7,7 @@ import { getSessionUser } from "../../../lib/auth";
 import {
   getVendorCurrentStepLabel,
   getVendorStatusHint,
+  getVendorTimingNote,
   VENDOR_APPLICATION_TASK_GROUPS
 } from "../../../lib/role-play";
 import { listVendorApplications } from "../../../server/applications/service";
@@ -158,76 +159,110 @@ export default async function VendorApplicationsPage({
         ) : null}
 
         <section aria-label="报名列表">
-          {filteredApplications.map((application) => (
-            <article key={application.id}>
-              <h3>
-                {application.marketTitle} · {application.marketCity}
-              </h3>
-              <p>状态：{getApplicationStatusLabel(application.status)}</p>
-              <p>
-                当前处理：
-                {getVendorCurrentStepLabel(
-                  application.status,
-                  application.latestReviewDecision
-                )}
-              </p>
-              {application.latestReviewDecision === "supplement" ? (
+          {filteredApplications.map((application) => {
+            const timingNote = getVendorTimingNote({
+              latestReviewDecision: application.latestReviewDecision,
+              reviewedAt: application.reviewedAt
+            });
+
+            return (
+              <article key={application.id}>
+                <h3>
+                  {application.marketTitle} · {application.marketCity}
+                </h3>
+                <p>状态：{getApplicationStatusLabel(application.status)}</p>
+                <p>
+                  当前处理：
+                  {getVendorCurrentStepLabel(
+                    application.status,
+                    application.latestReviewDecision
+                  )}
+                </p>
+                {timingNote ? (
+                  <p>
+                    时效提醒：
+                    {timingNote}
+                  </p>
+                ) : null}
+                {application.latestReviewDecision === "supplement" ? (
+                  <p>
+                    <Link
+                      href={`/markets/${application.marketId}/apply?from=applications&action=supplement&applicationId=${application.id}`}
+                    >
+                      去补件
+                    </Link>
+                  </p>
+                ) : null}
+                <p>报名备注：{application.applicationNote ?? "无"}</p>
+                <p>审核备注：{application.reviewNote ?? "无"}</p>
+                <p>
+                  最近审核时间：
+                  {application.reviewedAt ? formatDate(application.reviewedAt) : "未审核"}
+                </p>
+                <ReviewHistory reviews={application.reviews} />
                 <p>
                   <Link
-                    href={`/markets/${application.marketId}/apply?from=applications&action=supplement&applicationId=${application.id}`}
+                    href={buildVendorMarketDetailHref({
+                      marketId: application.marketId,
+                      status: selectedStatus
+                    })}
                   >
-                    去补件
+                    查看{application.marketTitle}详情
                   </Link>
                 </p>
-              ) : null}
-              <p>报名备注：{application.applicationNote ?? "无"}</p>
-              <p>审核备注：{application.reviewNote ?? "无"}</p>
-              <p>最近审核时间：{application.reviewedAt ? formatDate(application.reviewedAt) : "未审核"}</p>
-              <ReviewHistory reviews={application.reviews} />
-              <p>
-                <Link
-                  href={buildVendorMarketDetailHref({
-                    marketId: application.marketId,
-                    status: selectedStatus
-                  })}
-                >
-                  查看{application.marketTitle}详情
-                </Link>
-              </p>
-              <p>报名附件：{application.attachments.length > 0 ? null : "无"}</p>
-              {application.attachments.map((attachment) => (
-                <p key={attachment.url}>
-                  <a href={attachment.url} target="_blank" rel="noreferrer">
-                    {attachment.originalName}
-                  </a>
+                <p>报名附件：{application.attachments.length > 0 ? null : "无"}</p>
+                {application.attachments.map((attachment) => (
+                  <p key={attachment.url}>
+                    <a href={attachment.url} target="_blank" rel="noreferrer">
+                      {attachment.originalName}
+                    </a>
+                  </p>
+                ))}
+                <p>
+                  分配结果：
+                  {application.assignedStallName && application.assignedStallCode
+                    ? `${application.assignedStallName}（${application.assignedStallCode}）`
+                    : "待分配"}
                 </p>
-              ))}
-              <p>
-                分配结果：
-                {application.assignedStallName && application.assignedStallCode
-                  ? `${application.assignedStallName}（${application.assignedStallCode}）`
-                  : "待分配"}
-              </p>
-              {application.orderId && (
-                <div style={{ marginTop: "1rem", padding: "1rem", backgroundColor: "#f9fafb", borderRadius: "8px" }}>
-                  <h4>账单与支付</h4>
-                  <p>账单金额：¥{application.orderAmount}</p>
-                  <p>账单状态：{application.orderStatus === "paid" ? "已支付" : "待支付"}</p>
-                  {application.orderStatus === "paid" && application.orderPaidAt ? (
-                    <p>支付时间：{formatDate(application.orderPaidAt)}</p>
-                  ) : null}
-                  {application.orderStatus === "pending" && (
-                    <form action={`/api/payments/${application.orderId}/pay`} method="POST">
-                      <button type="submit" style={{ marginTop: "0.5rem", backgroundColor: "#10b981", color: "white", padding: "0.5rem 1rem", border: "none", borderRadius: "4px", cursor: "pointer" }}>
-                        立即支付
-                      </button>
-                    </form>
-                  )}
-                </div>
-              )}
-              <p>提交时间：{formatDate(application.createdAt)}</p>
-            </article>
-          ))}
+                {application.orderId && (
+                  <div
+                    style={{
+                      marginTop: "1rem",
+                      padding: "1rem",
+                      backgroundColor: "#f9fafb",
+                      borderRadius: "8px"
+                    }}
+                  >
+                    <h4>账单与支付</h4>
+                    <p>账单金额：¥{application.orderAmount}</p>
+                    <p>账单状态：{application.orderStatus === "paid" ? "已支付" : "待支付"}</p>
+                    {application.orderStatus === "paid" && application.orderPaidAt ? (
+                      <p>支付时间：{formatDate(application.orderPaidAt)}</p>
+                    ) : null}
+                    {application.orderStatus === "pending" && (
+                      <form action={`/api/payments/${application.orderId}/pay`} method="POST">
+                        <button
+                          type="submit"
+                          style={{
+                            marginTop: "0.5rem",
+                            backgroundColor: "#10b981",
+                            color: "white",
+                            padding: "0.5rem 1rem",
+                            border: "none",
+                            borderRadius: "4px",
+                            cursor: "pointer"
+                          }}
+                        >
+                          立即支付
+                        </button>
+                      </form>
+                    )}
+                  </div>
+                )}
+                <p>提交时间：{formatDate(application.createdAt)}</p>
+              </article>
+            );
+          })}
         </section>
       </main>
     </AppShell>

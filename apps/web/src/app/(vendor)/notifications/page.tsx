@@ -1,4 +1,5 @@
 import { AppShell } from "../../../components/layout/app-shell";
+import { getVendorTimingNote } from "../../../lib/role-play";
 import { getSessionUser } from "../../../lib/auth";
 import { listVendorNotifications } from "../../../server/notifications/service";
 import { NotificationList } from "./notification-list";
@@ -26,6 +27,16 @@ export default async function VendorNotificationsPage() {
     (notification) =>
       notification.title.includes("候补") || notification.content.includes("候补")
   );
+  const supplementNotification = notifications.find(
+    (notification) =>
+      notification.title.includes("补充资料") || notification.content.includes("补充资料")
+  );
+  const timingNote = supplementNotification
+    ? getVendorTimingNote({
+        latestReviewDecision: "supplement",
+        reviewedAt: supplementNotification.createdAt
+      })
+    : null;
 
   return (
     <AppShell>
@@ -35,6 +46,7 @@ export default async function VendorNotificationsPage() {
           <section aria-labelledby="vendor-notification-guidance-title">
             <h3 id="vendor-notification-guidance-title">本周需要关注</h3>
             <p>补件通知请尽快处理，候补通知建议保留档期。</p>
+            {timingNote ? <p>{timingNote}</p> : null}
           </section>
         ) : null}
         <NotificationList initialNotifications={notifications} />

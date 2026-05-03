@@ -1,5 +1,5 @@
-import { render, screen, fireEvent } from "@testing-library/react";
-import { beforeEach, describe, expect, it, vi } from "vitest";
+import { render, screen } from "@testing-library/react";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
 import { getSessionUser } from "../../lib/auth";
 import { listVendorNotifications } from "../../server/notifications/service";
@@ -21,6 +21,10 @@ vi.mock("../../components/layout/app-shell", () => ({
 describe("VendorNotificationsPage", () => {
   beforeEach(() => {
     vi.clearAllMocks();
+  });
+
+  afterEach(() => {
+    vi.useRealTimers();
   });
 
   it("renders notifications for logged in vendor", async () => {
@@ -48,6 +52,8 @@ describe("VendorNotificationsPage", () => {
   });
 
   it("surfaces focused guidance when supplement and waitlist notifications exist", async () => {
+    vi.useFakeTimers();
+    vi.setSystemTime(new Date("2026-05-03T12:00:00.000Z"));
     vi.mocked(getSessionUser).mockResolvedValue({
       userId: "vendor_1",
       role: "vendor"
@@ -58,7 +64,7 @@ describe("VendorNotificationsPage", () => {
         title: "申请需要补充资料",
         content: "你在春日咖啡市集的申请需要补充资料后继续审核。",
         isRead: false,
-        createdAt: new Date("2026-05-01T10:00:00Z")
+        createdAt: new Date("2026-05-02T10:00:00Z")
       },
       {
         id: "n_2",
@@ -74,6 +80,7 @@ describe("VendorNotificationsPage", () => {
 
     expect(screen.getByRole("heading", { name: "本周需要关注" })).toBeInTheDocument();
     expect(screen.getByText("补件通知请尽快处理，候补通知建议保留档期。")).toBeInTheDocument();
+    expect(screen.getByText("补件将在 22 小时内截止，请优先处理。")).toBeInTheDocument();
   });
 
   it("renders empty state when no notifications exist", async () => {

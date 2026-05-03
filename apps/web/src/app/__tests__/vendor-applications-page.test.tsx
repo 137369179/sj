@@ -1,5 +1,5 @@
 import { render, screen } from "@testing-library/react";
-import { beforeEach, describe, expect, it, vi } from "vitest";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
 import { getSessionUser } from "../../lib/auth";
 import { listVendorApplications } from "../../server/applications/service";
@@ -58,6 +58,10 @@ function buildVendorApplication(
 describe("Vendor applications page", () => {
   beforeEach(() => {
     vi.clearAllMocks();
+  });
+
+  afterEach(() => {
+    vi.useRealTimers();
   });
 
   it("renders vendor applications from session identity with split notes and stall assignment result", async () => {
@@ -293,6 +297,8 @@ describe("Vendor applications page", () => {
   });
 
   it("groups vendor applications by task group and shows next-step hints", async () => {
+    vi.useFakeTimers();
+    vi.setSystemTime(new Date("2026-05-03T12:00:00.000Z"));
     vi.mocked(getSessionUser).mockResolvedValue({
       userId: "vendor_1",
       role: "vendor"
@@ -313,6 +319,7 @@ describe("Vendor applications page", () => {
         marketCity: "上海",
         status: "under_review",
         latestReviewDecision: "supplement",
+        reviewedAt: new Date("2026-05-01T18:00:00.000Z"),
         createdAt: new Date("2026-05-01T01:00:00.000Z")
       }),
       buildVendorApplication({
@@ -333,6 +340,7 @@ describe("Vendor applications page", () => {
         marketCity: "苏州",
         status: "under_review",
         latestReviewDecision: "waitlist",
+        reviewedAt: new Date("2026-05-02T09:00:00.000Z"),
         createdAt: new Date("2026-05-01T03:00:00.000Z")
       })
     ]);
@@ -352,6 +360,8 @@ describe("Vendor applications page", () => {
     expect(screen.getByText(/查看分配结果与后续安排/)).toBeInTheDocument();
     expect(screen.getByText("当前处理：待补件")).toBeInTheDocument();
     expect(screen.getByText("当前处理：候补中")).toBeInTheDocument();
+    expect(screen.getByText("时效提醒：补件将在 6 小时内截止，请优先处理。")).toBeInTheDocument();
+    expect(screen.getByText("时效提醒：候补观察期内请保留档期，留意补位通知。")).toBeInTheDocument();
     expect(screen.getByRole("link", { name: "去补件" })).toHaveAttribute(
       "href",
       "/markets/market_2/apply?from=applications&action=supplement&applicationId=app_2"
