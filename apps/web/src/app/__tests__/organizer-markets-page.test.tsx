@@ -58,7 +58,8 @@ describe("Organizer markets page", () => {
         city: "上海",
         status: "published",
         startsAt: new Date("2026-06-08T10:00:00.000Z"),
-        endsAt: new Date("2026-06-08T18:00:00.000Z")
+        endsAt: new Date("2026-06-08T18:00:00.000Z"),
+        isPlatformApproved: true
       },
       {
         id: "market_1",
@@ -66,7 +67,8 @@ describe("Organizer markets page", () => {
         city: "杭州",
         status: "draft",
         startsAt: new Date("2026-05-18T10:00:00.000Z"),
-        endsAt: new Date("2026-05-18T18:00:00.000Z")
+        endsAt: new Date("2026-05-18T18:00:00.000Z"),
+        isPlatformApproved: false
       }
     ]);
 
@@ -100,6 +102,34 @@ describe("Organizer markets page", () => {
     expect(screen.getByText("杭州 · 草稿")).toBeInTheDocument();
     expect(screen.getByRole("button", { name: "发布 春日咖啡市集" })).toBeInTheDocument();
     expect(screen.queryByRole("button", { name: "发布 夏夜面包市集" })).not.toBeInTheDocument();
+
+    expect(screen.queryByText("平台巡检中")).not.toBeInTheDocument();
+  });
+
+  it("renders pending approval status when market is published but not platform approved", async () => {
+    vi.mocked(getSessionUser).mockResolvedValue({
+      userId: "org_1",
+      role: "organizer"
+    });
+    vi.mocked(listOrganizerMarkets).mockResolvedValue([
+      {
+        id: "market_1",
+        title: "春日咖啡市集",
+        city: "杭州",
+        status: "published",
+        startsAt: new Date("2026-05-18T10:00:00.000Z"),
+        endsAt: new Date("2026-05-18T18:00:00.000Z"),
+        isPlatformApproved: false
+      }
+    ]);
+
+    const page = await OrganizerMarketsPage({
+      searchParams: Promise.resolve({})
+    });
+
+    render(page);
+
+    expect(screen.getByText("平台巡检中")).toBeInTheDocument();
   });
 
   it("renders market summary metrics and filters markets by status from search params", async () => {
@@ -114,7 +144,8 @@ describe("Organizer markets page", () => {
         city: "南京",
         status: "completed",
         startsAt: new Date("2026-07-08T10:00:00.000Z"),
-        endsAt: new Date("2026-07-08T18:00:00.000Z")
+        endsAt: new Date("2026-07-08T18:00:00.000Z"),
+        isPlatformApproved: true,
       },
       {
         id: "market_2",
@@ -122,7 +153,8 @@ describe("Organizer markets page", () => {
         city: "上海",
         status: "published",
         startsAt: new Date("2026-06-08T10:00:00.000Z"),
-        endsAt: new Date("2026-06-08T18:00:00.000Z")
+        endsAt: new Date("2026-06-08T18:00:00.000Z"),
+        isPlatformApproved: true
       },
       {
         id: "market_1",
@@ -130,7 +162,8 @@ describe("Organizer markets page", () => {
         city: "杭州",
         status: "draft",
         startsAt: new Date("2026-05-18T10:00:00.000Z"),
-        endsAt: new Date("2026-05-18T18:00:00.000Z")
+        endsAt: new Date("2026-05-18T18:00:00.000Z"),
+        isPlatformApproved: false
       }
     ]);
 

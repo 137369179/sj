@@ -175,7 +175,8 @@ describe("market service", () => {
 
     expect(findManySpy).toHaveBeenCalledWith({
       where: {
-        status: "published"
+        status: "published",
+        isPlatformApproved: true
       },
       select: {
         id: true,
@@ -218,7 +219,8 @@ describe("market service", () => {
     expect(findFirstSpy).toHaveBeenCalledWith({
       where: {
         id: "market_1",
-        status: "published"
+        status: "published",
+        isPlatformApproved: true
       },
       select: {
         id: true,

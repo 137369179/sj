@@ -211,7 +211,23 @@ export default async function OrganizerMarketsPage({
         <section aria-label="市集列表">
           {filteredMarkets.map((market) => (
             <article key={market.id}>
-              <h3>{market.title}</h3>
+              <h3>
+                {market.title}
+                {market.status === "published" && !market.isPlatformApproved ? (
+                  <span
+                    style={{
+                      marginLeft: "1rem",
+                      fontSize: "0.8rem",
+                      padding: "2px 6px",
+                      borderRadius: "4px",
+                      backgroundColor: "#fef08a",
+                      color: "#166534"
+                    }}
+                  >
+                    平台巡检中
+                  </span>
+                ) : null}
+              </h3>
               <p>
                 {market.city} · {getMarketStatusLabel(market.status)}
               </p>

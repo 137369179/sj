@@ -36,7 +36,8 @@ describe("AppShell", () => {
     expect(screen.getByRole("link", { name: "摊主端" })).toBeInTheDocument();
     expect(screen.getByRole("link", { name: "主办方端" })).toBeInTheDocument();
     expect(screen.getByText("Page Content")).toBeInTheDocument();
-    expect(screen.queryByRole("link", { name: "管理后台" })).not.toBeInTheDocument();
+    expect(screen.queryByRole("link", { name: "主办方管理" })).not.toBeInTheDocument();
+    expect(screen.queryByRole("link", { name: "市集巡检" })).not.toBeInTheDocument();
   });
 
   it("renders admin navigation for admin role", async () => {
@@ -51,7 +52,8 @@ describe("AppShell", () => {
       })
     );
 
-    expect(screen.getByRole("link", { name: "管理后台" })).toBeInTheDocument();
+    expect(screen.getByRole("link", { name: "主办方管理" })).toBeInTheDocument();
+    expect(screen.getByRole("link", { name: "市集巡检" })).toBeInTheDocument();
     expect(screen.queryByRole("link", { name: "我的报名" })).not.toBeInTheDocument();
   });
 });

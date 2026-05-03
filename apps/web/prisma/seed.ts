@@ -69,6 +69,7 @@ async function main() {
       startsAt: new Date(new Date().getTime() + 7 * 24 * 60 * 60 * 1000), // Next week
       endsAt: new Date(new Date().getTime() + 9 * 24 * 60 * 60 * 1000),
       status: MarketStatus.published,
+      isPlatformApproved: true,
       organizerId: organizer1.id,
       stalls: {
         create: [

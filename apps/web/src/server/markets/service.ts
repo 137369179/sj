@@ -50,6 +50,7 @@ export type OrganizerMarketListItem = {
   title: string;
   city: string;
   status: string;
+  isPlatformApproved: boolean;
   startsAt: Date;
   endsAt: Date;
 };
@@ -141,7 +142,8 @@ export async function listPublishedMarkets(filters: {
 }): Promise<PublishedMarketListItem[]> {
   const markets = await db.market.findMany({
     where: {
-      status: "published"
+      status: "published",
+      isPlatformApproved: true
     },
     select: {
       id: true,
@@ -182,7 +184,8 @@ export async function getPublishedMarketById(
   const market = await db.market.findFirst({
     where: {
       id: marketId,
-      status: "published"
+      status: "published",
+      isPlatformApproved: true
     },
     select: {
       id: true,
@@ -253,6 +256,7 @@ export async function listOrganizerMarkets(
       title: true,
       city: true,
       status: true,
+      isPlatformApproved: true,
       startsAt: true,
       endsAt: true
     },

@@ -51,6 +51,7 @@ model Market {
   startsAt              DateTime
   endsAt                DateTime
   status                MarketStatus   @default(draft)
+  isPlatformApproved    Boolean        @default(false)
   organizer             User           @relation("OrganizerMarkets", fields: [organizerId], references: [id])
   applications          Application[]
   stalls                Stall[]
