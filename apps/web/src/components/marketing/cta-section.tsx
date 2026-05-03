@@ -8,7 +8,7 @@ export function CtaSection() {
         <Link href="/markets" className="button button-primary">
           查看招募活动
         </Link>
-        <Link href="/organizer/markets" className="button button-secondary">
+        <Link href="/organizer/markets" prefetch={false} className="button button-secondary">
           进入主办方端
         </Link>
       </div>

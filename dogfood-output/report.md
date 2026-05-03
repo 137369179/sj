@@ -13,18 +13,19 @@
 |----------|-------|
 | Critical | 0 |
 | High | 0 |
-| Medium | 1 |
+| Medium | 0 |
 | Low | 0 |
-| **Total** | **1** |
+| **Total** | **0** |
 
 ## Verification Update
 
 - Re-verified on `http://127.0.0.1:3004` with the latest production build.
+- Re-verified on `http://127.0.0.1:3006` after disabling unauthorized organizer-link prefetch on the homepage and shared shell.
+- Fixed: `ISSUE-001` homepage organizer prefetch no longer emits `Failed to fetch RSC payload for /organizer/markets` during idle load.
 - Fixed: `ISSUE-002` host rewrite to `localhost`.
 - Fixed: `ISSUE-003` `/markets` no longer crashes when market data lookup fails; page now renders a recoverable alert.
 - Fixed: `ISSUE-004` login page no longer exposes `Stub` copy.
 - Fixed: `ISSUE-005` forged login no longer creates a session; in the current sandbox, unreachable DB now degrades to `service_unavailable` instead of a server error page.
-- Still open: `ISSUE-001` homepage organizer prefetch failure was not addressed in this batch.
 
 ## Issues
 

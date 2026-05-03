@@ -3,6 +3,27 @@ import { describe, expect, it, vi } from "vitest";
 
 import HomePage from "../page";
 
+vi.mock("next/link", () => ({
+  default: ({
+    href,
+    prefetch,
+    children,
+    ...props
+  }: {
+    href: string;
+    prefetch?: boolean;
+    children: React.ReactNode;
+  }) => (
+    <a
+      href={href}
+      data-prefetch={prefetch === undefined ? undefined : String(prefetch)}
+      {...props}
+    >
+      {children}
+    </a>
+  )
+}));
+
 // Mock AppShell to avoid testing async components deeply in the page test
 vi.mock("../../components/layout/app-shell", () => ({
   AppShell: ({ children }: { children: React.ReactNode }) => <div data-testid="app-shell">{children}</div>
@@ -31,6 +52,15 @@ describe("HomePage", () => {
     expect(
       screen.getAllByRole("link", { name: "进入主办方端" })
     ).toHaveLength(2);
+    expect(
+      screen
+        .getAllByRole("link", { name: "进入主办方端" })
+        .every((link) => link.getAttribute("data-prefetch") === "false")
+    ).toBe(true);
+    expect(screen.getByRole("link", { name: "去主办方端" })).toHaveAttribute(
+      "data-prefetch",
+      "false"
+    );
     expect(screen.getByText("我是摊主")).toBeInTheDocument();
     expect(screen.getByText("我是主办方")).toBeInTheDocument();
   });

@@ -25,7 +25,12 @@ export async function AppShell({ children }: PropsWithChildren) {
               <Link href="/notifications">我的通知</Link>
             </>
           )}
-          <Link href="/organizer/markets">主办方端</Link>
+          <Link
+            href="/organizer/markets"
+            prefetch={sessionUser?.role === "organizer" || sessionUser?.role === "admin" ? undefined : false}
+          >
+            主办方端
+          </Link>
           {sessionUser?.role === "admin" && (
             <>
               <Link href="/admin/organizers">主办方管理</Link>

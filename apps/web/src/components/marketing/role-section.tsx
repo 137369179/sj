@@ -15,7 +15,7 @@ export function RoleSection() {
         <article className="role-card">
           <h4>我是主办方</h4>
           <p>统一发布活动、管理报名与跟进执行。</p>
-          <Link href="/organizer/markets" className="button button-secondary">
+          <Link href="/organizer/markets" prefetch={false} className="button button-secondary">
             去主办方端
           </Link>
         </article>
