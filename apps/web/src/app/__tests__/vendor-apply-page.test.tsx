@@ -28,7 +28,7 @@ describe("VendorApplyPage", () => {
       });
   });
 
-  function fillAndSubmitForm(options?: { withFile?: boolean }) {
+  function fillAndSubmitForm(options?: { withFile?: boolean; submitLabel?: string }) {
     fireEvent.change(screen.getByLabelText("摊位偏好"), {
       target: { value: "靠近主通道" }
     });
@@ -45,7 +45,9 @@ describe("VendorApplyPage", () => {
       });
     }
 
-    fireEvent.click(screen.getByRole("button", { name: "提交申请" }));
+    fireEvent.click(
+      screen.getByRole("button", { name: options?.submitLabel ?? "提交申请" })
+    );
   }
 
   it("uploads the selected file before submitting the application and shows success feedback", async () => {
@@ -115,7 +117,6 @@ describe("VendorApplyPage", () => {
             "content-type": "application/json"
           },
           body: JSON.stringify({
-            marketId: "market_1",
             boothPreference: "靠近主通道",
             applicationNote: "主营手作咖啡",
             attachments: [
@@ -123,7 +124,8 @@ describe("VendorApplyPage", () => {
                 url: "/uploads/license.pdf",
                 originalName: "license.pdf"
               }
-            ]
+            ],
+            marketId: "market_1"
           })
         })
       );
@@ -243,6 +245,54 @@ describe("VendorApplyPage", () => {
     expect(
       screen.getByRole("link", { name: "返回我的报名" })
     ).toHaveAttribute("href", "/applications?marketId=market_1&status=approved");
+  });
+
+  it("submits supplement updates through the application patch route", async () => {
+    vi.mocked(fetch).mockResolvedValue(
+      new Response(JSON.stringify({ id: "app_2" }), {
+        status: 200,
+        headers: {
+          "content-type": "application/json"
+        }
+      })
+    );
+
+    render(
+      await VendorApplyPage({
+        params: Promise.resolve({ marketId: "market_1" }),
+        searchParams: Promise.resolve({
+          from: "applications",
+          applicationId: "app_2",
+          action: "supplement"
+        })
+      })
+    );
+
+    expect(screen.getByText("当前正在补件，请根据主办方要求更新资料后再次提交。")).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "提交补件" })).toBeInTheDocument();
+
+    fillAndSubmitForm({ submitLabel: "提交补件" });
+
+    await waitFor(() => {
+      expect(fetch).toHaveBeenCalledWith(
+        "/api/applications/app_2",
+        expect.objectContaining({
+          method: "PATCH",
+          headers: {
+            "content-type": "application/json"
+          },
+          body: JSON.stringify({
+            boothPreference: "靠近主通道",
+            applicationNote: "主营手作咖啡",
+            attachments: []
+          })
+        })
+      );
+    });
+
+    expect(
+      await screen.findByText("补件已提交，可返回我的报名查看最新进度。")
+    ).toBeInTheDocument();
   });
 
   it("shows an unavailable message instead of the form when the market is not published", async () => {

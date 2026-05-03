@@ -27,6 +27,14 @@ export const applicationSchema = z.object({
 
 export type ApplicationPayload = z.infer<typeof applicationSchema>;
 
+export const applicationSupplementSchema = z.object({
+  boothPreference: z.string().trim().min(1),
+  applicationNote: optionalTextSchema,
+  attachments: z.array(storedAttachmentSchema).default([])
+});
+
+export type ApplicationSupplementPayload = z.infer<typeof applicationSupplementSchema>;
+
 export const applicationReviewSchema = z.object({
   organizerId: z.string().trim().min(1),
   decision: z.enum(["approve", "reject", "supplement", "waitlist"]),
@@ -235,6 +243,12 @@ const vendorApplicationInclude = {
 
 export function buildApplicationPayload(input: unknown): ApplicationPayload {
   return applicationSchema.parse(input);
+}
+
+export function buildApplicationSupplementPayload(
+  input: unknown
+): ApplicationSupplementPayload {
+  return applicationSupplementSchema.parse(input);
 }
 
 export function buildApplicationReviewPayload(

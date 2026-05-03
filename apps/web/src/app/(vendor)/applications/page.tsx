@@ -171,6 +171,15 @@ export default async function VendorApplicationsPage({
                   application.latestReviewDecision
                 )}
               </p>
+              {application.latestReviewDecision === "supplement" ? (
+                <p>
+                  <Link
+                    href={`/markets/${application.marketId}/apply?from=applications&action=supplement&applicationId=${application.id}`}
+                  >
+                    去补件
+                  </Link>
+                </p>
+              ) : null}
               <p>报名备注：{application.applicationNote ?? "无"}</p>
               <p>审核备注：{application.reviewNote ?? "无"}</p>
               <p>最近审核时间：{application.reviewedAt ? formatDate(application.reviewedAt) : "未审核"}</p>

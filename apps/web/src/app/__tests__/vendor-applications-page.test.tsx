@@ -352,6 +352,10 @@ describe("Vendor applications page", () => {
     expect(screen.getByText(/查看分配结果与后续安排/)).toBeInTheDocument();
     expect(screen.getByText("当前处理：待补件")).toBeInTheDocument();
     expect(screen.getByText("当前处理：候补中")).toBeInTheDocument();
+    expect(screen.getByRole("link", { name: "去补件" })).toHaveAttribute(
+      "href",
+      "/markets/market_2/apply?from=applications&action=supplement&applicationId=app_2"
+    );
   });
 
   it("filters vendor applications by marketId and preserves status context", async () => {

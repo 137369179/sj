@@ -6,6 +6,8 @@ import { useMemo, useState, type FormEvent } from "react";
 type VendorApplyFormProps = {
   marketId: string;
   applicationsHref: string;
+  applicationId?: string;
+  mode?: "create" | "supplement";
 };
 
 type SubmitState =
@@ -18,7 +20,12 @@ type SubmitState =
       message: string;
     };
 
-export function VendorApplyForm({ marketId, applicationsHref }: VendorApplyFormProps) {
+export function VendorApplyForm({
+  marketId,
+  applicationsHref,
+  applicationId,
+  mode = "create"
+}: VendorApplyFormProps) {
   const [submitState, setSubmitState] = useState<SubmitState>({
     status: "idle",
     message: null
@@ -47,16 +54,20 @@ export function VendorApplyForm({ marketId, applicationsHref }: VendorApplyFormP
           ? [await uploadAttachment(attachmentFile)]
           : [];
 
-      const response = await fetch("/api/applications", {
-        method: "POST",
+      const endpoint =
+        mode === "supplement" && applicationId
+          ? `/api/applications/${applicationId}`
+          : "/api/applications";
+      const response = await fetch(endpoint, {
+        method: mode === "supplement" ? "PATCH" : "POST",
         headers: {
           "content-type": "application/json"
         },
         body: JSON.stringify({
-          marketId,
           boothPreference: String(formData.get("boothPreference") ?? ""),
           applicationNote: String(formData.get("applicationNote") ?? ""),
-          attachments
+          attachments,
+          ...(mode === "create" ? { marketId } : {})
         })
       });
 
@@ -67,7 +78,10 @@ export function VendorApplyForm({ marketId, applicationsHref }: VendorApplyFormP
 
       setSubmitState({
         status: "success",
-        message: "报名提交成功，可前往我的报名查看进度。"
+        message:
+          mode === "supplement"
+            ? "补件已提交，可返回我的报名查看最新进度。"
+            : "报名提交成功，可前往我的报名查看进度。"
       });
       form.reset();
     } catch (error) {
@@ -81,16 +95,16 @@ export function VendorApplyForm({ marketId, applicationsHref }: VendorApplyFormP
 
   const submitLabel = useMemo(() => {
     if (isSubmitting) {
-      return "提交中...";
+      return mode === "supplement" ? "提交补件中..." : "提交中...";
     }
 
-    return "提交申请";
-  }, [isSubmitting]);
+    return mode === "supplement" ? "提交补件" : "提交申请";
+  }, [isSubmitting, mode]);
 
   return (
     <>
       <form aria-label="报名申请表单" onSubmit={handleSubmit}>
-        <input type="hidden" name="marketId" value={marketId} />
+        {mode === "create" ? <input type="hidden" name="marketId" value={marketId} /> : null}
         <label>
           摊位偏好
           <textarea
@@ -151,6 +165,10 @@ async function readErrorPayload(response: Response) {
 }
 
 function resolveSubmitErrorMessage(status: number, errorCode: string | null) {
+  if (status === 409 && errorCode === "supplement unavailable") {
+    return "当前申请暂不处于补件阶段，请返回我的报名查看最新状态。";
+  }
+
   if (status === 409 || errorCode === "duplicate application") {
     return "你已经提交过该市集的报名，请前往我的报名查看进度。";
   }

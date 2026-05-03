@@ -12,6 +12,8 @@ export default async function VendorApplyPage({
   searchParams?: Promise<{
     from?: string;
     status?: string;
+    applicationId?: string;
+    action?: string;
   }>;
 }) {
   const { marketId } = await params;
@@ -23,6 +25,12 @@ export default async function VendorApplyPage({
           marketId,
           status: getVendorApplicationStatus(resolvedSearchParams.status)
         })
+      : null;
+  const supplementApplicationId =
+    resolvedSearchParams.action === "supplement" &&
+    typeof resolvedSearchParams.applicationId === "string" &&
+    resolvedSearchParams.applicationId.length > 0
+      ? resolvedSearchParams.applicationId
       : null;
 
   return (
@@ -45,10 +53,17 @@ export default async function VendorApplyPage({
             <Link href={returnToApplications}>返回我的报名</Link>
           </section>
         ) : null}
+        {supplementApplicationId ? (
+          <section aria-label="补件提示" style={{ marginBottom: "1rem" }}>
+            <p>当前正在补件，请根据主办方要求更新资料后再次提交。</p>
+          </section>
+        ) : null}
         {market ? (
           <VendorApplyForm
             marketId={marketId}
             applicationsHref={returnToApplications ?? "/applications"}
+            applicationId={supplementApplicationId ?? undefined}
+            mode={supplementApplicationId ? "supplement" : "create"}
           />
         ) : (
           <section aria-label="报名不可用提示">
