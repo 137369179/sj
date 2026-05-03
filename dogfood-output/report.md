@@ -12,10 +12,10 @@
 | Severity | Count |
 |----------|-------|
 | Critical | 0 |
-| High | 0 |
+| High | 1 |
 | Medium | 0 |
 | Low | 0 |
-| **Total** | **0** |
+| **Total** | **1** |
 
 ## Verification Update
 
@@ -28,6 +28,29 @@
 - Fixed: `ISSUE-005` forged login no longer creates a session; in the current sandbox, unreachable DB now degrades to `service_unavailable` instead of a server error page.
 
 ## Issues
+
+### ISSUE-006: 未登录访客可直接进入主办方工作台并看到创建市集表单
+
+| Field | Value |
+|-------|-------|
+| **Severity** | high |
+| **Category** | security |
+| **URL** | http://127.0.0.1:3008/organizer/markets |
+| **Repro Video** | N/A |
+
+**Description**
+
+在未登录状态下，直接访问主办方工作台地址 `/organizer/markets`，页面不会跳转到登录页，也不会显示“请先登录”的明确阻断，而是直接渲染“我的市集”页面和完整的“创建草稿”表单。进一步抽查 `/organizer/stalls` 也能直接打开“摊位管理”页面，说明这不是单页问题，而是主办方工作区整体缺少匿名访问保护。
+
+**Evidence**
+
+- Screenshot: [issue-006.png](file:///workspace/dogfood-output/screenshots/issue-006.png)
+
+**Repro Steps**
+
+1. 保持未登录状态，打开 `http://127.0.0.1:3008/organizer/markets`。
+2. 观察页面直接显示“我的市集”标题，以及“市集标题 / 城市 / 创建草稿”等主办方表单控件。
+3. 预期行为应为跳转到登录页或显示明确的未授权提示，而不是渲染后台工作台。
 
 ### ISSUE-001: 首页空闲状态触发主办方页 RSC 预取失败
 
