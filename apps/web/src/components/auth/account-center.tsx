@@ -258,7 +258,8 @@ export function AccountCenter({
           {sessions.map((session) => (
             <li key={session.id}>
               <p>{session.label}</p>
-              {session.isCurrent ? <p>当前设备</p> : null}
+              {session.categoryLabel ? <p>{session.categoryLabel}</p> : null}
+              {session.isCurrent ? <p>活跃中</p> : null}
               {session.createdAtLabel ? <p>{session.createdAtLabel}</p> : null}
               {session.expiresAtLabel ? <p>{session.expiresAtLabel}</p> : null}
               {session.ipAddressLabel ? <p>{session.ipAddressLabel}</p> : null}

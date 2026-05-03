@@ -47,12 +47,13 @@
   - 已接入真实账号中心数据聚合
 - `apps/web/src/components/auth/account-center.tsx`
   - 已支持已开通角色概览与当前工作角色说明
+  - 已支持未开通角色说明与能力引导
   - 已支持绑定 Passkey、切换角色、退出其他设备
   - 已支持删除单个 Passkey
   - 已支持重命名单个 Passkey
   - 已支持撤销单个设备会话
   - 已展示 Passkey 明细与设备会话明细
-  - 已展示当前设备标识、登录时间、过期时间和 IP 摘要
+  - 已展示当前设备活跃状态、设备分类、登录时间、过期时间和 IP 摘要
 - `apps/web/src/components/layout/auth-status.tsx`
   - 已增加登录后“账号中心”入口
 

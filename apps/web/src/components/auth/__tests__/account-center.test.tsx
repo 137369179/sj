@@ -228,4 +228,43 @@ describe("AccountCenter", () => {
 
     expect(await screen.findByRole("status")).toHaveTextContent("设备会话已撤销。");
   });
+
+  it("renders readable session activity hints", () => {
+    render(
+      <AccountCenter
+        user={{
+          name: "Organizer",
+          email: "organizer@example.com",
+          roles: ["vendor", "organizer"],
+          activeRole: "organizer",
+        }}
+        passkeyCount={0}
+        sessionCount={2}
+        sessions={[
+          {
+            id: "session_current",
+            label: "Chrome on macOS",
+            createdAtLabel: "登录于 2026-05-03 08:30",
+            expiresAtLabel: "过期时间 2026-05-10 09:00",
+            ipAddressLabel: "IP 127.0.0.1",
+            categoryLabel: "浏览器设备",
+            isCurrent: true,
+          },
+          {
+            id: "session_mobile",
+            label: "Mobile Safari on iPhone",
+            createdAtLabel: "登录于 2026-05-03 09:10",
+            expiresAtLabel: "过期时间 2026-05-10 09:10",
+            ipAddressLabel: "IP 10.0.0.8",
+            categoryLabel: "移动设备",
+            isCurrent: false,
+          },
+        ]}
+      />,
+    );
+
+    expect(screen.getByText("浏览器设备")).toBeInTheDocument();
+    expect(screen.getByText("移动设备")).toBeInTheDocument();
+    expect(screen.getByText("活跃中")).toBeInTheDocument();
+  });
 });

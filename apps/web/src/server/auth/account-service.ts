@@ -5,6 +5,7 @@ import { auth } from "../../lib/auth-config";
 export type AccountSessionSummary = {
   id: string;
   label: string;
+  categoryLabel?: string;
   expiresAtLabel?: string;
   createdAtLabel?: string;
   ipAddressLabel?: string;
@@ -46,6 +47,29 @@ function readDateLabel(value: unknown, prefix: string): string | undefined {
   }).format(date);
 
   return `${prefix} ${formatted}`;
+}
+
+function inferSessionCategory(userAgent?: string): string | undefined {
+  if (!userAgent) {
+    return undefined;
+  }
+
+  const normalized = userAgent.toLowerCase();
+
+  if (normalized.includes("iphone") || normalized.includes("android") || normalized.includes("mobile")) {
+    return "移动设备";
+  }
+
+  if (
+    normalized.includes("chrome") ||
+    normalized.includes("safari") ||
+    normalized.includes("firefox") ||
+    normalized.includes("edge")
+  ) {
+    return "浏览器设备";
+  }
+
+  return "已登录设备";
 }
 
 function readArray(input: unknown): unknown[] {
@@ -90,6 +114,7 @@ function normalizeSession(
   return {
     id,
     label,
+    categoryLabel: inferSessionCategory(userAgent),
     createdAtLabel: readDateLabel(record.createdAt, "登录于"),
     expiresAtLabel: readDateLabel(record.expiresAt, "过期时间"),
     ipAddressLabel: ipAddress ? `IP ${ipAddress}` : undefined,

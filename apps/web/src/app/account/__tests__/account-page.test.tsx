@@ -89,6 +89,7 @@ describe("AccountPage", () => {
         expiresAtLabel: "过期时间 2026-05-10 09:00",
         createdAtLabel: "登录于 2026-05-03 08:30",
         ipAddressLabel: "IP 127.0.0.1",
+        categoryLabel: "浏览器设备",
         isCurrent: false,
       },
     ]);
@@ -101,5 +102,6 @@ describe("AccountPage", () => {
     expect(screen.getByText("过期时间 2026-05-10 09:00")).toBeInTheDocument();
     expect(screen.getByText("登录于 2026-05-03 08:30")).toBeInTheDocument();
     expect(screen.getByText("IP 127.0.0.1")).toBeInTheDocument();
+    expect(screen.getByText("浏览器设备")).toBeInTheDocument();
   });
 });
