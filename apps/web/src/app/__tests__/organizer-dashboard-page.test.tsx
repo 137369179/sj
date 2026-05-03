@@ -22,6 +22,16 @@ vi.mock("../../components/layout/app-shell", () => ({
   AppShell: ({ children }: { children: React.ReactNode }) => <div data-testid="app-shell">{children}</div>
 }));
 
+vi.mock("recharts", async () => {
+  const OriginalRechartsModule = await vi.importActual("recharts");
+  return {
+    ...OriginalRechartsModule,
+    ResponsiveContainer: ({ children }: any) => (
+      <div style={{ width: 800, height: 800 }}>{children}</div>
+    )
+  };
+});
+
 describe("Organizer dashboard page", () => {
   beforeEach(() => {
     vi.clearAllMocks();
@@ -58,11 +68,13 @@ describe("Organizer dashboard page", () => {
         approvedCount: 1,
         rejectedCount: 1,
         assignedCount: 1,
+        paidCount: 0,
         approvalRate: 0.4,
         totalStalls: 6,
         activeStalls: 5,
         occupiedStalls: 3,
-        stallOccupancyRate: 0.6
+        stallOccupancyRate: 0.6,
+        totalRevenue: 0
       }
     });
 
@@ -135,11 +147,13 @@ describe("Organizer dashboard page", () => {
         approvedCount: 1,
         rejectedCount: 1,
         assignedCount: 1,
+        paidCount: 0,
         approvalRate: 0.4,
         totalStalls: 6,
         activeStalls: 5,
         occupiedStalls: 3,
-        stallOccupancyRate: 0.6
+        stallOccupancyRate: 0.6,
+        totalRevenue: 0
       }
     });
 
@@ -192,11 +206,13 @@ describe("Organizer dashboard page", () => {
         approvedCount: 1,
         rejectedCount: 1,
         assignedCount: 1,
+        paidCount: 0,
         approvalRate: 0.4,
         totalStalls: 6,
         activeStalls: 5,
         occupiedStalls: 3,
-        stallOccupancyRate: 0.6
+        stallOccupancyRate: 0.6,
+        totalRevenue: 0
       }
     });
 
@@ -249,11 +265,13 @@ describe("Organizer dashboard page", () => {
         approvedCount: 1,
         rejectedCount: 1,
         assignedCount: 1,
+        paidCount: 0,
         approvalRate: 0.4,
         totalStalls: 6,
         activeStalls: 5,
         occupiedStalls: 3,
-        stallOccupancyRate: 0.6
+        stallOccupancyRate: 0.6,
+        totalRevenue: 0
       }
     });
 

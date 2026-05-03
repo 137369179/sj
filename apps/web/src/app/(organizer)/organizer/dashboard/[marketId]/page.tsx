@@ -135,6 +135,14 @@ export default async function OrganizerDashboardPage({
             <p>{summary.metrics.assignedCount}</p>
           </article>
           <article>
+            <h3>已支付</h3>
+            <p>{summary.metrics.paidCount}</p>
+          </article>
+          <article>
+            <h3>总营收</h3>
+            <p>¥{summary.metrics.totalRevenue.toFixed(2)}</p>
+          </article>
+          <article>
             <h3>通过率</h3>
             <p>{approvalRateLabel}</p>
           </article>
@@ -158,7 +166,8 @@ export default async function OrganizerDashboardPage({
             underReview: summary.metrics.underReviewCount,
             approved: summary.metrics.approvedCount,
             rejected: summary.metrics.rejectedCount,
-            assigned: summary.metrics.assignedCount
+            assigned: summary.metrics.assignedCount,
+            paid: summary.metrics.paidCount
           }}
           stalls={{
             active: summary.metrics.activeStalls,

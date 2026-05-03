@@ -20,23 +20,27 @@ describe("dashboard service", () => {
         approvedCount: 4,
         rejectedCount: 1,
         assignedCount: 2,
+        paidCount: 1,
         totalStalls: 10,
         activeStalls: 8,
-        occupiedStalls: 5
+        occupiedStalls: 5,
+        totalRevenue: 500
       })
     ).toEqual({
-      totalApplications: 12,
+      totalApplications: 13,
       submittedCount: 3,
       underReviewCount: 2,
       pendingReviewCount: 5,
       approvedCount: 4,
       rejectedCount: 1,
       assignedCount: 2,
-      approvalRate: 0.5,
+      paidCount: 1,
+      approvalRate: 7 / 13,
       totalStalls: 10,
       activeStalls: 8,
       occupiedStalls: 5,
-      stallOccupancyRate: 0.625
+      stallOccupancyRate: 5 / 8,
+      totalRevenue: 500
     });
   });
 
@@ -68,6 +72,10 @@ describe("dashboard service", () => {
         assignedApplicationId: null
       }
     ] as Awaited<ReturnType<typeof db.stall.findMany>>);
+    const orderSpy = vi.spyOn(db.order, "findMany").mockResolvedValue([
+      { amount: 100 },
+      { amount: 150 }
+    ] as any);
 
     const summary = await getMarketDashboardSummary({
       organizerId: "org_1",
@@ -116,11 +124,13 @@ describe("dashboard service", () => {
         approvedCount: 1,
         rejectedCount: 1,
         assignedCount: 1,
+        paidCount: 0,
         approvalRate: 0.4,
         totalStalls: 3,
         activeStalls: 2,
         occupiedStalls: 1,
-        stallOccupancyRate: 0.5
+        stallOccupancyRate: 0.5,
+        totalRevenue: 250
       }
     });
   });

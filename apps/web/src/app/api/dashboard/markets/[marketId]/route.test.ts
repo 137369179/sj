@@ -65,11 +65,13 @@ describe("GET /api/dashboard/markets/[marketId]", () => {
         approvedCount: 1,
         rejectedCount: 1,
         assignedCount: 1,
+        paidCount: 0,
         approvalRate: 0.4,
         totalStalls: 6,
         activeStalls: 5,
         occupiedStalls: 2,
-        stallOccupancyRate: 0.4
+        stallOccupancyRate: 0.4,
+        totalRevenue: 0
       }
     });
 
@@ -99,11 +101,13 @@ describe("GET /api/dashboard/markets/[marketId]", () => {
         approvedCount: 1,
         rejectedCount: 1,
         assignedCount: 1,
+        paidCount: 0,
         approvalRate: 0.4,
         totalStalls: 6,
         activeStalls: 5,
         occupiedStalls: 2,
-        stallOccupancyRate: 0.4
+        stallOccupancyRate: 0.4,
+        totalRevenue: 0
       }
     });
   });

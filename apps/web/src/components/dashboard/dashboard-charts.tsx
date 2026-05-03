@@ -22,6 +22,7 @@ type DashboardChartsProps = {
     approved: number;
     rejected: number;
     assigned: number;
+    paid: number;
   };
   stalls: {
     active: number;
@@ -29,7 +30,7 @@ type DashboardChartsProps = {
   };
 };
 
-const COLORS = ["#f59e0b", "#3b82f6", "#10b981", "#ef4444", "#6366f1"];
+const COLORS = ["#f59e0b", "#3b82f6", "#10b981", "#ef4444", "#6366f1", "#8b5cf6"];
 
 export function DashboardCharts({ applications, stalls }: DashboardChartsProps) {
   const applicationData = useMemo(
@@ -38,7 +39,8 @@ export function DashboardCharts({ applications, stalls }: DashboardChartsProps) 
       { name: "审核中", value: applications.underReview },
       { name: "已通过", value: applications.approved },
       { name: "已拒绝", value: applications.rejected },
-      { name: "已分配", value: applications.assigned }
+      { name: "已分配", value: applications.assigned },
+      { name: "已支付", value: applications.paid }
     ].filter(item => item.value > 0),
     [applications]
   );
@@ -56,8 +58,8 @@ export function DashboardCharts({ applications, stalls }: DashboardChartsProps) 
       <section aria-label="报名状态分布">
         <h3>报名状态分布</h3>
         {applicationData.length > 0 ? (
-          <div style={{ height: 300 }}>
-            <ResponsiveContainer width="100%" height="100%">
+          <div style={{ height: 300, minWidth: 0 }}>
+            <ResponsiveContainer width="100%" height="100%" minWidth={0} minHeight={0}>
               <PieChart>
                 <Pie
                   data={applicationData}
@@ -86,8 +88,8 @@ export function DashboardCharts({ applications, stalls }: DashboardChartsProps) 
       <section aria-label="摊位分配情况">
         <h3>摊位分配情况</h3>
         {stalls.active > 0 ? (
-          <div style={{ height: 300 }}>
-            <ResponsiveContainer width="100%" height="100%">
+          <div style={{ height: 300, minWidth: 0 }}>
+            <ResponsiveContainer width="100%" height="100%" minWidth={0} minHeight={0}>
               <BarChart data={stallData} layout="vertical" margin={{ top: 5, right: 30, left: 20, bottom: 5 }}>
                 <CartesianGrid strokeDasharray="3 3" />
                 <XAxis type="number" />

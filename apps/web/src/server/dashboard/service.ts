@@ -7,9 +7,11 @@ export type DashboardSummaryInput = {
   approvedCount: number;
   rejectedCount: number;
   assignedCount: number;
+  paidCount: number;
   totalStalls: number;
   activeStalls: number;
   occupiedStalls: number;
+  totalRevenue: number;
 };
 
 export type MarketDashboardSummary = {
@@ -38,8 +40,9 @@ export function buildDashboardSummary(input: DashboardSummaryInput) {
     input.underReviewCount +
     input.approvedCount +
     input.rejectedCount +
-    input.assignedCount;
-  const acceptedCount = input.approvedCount + input.assignedCount;
+    input.assignedCount +
+    input.paidCount;
+  const acceptedCount = input.approvedCount + input.assignedCount + input.paidCount;
 
   return {
     totalApplications,
@@ -49,12 +52,14 @@ export function buildDashboardSummary(input: DashboardSummaryInput) {
     approvedCount: input.approvedCount,
     rejectedCount: input.rejectedCount,
     assignedCount: input.assignedCount,
+    paidCount: input.paidCount,
     approvalRate: totalApplications === 0 ? 0 : acceptedCount / totalApplications,
     totalStalls: input.totalStalls,
     activeStalls: input.activeStalls,
     occupiedStalls: input.occupiedStalls,
     stallOccupancyRate:
-      input.activeStalls === 0 ? 0 : input.occupiedStalls / input.activeStalls
+      input.activeStalls === 0 ? 0 : input.occupiedStalls / input.activeStalls,
+    totalRevenue: input.totalRevenue
   };
 }
 
@@ -99,6 +104,18 @@ export async function getMarketDashboardSummary(input: {
       assignedApplicationId: true
     }
   });
+  const orders = await db.order.findMany({
+    where: {
+      application: {
+        marketId: input.marketId
+      },
+      status: "paid"
+    },
+    select: {
+      amount: true
+    }
+  });
+  const totalRevenue = orders.reduce((sum, order) => sum + order.amount, 0);
 
   return {
     market: {
@@ -108,21 +125,20 @@ export async function getMarketDashboardSummary(input: {
     },
     metrics: buildDashboardSummary({
       ...countStatuses(applications.map((item) => item.status)),
-      ...countStalls(stalls)
+      ...countStalls(stalls),
+      totalRevenue
     })
   };
 }
 
-function countStatuses(statuses: ApplicationStatus[]): DashboardSummaryInput {
-  const counts: DashboardSummaryInput = {
+function countStatuses(statuses: ApplicationStatus[]): Omit<DashboardSummaryInput, "totalStalls" | "activeStalls" | "occupiedStalls" | "totalRevenue"> {
+  const counts = {
     submittedCount: 0,
     underReviewCount: 0,
     approvedCount: 0,
     rejectedCount: 0,
     assignedCount: 0,
-    totalStalls: 0,
-    activeStalls: 0,
-    occupiedStalls: 0
+    paidCount: 0
   };
 
   for (const status of statuses) {
@@ -141,6 +157,9 @@ function countStatuses(statuses: ApplicationStatus[]): DashboardSummaryInput {
         break;
       case "stall_assigned":
         counts.assignedCount += 1;
+        break;
+      case "paid":
+        counts.paidCount += 1;
         break;
     }
   }
