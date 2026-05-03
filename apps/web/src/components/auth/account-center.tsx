@@ -22,6 +22,12 @@ type AccountCenterProps = {
   sessions?: AccountSessionSummary[];
 };
 
+const ROLE_LABELS: Record<"vendor" | "organizer" | "admin", string> = {
+  vendor: "摊主",
+  organizer: "主办方",
+  admin: "平台管理员",
+};
+
 export function AccountCenter({
   user,
   passkeyCount = 0,
@@ -176,6 +182,19 @@ export function AccountCenter({
       <p>{user.email ?? "未绑定邮箱"}</p>
       {status ? <p role="status">{status}</p> : null}
       {error ? <p role="alert">{error}</p> : null}
+      <h3>已开通角色</h3>
+      <p>
+        当前工作角色：
+        {activeRole ? ROLE_LABELS[activeRole] : "未选择"}
+      </p>
+      <ul aria-label="已开通角色列表">
+        {user.roles.map((role) => (
+          <li key={role}>
+            <p>{ROLE_LABELS[role]}</p>
+            <p>{activeRole === role ? "当前使用中" : "已开通"}</p>
+          </li>
+        ))}
+      </ul>
       <h3>已绑定 Passkey</h3>
       <p>{passkeyCount} 个</p>
       {passkeys.length > 0 ? (

@@ -65,6 +65,27 @@ describe("AccountCenter", () => {
     expect(await screen.findByRole("status")).toHaveTextContent("当前角色已切换。");
   });
 
+  it("renders enabled role overview with active context", () => {
+    render(
+      <AccountCenter
+        user={{
+          name: "Organizer",
+          email: "organizer@example.com",
+          roles: ["vendor", "organizer"],
+          activeRole: "organizer",
+        }}
+        passkeyCount={0}
+        sessionCount={0}
+      />,
+    );
+
+    expect(screen.getByRole("heading", { name: "已开通角色" })).toBeInTheDocument();
+    expect(screen.getByText("摊主")).toBeInTheDocument();
+    expect(screen.getByText("主办方")).toBeInTheDocument();
+    expect(screen.getByText("当前工作角色：主办方")).toBeInTheDocument();
+    expect(screen.getByText("当前使用中")).toBeInTheDocument();
+  });
+
   it("deletes a passkey from the account center", async () => {
     fetchMock.mockResolvedValue({
       ok: true,
