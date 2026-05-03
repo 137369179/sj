@@ -1,12 +1,16 @@
 import { revalidatePath } from "next/cache";
 import Link from "next/link";
 
+import { redirect } from "next/navigation";
+import { ZodError } from "zod";
+
 import { ReviewHistory } from "../../../../components/applications/review-history";
 import { AppShell } from "../../../../components/layout/app-shell";
 import { getApplicationStatusLabel } from "../../../../lib/application-status";
 import { getSessionUser } from "../../../../lib/auth";
 import { listOrganizerMarketOptions } from "../../../../server/markets/service";
 import {
+  ApplicationReviewError,
   buildApplicationReviewPayload,
   listOrganizerApplications,
   reviewApplication
@@ -24,17 +28,50 @@ async function reviewApplicationAction(formData: FormData) {
   const applicationId = String(formData.get("applicationId") ?? "");
   const decision = String(formData.get("decision") ?? "");
   const reviewNote = String(formData.get("reviewNote") ?? "");
-  const payload = buildApplicationReviewPayload({
-    organizerId: sessionUser.userId,
-    decision,
-    reviewNote
-  });
+  
+  try {
+    const payload = buildApplicationReviewPayload({
+      organizerId: sessionUser.userId,
+      decision,
+      reviewNote
+    });
 
-  await reviewApplication({
-    applicationId,
-    ...payload
-  });
-  revalidatePath("/organizer/applications");
+    await reviewApplication({
+      applicationId,
+      ...payload
+    });
+    revalidatePath("/organizer/applications");
+  } catch (error) {
+    const params = new URLSearchParams();
+    
+    if (error instanceof ApplicationReviewError) {
+      params.set("reviewError", error.code);
+      params.set("errorApplicationId", applicationId);
+    } else if (error instanceof ZodError) {
+      const decisionError = error.errors.find((e) => e.path[0] === "decision")?.message;
+      const reviewNoteError = error.errors.find((e) => e.path[0] === "reviewNote")?.message;
+      
+      if (decisionError) params.set("decisionError", decisionError);
+      if (reviewNoteError) params.set("reviewNoteError", reviewNoteError);
+      params.set("errorApplicationId", applicationId);
+    } else {
+      throw error;
+    }
+
+    const marketId = String(formData.get("marketId") ?? "");
+    const from = String(formData.get("from") ?? "");
+    const marketStatus = String(formData.get("marketStatus") ?? "");
+    const status = String(formData.get("status") ?? "");
+    const sourceStatus = String(formData.get("sourceStatus") ?? "");
+    
+    if (marketId) params.set("marketId", marketId);
+    if (from) params.set("from", from);
+    if (marketStatus) params.set("marketStatus", marketStatus);
+    if (status) params.set("status", status);
+    if (sourceStatus) params.set("sourceStatus", sourceStatus);
+    
+    redirect(`/organizer/applications?${params.toString()}`);
+  }
 }
 
 type OrganizerApplicationsPageProps = {
@@ -44,6 +81,10 @@ type OrganizerApplicationsPageProps = {
     from?: string;
     marketStatus?: string;
     sourceStatus?: string;
+    reviewError?: string;
+    decisionError?: string;
+    reviewNoteError?: string;
+    errorApplicationId?: string;
   }>;
 };
 
@@ -246,21 +287,36 @@ export default async function OrganizerApplicationsPage({
               <p>提交时间：{formatDate(application.createdAt)}</p>
 
               <form action={reviewApplicationAction} aria-label={`${application.vendorName} 审核表单`}>
+                {resolvedSearchParams.reviewError && resolvedSearchParams.errorApplicationId === application.id ? (
+                  <p role="alert">{getReviewErrorMessage(resolvedSearchParams.reviewError)}</p>
+                ) : null}
                 <input name="applicationId" type="hidden" value={application.id} />
+                <input name="marketId" type="hidden" value={resolvedSearchParams.marketId ?? ""} />
+                <input name="from" type="hidden" value={resolvedSearchParams.from ?? ""} />
+                <input name="marketStatus" type="hidden" value={resolvedSearchParams.marketStatus ?? ""} />
+                <input name="status" type="hidden" value={resolvedSearchParams.status ?? ""} />
+                <input name="sourceStatus" type="hidden" value={resolvedSearchParams.sourceStatus ?? ""} />
                 <label>
                   审核备注
                   <textarea
                     name="reviewNote"
                     rows={3}
                     placeholder="可选填写审核备注，系统会同步通知摊主。"
+                    aria-invalid={resolvedSearchParams.errorApplicationId === application.id && resolvedSearchParams.reviewNoteError ? "true" : "false"}
                   />
                 </label>
+                {resolvedSearchParams.errorApplicationId === application.id && resolvedSearchParams.reviewNoteError ? (
+                  <p>{resolvedSearchParams.reviewNoteError}</p>
+                ) : null}
                 <button name="decision" type="submit" value="approve">
                   通过
                 </button>
                 <button name="decision" type="submit" value="reject">
                   拒绝
                 </button>
+                {resolvedSearchParams.errorApplicationId === application.id && resolvedSearchParams.decisionError ? (
+                  <p>{resolvedSearchParams.decisionError}</p>
+                ) : null}
               </form>
             </article>
           ))}
@@ -268,6 +324,22 @@ export default async function OrganizerApplicationsPage({
       </main>
     </AppShell>
   );
+}
+
+function getReviewErrorMessage(code: string | undefined) {
+  if (code === "NOT_FOUND") {
+    return "审核失败：申请不存在。";
+  }
+
+  if (code === "FORBIDDEN") {
+    return "审核失败：无权操作该申请。";
+  }
+
+  if (code === "INVALID_STATUS") {
+    return "审核失败：当前申请状态不允许该操作。";
+  }
+
+  return "审核失败：请重试。";
 }
 
 function formatDate(value: Date) {

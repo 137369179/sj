@@ -57,3 +57,64 @@ export function createNotification(input: CreateNotificationInput) {
     data: input
   });
 }
+
+export type VendorNotificationListItem = {
+  id: string;
+  title: string;
+  content: string;
+  isRead: boolean;
+  createdAt: Date;
+};
+
+export async function listVendorNotifications(
+  userId: string
+): Promise<VendorNotificationListItem[]> {
+  const notifications = await db.notification.findMany({
+    where: {
+      userId
+    },
+    orderBy: {
+      createdAt: "desc"
+    }
+  });
+
+  return notifications.map((notification) => ({
+    id: notification.id,
+    title: notification.title,
+    content: notification.content,
+    isRead: notification.readAt !== null,
+    createdAt: notification.createdAt
+  }));
+}
+
+export async function markNotificationAsRead(input: {
+  notificationId: string;
+  userId: string;
+}) {
+  const notification = await db.notification.findUnique({
+    where: {
+      id: input.notificationId
+    }
+  });
+
+  if (!notification) {
+    throw new Error("NOTIFICATION_NOT_FOUND");
+  }
+
+  if (notification.userId !== input.userId) {
+    throw new Error("FORBIDDEN");
+  }
+
+  if (notification.readAt) {
+    return notification;
+  }
+
+  return db.notification.update({
+    where: {
+      id: input.notificationId
+    },
+    data: {
+      readAt: new Date()
+    }
+  });
+}

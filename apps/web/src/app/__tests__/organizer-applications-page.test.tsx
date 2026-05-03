@@ -528,4 +528,43 @@ describe("Organizer applications page", () => {
     expect(listOrganizerMarketOptions).not.toHaveBeenCalled();
     expect(listOrganizerApplications).not.toHaveBeenCalled();
   });
+
+  it("renders review error when the action fails", async () => {
+    vi.mocked(getSessionUser).mockResolvedValue({
+      userId: "org_1",
+      role: "organizer"
+    });
+    vi.mocked(listOrganizerMarketOptions).mockResolvedValue([]);
+    vi.mocked(listOrganizerApplications).mockResolvedValue([
+      {
+        id: "app_1",
+        marketId: "market_1",
+        marketTitle: "春日咖啡市集",
+        marketCity: "杭州",
+        vendorId: "vendor_1",
+        vendorName: "手工咖啡渣再造",
+        status: "approved",
+        note: "备注内容",
+        applicationNote: "报名备注",
+        reviewNote: null,
+        attachments: [],
+        reviewedAt: new Date("2026-05-02T10:00:00.000Z"),
+        reviews: [],
+        createdAt: new Date("2026-05-01T10:00:00.000Z")
+      }
+    ]);
+
+    const page = await OrganizerApplicationsPage({
+      searchParams: Promise.resolve({
+        reviewError: "INVALID_STATUS",
+        errorApplicationId: "app_1"
+      })
+    });
+
+    render(page);
+
+    expect(
+      screen.getByText("审核失败：当前申请状态不允许该操作。")
+    ).toBeInTheDocument();
+  });
 });

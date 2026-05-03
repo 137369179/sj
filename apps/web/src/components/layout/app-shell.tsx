@@ -10,6 +10,8 @@ export function AppShell({ children }: PropsWithChildren) {
         </Link>
         <nav className="shell-nav" aria-label="角色导航">
           <Link href="/markets">摊主端</Link>
+          <Link href="/applications">我的报名</Link>
+          <Link href="/notifications">我的通知</Link>
           <Link href="/organizer/markets">主办方端</Link>
         </nav>
       </header>

@@ -1,52 +1,195 @@
-import { describe, expect, it } from "vitest";
+import { beforeEach, describe, expect, it, vi } from "vitest";
 
+import { db } from "../../../lib/db";
 import {
   buildApplicationReviewNotification,
-  buildStallAssignmentNotification
+  buildStallAssignmentNotification,
+  createNotification,
+  listVendorNotifications,
+  markNotificationAsRead
 } from "../service";
 
+vi.mock("../../../lib/db", () => ({
+  db: {
+    notification: {
+      create: vi.fn(),
+      findMany: vi.fn(),
+      findUnique: vi.fn(),
+      update: vi.fn()
+    }
+  }
+}));
+
 describe("notification service", () => {
-  it("builds an approval notification with the organizer note", () => {
-    const notification = buildApplicationReviewNotification({
-      userId: "vendor_1",
-      marketTitle: "春日咖啡市集",
-      decision: "approve",
-      note: "已录取，摊位后续通知"
+  beforeEach(() => {
+    vi.clearAllMocks();
+  });
+
+  describe("buildApplicationReviewNotification", () => {
+    it("builds an approval notification", () => {
+      const result = buildApplicationReviewNotification({
+        userId: "vendor_1",
+        marketTitle: "夏日冰饮市集",
+        decision: "approve"
+      });
+
+      expect(result).toEqual({
+        userId: "vendor_1",
+        title: "申请审核已通过",
+        content: "你在夏日冰饮市集的申请已审核通过。"
+      });
     });
 
-    expect(notification).toEqual({
-      userId: "vendor_1",
-      title: "申请审核已通过",
-      content: "你在春日咖啡市集的申请已审核通过。备注：已录取，摊位后续通知"
+    it("builds a rejection notification with note", () => {
+      const result = buildApplicationReviewNotification({
+        userId: "vendor_2",
+        marketTitle: "春日咖啡市集",
+        decision: "reject",
+        note: "主推品类与市集调性不符"
+      });
+
+      expect(result).toEqual({
+        userId: "vendor_2",
+        title: "申请未通过审核",
+        content:
+          "你在春日咖啡市集的申请未通过审核，请调整后重新报名。备注：主推品类与市集调性不符"
+      });
     });
   });
 
-  it("builds a rejection notification without an empty note", () => {
-    const notification = buildApplicationReviewNotification({
-      userId: "vendor_1",
-      marketTitle: "春日咖啡市集",
-      decision: "reject"
-    });
+  describe("buildStallAssignmentNotification", () => {
+    it("builds a stall assignment notification", () => {
+      const result = buildStallAssignmentNotification({
+        userId: "vendor_1",
+        marketTitle: "夏日冰饮市集",
+        stallCode: "A01",
+        stallName: "主入口特展"
+      });
 
-    expect(notification).toEqual({
-      userId: "vendor_1",
-      title: "申请未通过审核",
-      content: "你在春日咖啡市集的申请未通过审核，请调整后重新报名。"
+      expect(result).toEqual({
+        userId: "vendor_1",
+        title: "摊位分配已确认",
+        content: "你在夏日冰饮市集的申请已完成摊位分配，摊位为主入口特展（A01）。"
+      });
     });
   });
 
-  it("builds a stall assignment notification", () => {
-    const notification = buildStallAssignmentNotification({
-      userId: "vendor_1",
-      marketTitle: "春日咖啡市集",
-      stallCode: "A-01",
-      stallName: "主通道 1 号位"
+  describe("createNotification", () => {
+    it("saves the notification to the database", async () => {
+      const mockCreated = { id: "n_1" };
+      vi.mocked(db.notification.create).mockResolvedValue(mockCreated as any);
+
+      const result = await createNotification({
+        userId: "vendor_1",
+        title: "测试通知",
+        content: "这是一条测试内容"
+      });
+
+      expect(db.notification.create).toHaveBeenCalledWith({
+        data: {
+          userId: "vendor_1",
+          title: "测试通知",
+          content: "这是一条测试内容"
+        }
+      });
+      expect(result).toBe(mockCreated);
+    });
+  });
+
+  describe("listVendorNotifications", () => {
+    it("lists notifications for a vendor and maps read status", async () => {
+      vi.mocked(db.notification.findMany).mockResolvedValue([
+        {
+          id: "n_1",
+          title: "测试通知 1",
+          content: "内容 1",
+          userId: "vendor_1",
+          readAt: new Date(),
+          createdAt: new Date("2026-05-01T10:00:00Z")
+        },
+        {
+          id: "n_2",
+          title: "测试通知 2",
+          content: "内容 2",
+          userId: "vendor_1",
+          readAt: null,
+          createdAt: new Date("2026-05-02T10:00:00Z")
+        }
+      ]);
+
+      const results = await listVendorNotifications("vendor_1");
+
+      expect(db.notification.findMany).toHaveBeenCalledWith({
+        where: { userId: "vendor_1" },
+        orderBy: { createdAt: "desc" }
+      });
+      expect(results).toEqual([
+        {
+          id: "n_1",
+          title: "测试通知 1",
+          content: "内容 1",
+          isRead: true,
+          createdAt: new Date("2026-05-01T10:00:00Z")
+        },
+        {
+          id: "n_2",
+          title: "测试通知 2",
+          content: "内容 2",
+          isRead: false,
+          createdAt: new Date("2026-05-02T10:00:00Z")
+        }
+      ]);
+    });
+  });
+
+  describe("markNotificationAsRead", () => {
+    it("marks an unread notification as read", async () => {
+      vi.mocked(db.notification.findUnique).mockResolvedValue({
+        id: "n_1",
+        userId: "vendor_1",
+        readAt: null
+      } as any);
+
+      await markNotificationAsRead({ notificationId: "n_1", userId: "vendor_1" });
+
+      expect(db.notification.update).toHaveBeenCalledWith(
+        expect.objectContaining({
+          where: { id: "n_1" },
+          data: expect.objectContaining({ readAt: expect.any(Date) })
+        })
+      );
     });
 
-    expect(notification).toEqual({
-      userId: "vendor_1",
-      title: "摊位分配已确认",
-      content: "你在春日咖啡市集的申请已完成摊位分配，摊位为主通道 1 号位（A-01）。"
+    it("throws NOTIFICATION_NOT_FOUND if notification does not exist", async () => {
+      vi.mocked(db.notification.findUnique).mockResolvedValue(null);
+
+      await expect(
+        markNotificationAsRead({ notificationId: "n_1", userId: "vendor_1" })
+      ).rejects.toThrow("NOTIFICATION_NOT_FOUND");
+    });
+
+    it("throws FORBIDDEN if the notification belongs to another user", async () => {
+      vi.mocked(db.notification.findUnique).mockResolvedValue({
+        id: "n_1",
+        userId: "vendor_2",
+        readAt: null
+      } as any);
+
+      await expect(
+        markNotificationAsRead({ notificationId: "n_1", userId: "vendor_1" })
+      ).rejects.toThrow("FORBIDDEN");
+    });
+
+    it("skips updating if already read", async () => {
+      vi.mocked(db.notification.findUnique).mockResolvedValue({
+        id: "n_1",
+        userId: "vendor_1",
+        readAt: new Date()
+      } as any);
+
+      await markNotificationAsRead({ notificationId: "n_1", userId: "vendor_1" });
+
+      expect(db.notification.update).not.toHaveBeenCalled();
     });
   });
 });

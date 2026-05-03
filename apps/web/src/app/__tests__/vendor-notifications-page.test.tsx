@@ -1,0 +1,66 @@
+import { render, screen, fireEvent } from "@testing-library/react";
+import { beforeEach, describe, expect, it, vi } from "vitest";
+
+import { getSessionUser } from "../../lib/auth";
+import { listVendorNotifications } from "../../server/notifications/service";
+import VendorNotificationsPage from "../(vendor)/notifications/page";
+
+vi.mock("../../lib/auth", () => ({
+  getSessionUser: vi.fn()
+}));
+
+vi.mock("../../server/notifications/service", () => ({
+  listVendorNotifications: vi.fn()
+}));
+
+describe("VendorNotificationsPage", () => {
+  beforeEach(() => {
+    vi.clearAllMocks();
+  });
+
+  it("renders notifications for logged in vendor", async () => {
+    vi.mocked(getSessionUser).mockResolvedValue({
+      userId: "vendor_1",
+      role: "vendor"
+    });
+    vi.mocked(listVendorNotifications).mockResolvedValue([
+      {
+        id: "n_1",
+        title: "测试通知",
+        content: "这是一条测试内容",
+        isRead: false,
+        createdAt: new Date("2026-05-01T10:00:00Z")
+      }
+    ]);
+
+    const page = await VendorNotificationsPage();
+    render(page);
+
+    expect(screen.getByRole("heading", { name: "我的通知" })).toBeInTheDocument();
+    expect(screen.getByText("测试通知")).toBeInTheDocument();
+    expect(screen.getByText("这是一条测试内容")).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "标记为已读" })).toBeInTheDocument();
+  });
+
+  it("renders empty state when no notifications exist", async () => {
+    vi.mocked(getSessionUser).mockResolvedValue({
+      userId: "vendor_1",
+      role: "vendor"
+    });
+    vi.mocked(listVendorNotifications).mockResolvedValue([]);
+
+    const page = await VendorNotificationsPage();
+    render(page);
+
+    expect(screen.getByText("当前暂无通知消息。")).toBeInTheDocument();
+  });
+
+  it("prompts to login when session is missing", async () => {
+    vi.mocked(getSessionUser).mockResolvedValue(null);
+
+    const page = await VendorNotificationsPage();
+    render(page);
+
+    expect(screen.getByText("请先登录后查看通知。")).toBeInTheDocument();
+  });
+});

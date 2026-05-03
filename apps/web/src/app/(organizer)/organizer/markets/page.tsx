@@ -6,6 +6,7 @@ import { ZodError } from "zod";
 import { AppShell } from "../../../../components/layout/app-shell";
 import { getSessionUser } from "../../../../lib/auth";
 import {
+  MarketPublishError,
   createOrganizerMarket,
   listOrganizerMarkets,
   publishOrganizerMarket
@@ -54,11 +55,19 @@ async function publishMarketAction(formData: FormData) {
     return;
   }
 
-  await publishOrganizerMarket({
-    marketId: String(formData.get("marketId") ?? ""),
-    organizerId: sessionUser.userId
-  });
-  revalidatePath("/organizer/markets");
+  try {
+    await publishOrganizerMarket({
+      marketId: String(formData.get("marketId") ?? ""),
+      organizerId: sessionUser.userId
+    });
+    revalidatePath("/organizer/markets");
+  } catch (error) {
+    if (error instanceof MarketPublishError) {
+      redirect(`/organizer/markets?publishError=${error.code}`);
+    }
+
+    throw error;
+  }
 }
 
 type OrganizerMarketsPageProps = {
@@ -68,6 +77,7 @@ type OrganizerMarketsPageProps = {
     cityError?: string;
     startsAtError?: string;
     endsAtError?: string;
+    publishError?: string;
   }>;
 };
 
@@ -82,6 +92,7 @@ export default async function OrganizerMarketsPage({
   const resolvedSearchParams = (await searchParams) ?? {};
   const selectedStatus = getSelectedMarketStatus(resolvedSearchParams.status);
   const createMarketErrors = getCreateMarketErrors(resolvedSearchParams);
+  const publishErrorMessage = getPublishErrorMessage(resolvedSearchParams.publishError);
   const filteredMarkets =
     selectedStatus === "all"
       ? markets
@@ -143,6 +154,7 @@ export default async function OrganizerMarketsPage({
 
         {isOrganizerSession ? (
           <>
+            {publishErrorMessage ? <p role="alert">{publishErrorMessage}</p> : null}
             <section aria-label="市集摘要">
               <p>全部市集：{summary.all}</p>
               <p>草稿：{summary.draft}</p>
@@ -273,6 +285,22 @@ function getMarketStatusLabel(status: string) {
   }
 
   return status;
+}
+
+function getPublishErrorMessage(code: string | undefined) {
+  if (code === "NOT_FOUND") {
+    return "发布失败：市集不存在。";
+  }
+
+  if (code === "FORBIDDEN") {
+    return "发布失败：无权操作该市集。";
+  }
+
+  if (code === "INVALID_STATUS") {
+    return "发布失败：市集当前状态无法发布，请确保市集包含至少一个摊位。";
+  }
+
+  return null;
 }
 
 function normalizeDateTimeInput(value: string) {

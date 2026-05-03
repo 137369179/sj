@@ -522,8 +522,82 @@ describe("Organizer stalls page", () => {
     expect(
       screen.getByText("请先以主办方身份登录后管理摊位。")
     ).toBeInTheDocument();
-    expect(listOrganizerMarketOptions).not.toHaveBeenCalled();
     expect(listOrganizerStalls).not.toHaveBeenCalled();
+    expect(listOrganizerMarketOptions).not.toHaveBeenCalled();
     expect(listOrganizerApplications).not.toHaveBeenCalled();
+  });
+
+  it("renders stall creation error when the action fails", async () => {
+    vi.mocked(getSessionUser).mockResolvedValue({
+      userId: "org_1",
+      role: "organizer"
+    });
+    vi.mocked(listOrganizerStalls).mockResolvedValue([]);
+    vi.mocked(listOrganizerMarketOptions).mockResolvedValue([]);
+    vi.mocked(listOrganizerApplications).mockResolvedValue([]);
+
+    const page = await OrganizerStallsPage({
+      searchParams: Promise.resolve({
+        createError: "FORBIDDEN"
+      })
+    });
+
+    render(page);
+
+    expect(
+      screen.getByText("创建失败：无权操作该市集。")
+    ).toBeInTheDocument();
+  });
+
+  it("renders stall assignment error when the action fails", async () => {
+    vi.mocked(getSessionUser).mockResolvedValue({
+      userId: "org_1",
+      role: "organizer"
+    });
+    vi.mocked(listOrganizerMarketOptions).mockResolvedValue([]);
+    vi.mocked(listOrganizerStalls).mockResolvedValue([
+      {
+        id: "stall_1",
+        marketId: "market_1",
+        marketTitle: "春日咖啡市集",
+        code: "A01",
+        name: "入口大摊",
+        isActive: true,
+        assignedApplicationId: null,
+        assignedVendorId: null,
+        assignedVendorName: null
+      }
+    ]);
+    vi.mocked(listOrganizerApplications).mockResolvedValue([
+      {
+        id: "app_1",
+        marketId: "market_1",
+        marketTitle: "春日咖啡市集",
+        marketCity: "杭州",
+        vendorId: "vendor_1",
+        vendorName: "手工咖啡渣再造",
+        status: "approved",
+        note: "备注内容",
+        applicationNote: "报名备注",
+        reviewNote: null,
+        attachments: [],
+        reviewedAt: new Date("2026-05-02T10:00:00.000Z"),
+        reviews: [],
+        createdAt: new Date("2026-05-01T10:00:00.000Z")
+      }
+    ]);
+
+    const page = await OrganizerStallsPage({
+      searchParams: Promise.resolve({
+        assignError: "STALL_UNAVAILABLE",
+        errorStallId: "stall_1"
+      })
+    });
+
+    render(page);
+
+    expect(
+      screen.getByText("分配失败：该摊位已停用或已分配给其他申请。")
+    ).toBeInTheDocument();
   });
 });

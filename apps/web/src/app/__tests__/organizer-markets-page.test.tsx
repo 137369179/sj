@@ -198,4 +198,24 @@ describe("Organizer markets page", () => {
     expect(screen.getByText("请先以主办方身份登录后管理市集。")).toBeInTheDocument();
     expect(listOrganizerMarkets).not.toHaveBeenCalled();
   });
+
+  it("renders publish error when the action fails", async () => {
+    vi.mocked(getSessionUser).mockResolvedValue({
+      userId: "org_1",
+      role: "organizer"
+    });
+    vi.mocked(listOrganizerMarkets).mockResolvedValue([]);
+
+    const page = await OrganizerMarketsPage({
+      searchParams: Promise.resolve({
+        publishError: "INVALID_STATUS"
+      })
+    });
+
+    render(page);
+
+    expect(
+      screen.getByText("发布失败：市集当前状态无法发布，请确保市集包含至少一个摊位。")
+    ).toBeInTheDocument();
+  });
 });

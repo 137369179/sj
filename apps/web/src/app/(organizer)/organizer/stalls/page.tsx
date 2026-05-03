@@ -1,11 +1,16 @@
 import { revalidatePath } from "next/cache";
 import Link from "next/link";
 
+import { redirect } from "next/navigation";
+import { ZodError } from "zod";
+
 import { AppShell } from "../../../../components/layout/app-shell";
 import { getSessionUser } from "../../../../lib/auth";
 import { listOrganizerMarketOptions } from "../../../../server/markets/service";
 import { listOrganizerApplications } from "../../../../server/applications/service";
 import {
+  StallCreationError,
+  StallAssignmentError,
   assignStall,
   buildAssignStallPayload,
   buildStallPayload,
@@ -25,15 +30,45 @@ async function createStallAction(formData: FormData) {
   const marketId = String(formData.get("marketId") ?? "");
   const code = String(formData.get("code") ?? "");
   const name = String(formData.get("name") ?? "");
-  const payload = buildStallPayload({
-    organizerId: sessionUser.userId,
-    marketId,
-    code,
-    name
-  });
+  
+  try {
+    const payload = buildStallPayload({
+      organizerId: sessionUser.userId,
+      marketId,
+      code,
+      name
+    });
 
-  await createStall(payload);
-  revalidatePath("/organizer/stalls");
+    await createStall(payload);
+    revalidatePath("/organizer/stalls");
+  } catch (error) {
+    const params = new URLSearchParams();
+    
+    if (error instanceof StallCreationError) {
+      params.set("createError", error.code);
+    } else if (error instanceof ZodError) {
+      const codeError = error.errors.find((e) => e.path[0] === "code")?.message;
+      const nameError = error.errors.find((e) => e.path[0] === "name")?.message;
+      
+      if (codeError) params.set("codeError", codeError);
+      if (nameError) params.set("nameError", nameError);
+    } else {
+      throw error;
+    }
+
+    const from = String(formData.get("from") ?? "");
+    const marketStatus = String(formData.get("marketStatus") ?? "");
+    const status = String(formData.get("status") ?? "");
+    const sourceStatus = String(formData.get("sourceStatus") ?? "");
+    
+    if (marketId) params.set("marketId", marketId);
+    if (from) params.set("from", from);
+    if (marketStatus) params.set("marketStatus", marketStatus);
+    if (status) params.set("status", status);
+    if (sourceStatus) params.set("sourceStatus", sourceStatus);
+    
+    redirect(`/organizer/stalls?${params.toString()}`);
+  }
 }
 
 async function assignStallAction(formData: FormData) {
@@ -47,16 +82,46 @@ async function assignStallAction(formData: FormData) {
 
   const stallId = String(formData.get("stallId") ?? "");
   const applicationId = String(formData.get("applicationId") ?? "");
-  const payload = buildAssignStallPayload({
-    organizerId: sessionUser.userId,
-    applicationId
-  });
+  
+  try {
+    const payload = buildAssignStallPayload({
+      organizerId: sessionUser.userId,
+      applicationId
+    });
 
-  await assignStall({
-    stallId,
-    ...payload
-  });
-  revalidatePath("/organizer/stalls");
+    await assignStall({
+      stallId,
+      ...payload
+    });
+    revalidatePath("/organizer/stalls");
+  } catch (error) {
+    const params = new URLSearchParams();
+    
+    if (error instanceof StallAssignmentError) {
+      params.set("assignError", error.code);
+      params.set("errorStallId", stallId);
+    } else if (error instanceof ZodError) {
+      const applicationIdError = error.errors.find((e) => e.path[0] === "applicationId")?.message;
+      if (applicationIdError) params.set("applicationIdError", applicationIdError);
+      params.set("errorStallId", stallId);
+    } else {
+      throw error;
+    }
+
+    const marketId = String(formData.get("marketId") ?? "");
+    const from = String(formData.get("from") ?? "");
+    const marketStatus = String(formData.get("marketStatus") ?? "");
+    const status = String(formData.get("status") ?? "");
+    const sourceStatus = String(formData.get("sourceStatus") ?? "");
+    
+    if (marketId) params.set("marketId", marketId);
+    if (from) params.set("from", from);
+    if (marketStatus) params.set("marketStatus", marketStatus);
+    if (status) params.set("status", status);
+    if (sourceStatus) params.set("sourceStatus", sourceStatus);
+    
+    redirect(`/organizer/stalls?${params.toString()}`);
+  }
 }
 
 type OrganizerStallsPageProps = {
@@ -66,6 +131,12 @@ type OrganizerStallsPageProps = {
     from?: string;
     marketStatus?: string;
     sourceStatus?: string;
+    createError?: string;
+    codeError?: string;
+    nameError?: string;
+    assignError?: string;
+    applicationIdError?: string;
+    errorStallId?: string;
   }>;
 };
 
@@ -251,6 +322,13 @@ export default async function OrganizerStallsPage({
             <section aria-label="创建摊位">
               <h3>创建摊位</h3>
               <form action={createStallAction} aria-label="创建摊位表单">
+                {resolvedSearchParams.createError ? (
+                  <p role="alert">{getStallCreationErrorMessage(resolvedSearchParams.createError)}</p>
+                ) : null}
+                <input name="from" type="hidden" value={resolvedSearchParams.from ?? ""} />
+                <input name="marketStatus" type="hidden" value={resolvedSearchParams.marketStatus ?? ""} />
+                <input name="status" type="hidden" value={resolvedSearchParams.status ?? ""} />
+                <input name="sourceStatus" type="hidden" value={resolvedSearchParams.sourceStatus ?? ""} />
                 <label>
                   选择市集
                   <select
@@ -270,12 +348,24 @@ export default async function OrganizerStallsPage({
                 </label>
                 <label>
                   摊位编码
-                  <input name="code" type="text" />
+                  <input 
+                    name="code" 
+                    type="text" 
+                    required 
+                    aria-invalid={resolvedSearchParams.codeError ? "true" : "false"}
+                  />
                 </label>
+                {resolvedSearchParams.codeError ? <p>{resolvedSearchParams.codeError}</p> : null}
                 <label>
                   摊位名称
-                  <input name="name" type="text" />
+                  <input 
+                    name="name" 
+                    type="text" 
+                    required 
+                    aria-invalid={resolvedSearchParams.nameError ? "true" : "false"}
+                  />
                 </label>
+                {resolvedSearchParams.nameError ? <p>{resolvedSearchParams.nameError}</p> : null}
                 <button type="submit">创建摊位</button>
               </form>
             </section>
@@ -307,10 +397,22 @@ export default async function OrganizerStallsPage({
 
                 {isAssignable ? (
                   <form action={assignStallAction} aria-label={`${stall.name} 分配表单`}>
+                    {resolvedSearchParams.assignError && resolvedSearchParams.errorStallId === stall.id ? (
+                      <p role="alert">{getStallAssignmentErrorMessage(resolvedSearchParams.assignError)}</p>
+                    ) : null}
                     <input name="stallId" type="hidden" value={stall.id} />
+                    <input name="marketId" type="hidden" value={resolvedSearchParams.marketId ?? ""} />
+                    <input name="from" type="hidden" value={resolvedSearchParams.from ?? ""} />
+                    <input name="marketStatus" type="hidden" value={resolvedSearchParams.marketStatus ?? ""} />
+                    <input name="status" type="hidden" value={resolvedSearchParams.status ?? ""} />
+                    <input name="sourceStatus" type="hidden" value={resolvedSearchParams.sourceStatus ?? ""} />
                     <label>
                       已通过申请
-                      <select name="applicationId" defaultValue={marketApplications[0]?.id ?? ""}>
+                      <select 
+                        name="applicationId" 
+                        defaultValue={marketApplications[0]?.id ?? ""}
+                        aria-invalid={resolvedSearchParams.errorStallId === stall.id && resolvedSearchParams.applicationIdError ? "true" : "false"}
+                      >
                         {marketApplications.map((application) => (
                           <option key={application.id} value={application.id}>
                             {application.vendorName}
@@ -318,6 +420,9 @@ export default async function OrganizerStallsPage({
                         ))}
                       </select>
                     </label>
+                    {resolvedSearchParams.errorStallId === stall.id && resolvedSearchParams.applicationIdError ? (
+                      <p>{resolvedSearchParams.applicationIdError}</p>
+                    ) : null}
                     <p>报名备注：{marketApplications[0]?.applicationNote ?? "无"}</p>
                     <p>审核备注：{marketApplications[0]?.reviewNote ?? "无"}</p>
                     <button type="submit">分配摊位</button>
@@ -334,6 +439,42 @@ export default async function OrganizerStallsPage({
       </main>
     </AppShell>
   );
+}
+
+function getStallCreationErrorMessage(code: string | undefined) {
+  if (code === "MARKET_NOT_FOUND") {
+    return "创建失败：关联的市集不存在。";
+  }
+
+  if (code === "FORBIDDEN") {
+    return "创建失败：无权操作该市集。";
+  }
+
+  return "创建失败：请重试。";
+}
+
+function getStallAssignmentErrorMessage(code: string | undefined) {
+  if (code === "NOT_FOUND") {
+    return "分配失败：摊位或申请不存在。";
+  }
+
+  if (code === "FORBIDDEN") {
+    return "分配失败：无权操作该摊位或申请。";
+  }
+
+  if (code === "STALL_UNAVAILABLE") {
+    return "分配失败：该摊位已停用或已分配给其他申请。";
+  }
+
+  if (code === "INVALID_APPLICATION") {
+    return "分配失败：该申请不属于当前市集。";
+  }
+
+  if (code === "INVALID_APPLICATION_STATUS") {
+    return "分配失败：只能分配给已通过审核且未分配的申请。";
+  }
+
+  return "分配失败：请重试。";
 }
 
 function getSelectedStatus(status: string | undefined) {
