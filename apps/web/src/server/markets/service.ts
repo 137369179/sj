@@ -2,12 +2,32 @@ import { z } from "zod";
 
 import { db } from "../../lib/db";
 
-export const marketSchema = z.object({
-  title: z.string().trim().min(2),
-  city: z.string().trim().min(2),
-  startsAt: z.string().datetime(),
-  endsAt: z.string().datetime()
-});
+export const marketSchema = z
+  .object({
+    title: z.string().trim().min(2),
+    city: z.string().trim().min(2),
+    startsAt: z.string().datetime(),
+    endsAt: z.string().datetime()
+  })
+  .superRefine((value, context) => {
+    const startsAt = new Date(value.startsAt);
+    const endsAt = new Date(value.endsAt);
+
+    if (startsAt.getTime() <= endsAt.getTime()) {
+      return;
+    }
+
+    context.addIssue({
+      code: z.ZodIssueCode.custom,
+      message: "开始时间不能晚于结束时间",
+      path: ["startsAt"]
+    });
+    context.addIssue({
+      code: z.ZodIssueCode.custom,
+      message: "结束时间不能早于开始时间",
+      path: ["endsAt"]
+    });
+  });
 
 export type MarketPayload = z.infer<typeof marketSchema>;
 

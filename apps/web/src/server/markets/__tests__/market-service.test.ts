@@ -28,6 +28,34 @@ describe("market service", () => {
     expect(result.city).toBe("杭州");
   });
 
+  it("rejects a market payload when start time is after end time", () => {
+    expect(() =>
+      buildMarketPayload({
+        title: "春日咖啡市集",
+        city: "杭州",
+        startsAt: "2026-05-02T18:00:00.000Z",
+        endsAt: "2026-05-01T10:00:00.000Z"
+      })
+    ).toThrowErrorMatchingInlineSnapshot(`
+      [ZodError: [
+        {
+          "code": "custom",
+          "message": "开始时间不能晚于结束时间",
+          "path": [
+            "startsAt"
+          ]
+        },
+        {
+          "code": "custom",
+          "message": "结束时间不能早于开始时间",
+          "path": [
+            "endsAt"
+          ]
+        }
+      ]]
+    `);
+  });
+
   it("allows publish only for draft market", () => {
     expect(canPublishMarket("draft")).toBe(true);
     expect(canPublishMarket("published")).toBe(false);

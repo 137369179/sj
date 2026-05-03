@@ -1,4 +1,5 @@
 import { NextResponse } from "next/server";
+import { ZodError } from "zod";
 
 import { getSessionUser } from "../../../lib/auth";
 import { createOrganizerMarket } from "../../../server/markets/service";
@@ -15,13 +16,28 @@ export async function POST(request: Request) {
   }
 
   const body = await request.json();
-  const market = await createOrganizerMarket({
-    organizerId: sessionUser.userId,
-    title: body.title,
-    city: body.city,
-    startsAt: body.startsAt,
-    endsAt: body.endsAt
-  });
 
-  return NextResponse.json(market, { status: 201 });
+  try {
+    const market = await createOrganizerMarket({
+      organizerId: sessionUser.userId,
+      title: body.title,
+      city: body.city,
+      startsAt: body.startsAt,
+      endsAt: body.endsAt
+    });
+
+    return NextResponse.json(market, { status: 201 });
+  } catch (error) {
+    if (error instanceof ZodError) {
+      return NextResponse.json(
+        {
+          message: "validation failed",
+          fieldErrors: error.flatten().fieldErrors
+        },
+        { status: 422 }
+      );
+    }
+
+    throw error;
+  }
 }
