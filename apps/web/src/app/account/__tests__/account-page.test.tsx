@@ -71,6 +71,7 @@ describe("AccountPage", () => {
         id: "session_1",
         label: "Chrome on macOS",
         expiresAtLabel: "过期时间 2026-05-10 09:00",
+        isCurrent: false,
       },
     ]);
 

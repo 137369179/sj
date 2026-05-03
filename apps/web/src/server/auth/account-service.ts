@@ -6,6 +6,7 @@ export type AccountSessionSummary = {
   id: string;
   label: string;
   expiresAtLabel?: string;
+  isCurrent: boolean;
 };
 
 export type AccountPasskeySummary = {
@@ -66,7 +67,10 @@ function readArray(input: unknown): unknown[] {
   return [];
 }
 
-function normalizeSession(value: unknown): AccountSessionSummary | null {
+function normalizeSession(
+  value: unknown,
+  currentSessionId?: string,
+): AccountSessionSummary | null {
   const record = asRecord(value);
   if (!record) {
     return null;
@@ -85,6 +89,7 @@ function normalizeSession(value: unknown): AccountSessionSummary | null {
     id,
     label,
     expiresAtLabel: readDateLabel(record.expiresAt, "过期时间"),
+    isCurrent: currentSessionId === id,
   };
 }
 
@@ -108,11 +113,23 @@ function normalizePasskey(value: unknown): AccountPasskeySummary | null {
 
 export async function listAccountSessions(): Promise<AccountSessionSummary[]> {
   const requestHeaders = await headers();
-  const result = await auth.api.listSessions({
-    headers: requestHeaders,
-  });
+  const [result, currentSession] = await Promise.all([
+    auth.api.listSessions({
+      headers: requestHeaders,
+    }),
+    auth.api.getSession({
+      headers: requestHeaders,
+    }),
+  ]);
 
-  return readArray(result).map(normalizeSession).filter((item): item is AccountSessionSummary => item !== null);
+  const currentSessionId =
+    currentSession && typeof currentSession === "object" && "session" in currentSession
+      ? readString((currentSession.session as Record<string, unknown>)?.id)
+      : undefined;
+
+  return readArray(result)
+    .map((item) => normalizeSession(item, currentSessionId))
+    .filter((item): item is AccountSessionSummary => item !== null);
 }
 
 export async function listAccountPasskeys(): Promise<AccountPasskeySummary[]> {

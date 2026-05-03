@@ -93,6 +93,44 @@ export function AccountCenter({
     router.refresh();
   }
 
+  async function handleDeletePasskey(passkeyId: string) {
+    setStatus(null);
+    setError(null);
+    const response = await fetch(`/api/auth/passkeys/${passkeyId}`, {
+      method: "DELETE",
+    });
+
+    if (!response.ok) {
+      const result = (await response.json().catch(() => ({ message: "删除 Passkey 失败。" }))) as {
+        message?: string;
+      };
+      setError(result.message ?? "删除 Passkey 失败。");
+      return;
+    }
+
+    setStatus("Passkey 已删除。");
+    router.refresh();
+  }
+
+  async function handleRevokeSession(sessionId: string) {
+    setStatus(null);
+    setError(null);
+    const response = await fetch(`/api/auth/sessions/${sessionId}`, {
+      method: "DELETE",
+    });
+
+    if (!response.ok) {
+      const result = (await response.json().catch(() => ({ message: "撤销设备会话失败。" }))) as {
+        message?: string;
+      };
+      setError(result.message ?? "撤销设备会话失败。");
+      return;
+    }
+
+    setStatus("设备会话已撤销。");
+    router.refresh();
+  }
+
   return (
     <section aria-label="账号中心内容">
       <p>{user.email ?? "未绑定邮箱"}</p>
@@ -106,6 +144,9 @@ export function AccountCenter({
             <li key={passkey.id}>
               <p>{passkey.name}</p>
               {passkey.createdAtLabel ? <p>{passkey.createdAtLabel}</p> : null}
+              <button type="button" onClick={() => void handleDeletePasskey(passkey.id)}>
+                删除 {passkey.name}
+              </button>
             </li>
           ))}
         </ul>
@@ -119,7 +160,13 @@ export function AccountCenter({
           {sessions.map((session) => (
             <li key={session.id}>
               <p>{session.label}</p>
+              {session.isCurrent ? <p>当前设备</p> : null}
               {session.expiresAtLabel ? <p>{session.expiresAtLabel}</p> : null}
+              {!session.isCurrent ? (
+                <button type="button" onClick={() => void handleRevokeSession(session.id)}>
+                  撤销 {session.label}
+                </button>
+              ) : null}
             </li>
           ))}
         </ul>

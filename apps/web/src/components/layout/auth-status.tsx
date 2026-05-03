@@ -35,6 +35,7 @@ export function AuthStatus({
           {currentRole === "admin" ? "平台管理员" : currentRole === "organizer" ? "主办方" : "摊主"}:{" "}
           {sessionUser.name ?? sessionUser.userId}
         </span>
+        <button onClick={() => router.push("/account")}>账号中心</button>
         <button onClick={handleLogout} disabled={isLoggingOut}>
           退出登录
         </button>
