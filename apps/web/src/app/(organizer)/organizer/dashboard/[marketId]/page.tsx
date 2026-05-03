@@ -143,6 +143,18 @@ export default async function OrganizerDashboardPage({
             <p>{summary.metrics.paidCount}</p>
           </article>
           <article>
+            <h3>补件催办</h3>
+            <p>{summary.metrics.supplementPendingCount}</p>
+          </article>
+          <article>
+            <h3>候补待决</h3>
+            <p>{summary.metrics.waitlistPendingCount}</p>
+          </article>
+          <article>
+            <h3>高优先风险</h3>
+            <p>{summary.metrics.followUpUrgentCount}</p>
+          </article>
+          <article>
             <h3>总营收</h3>
             <p>¥{summary.metrics.totalRevenue.toFixed(2)}</p>
           </article>

@@ -19,6 +19,8 @@ export const VENDOR_APPLICATION_TASK_GROUPS = [
 export type VendorApplicationTaskGroupId =
   (typeof VENDOR_APPLICATION_TASK_GROUPS)[number]["id"];
 
+export type OrganizerFollowUpState = "idle" | "watching" | "urgent";
+
 export function getVendorStatusHint(
   status: string,
   latestReviewDecision?: string | null
@@ -121,6 +123,82 @@ export function getVendorTimingNote(input: {
   return null;
 }
 
+export function getOrganizerFollowUpState(input: {
+  latestReviewDecision?: string | null;
+  reviewedAt?: Date | string | null;
+}): OrganizerFollowUpState {
+  const reviewedAt = normalizeDate(input.reviewedAt);
+
+  if (!reviewedAt) {
+    return "idle";
+  }
+
+  if (input.latestReviewDecision === "supplement") {
+    const remainingHours = getRemainingHours(reviewedAt, 48);
+    return remainingHours <= 24 ? "urgent" : "watching";
+  }
+
+  if (input.latestReviewDecision === "waitlist") {
+    const remainingHours = getRemainingHours(reviewedAt, 72);
+    return remainingHours <= 24 ? "urgent" : "watching";
+  }
+
+  return "idle";
+}
+
+export function getOrganizerFollowUpLabel(state: OrganizerFollowUpState) {
+  if (state === "urgent") {
+    return "立即催办";
+  }
+
+  if (state === "watching") {
+    return "持续跟进";
+  }
+
+  return "正常推进";
+}
+
+export function getOrganizerFollowUpNote(input: {
+  latestReviewDecision?: string | null;
+  reviewedAt?: Date | string | null;
+}) {
+  const reviewedAt = normalizeDate(input.reviewedAt);
+
+  if (!reviewedAt) {
+    return null;
+  }
+
+  if (input.latestReviewDecision === "supplement") {
+    const remainingHours = getRemainingHours(reviewedAt, 48);
+
+    if (remainingHours <= 0) {
+      return "补件已超时，建议立即催办摊主，仍无回应则改判。";
+    }
+
+    if (remainingHours <= 24) {
+      return `补件将在 ${remainingHours} 小时后超时，建议今天完成催办。`;
+    }
+
+    return "补件处理中，建议在截止前至少催办一次。";
+  }
+
+  if (input.latestReviewDecision === "waitlist") {
+    const remainingHours = getRemainingHours(reviewedAt, 72);
+
+    if (remainingHours <= 0) {
+      return "候补观察已到期，建议立即确认补位或释放名额。";
+    }
+
+    if (remainingHours <= 24) {
+      return `候补观察将在 ${remainingHours} 小时后到期，建议尽快确认是否补位。`;
+    }
+
+    return "候补观察中，建议提前确认可补位摊主。";
+  }
+
+  return null;
+}
+
 function normalizeDate(value?: Date | string | null) {
   if (!value) {
     return null;
@@ -128,6 +206,11 @@ function normalizeDate(value?: Date | string | null) {
 
   const date = value instanceof Date ? value : new Date(value);
   return Number.isNaN(date.getTime()) ? null : date;
+}
+
+function getRemainingHours(reviewedAt: Date, windowHours: number) {
+  const deadline = new Date(reviewedAt.getTime() + windowHours * 60 * 60 * 1000);
+  return Math.ceil((deadline.getTime() - Date.now()) / (60 * 60 * 1000));
 }
 
 export const ORGANIZER_DASHBOARD_PRIORITIES = [

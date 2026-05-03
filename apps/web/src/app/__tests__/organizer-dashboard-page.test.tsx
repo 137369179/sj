@@ -69,6 +69,9 @@ describe("Organizer dashboard page", () => {
         rejectedCount: 1,
         assignedCount: 1,
         paidCount: 0,
+        supplementPendingCount: 1,
+        waitlistPendingCount: 2,
+        followUpUrgentCount: 1,
         approvalRate: 0.4,
         totalStalls: 6,
         activeStalls: 5,
@@ -97,7 +100,10 @@ describe("Organizer dashboard page", () => {
     expect(screen.getByText("总报名数")).toBeInTheDocument();
     expect(screen.getAllByText("5")).toHaveLength(2);
     expect(screen.getByText("待处理")).toBeInTheDocument();
-    expect(screen.getByText("2")).toBeInTheDocument();
+    expect(screen.getAllByText("2").length).toBeGreaterThanOrEqual(2);
+    expect(screen.getByText("补件催办")).toBeInTheDocument();
+    expect(screen.getByText("候补待决")).toBeInTheDocument();
+    expect(screen.getByText("高优先风险")).toBeInTheDocument();
     expect(screen.getByText("40%")).toBeInTheDocument();
     expect(screen.getByText("摊位总数")).toBeInTheDocument();
     expect(screen.getByText("6")).toBeInTheDocument();
@@ -150,6 +156,9 @@ describe("Organizer dashboard page", () => {
         rejectedCount: 1,
         assignedCount: 1,
         paidCount: 0,
+        supplementPendingCount: 1,
+        waitlistPendingCount: 2,
+        followUpUrgentCount: 1,
         approvalRate: 0.4,
         totalStalls: 6,
         activeStalls: 5,
@@ -209,6 +218,9 @@ describe("Organizer dashboard page", () => {
         rejectedCount: 1,
         assignedCount: 1,
         paidCount: 0,
+        supplementPendingCount: 1,
+        waitlistPendingCount: 2,
+        followUpUrgentCount: 1,
         approvalRate: 0.4,
         totalStalls: 6,
         activeStalls: 5,
@@ -268,6 +280,9 @@ describe("Organizer dashboard page", () => {
         rejectedCount: 1,
         assignedCount: 1,
         paidCount: 0,
+        supplementPendingCount: 1,
+        waitlistPendingCount: 2,
+        followUpUrgentCount: 1,
         approvalRate: 0.4,
         totalStalls: 6,
         activeStalls: 5,

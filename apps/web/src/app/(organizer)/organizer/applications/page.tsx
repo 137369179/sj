@@ -8,6 +8,10 @@ import { ReviewHistory } from "../../../../components/applications/review-histor
 import { AppShell } from "../../../../components/layout/app-shell";
 import { getApplicationStatusLabel } from "../../../../lib/application-status";
 import { getSessionUser } from "../../../../lib/auth";
+import {
+  getOrganizerFollowUpLabel,
+  getOrganizerFollowUpNote
+} from "../../../../lib/role-play";
 import { listOrganizerMarketOptions } from "../../../../server/markets/service";
 import {
   ApplicationReviewError,
@@ -277,6 +281,20 @@ export default async function OrganizerApplicationsPage({
                 {application.marketTitle} · {application.marketCity}
               </p>
               <p>状态：{getApplicationStatusLabel(application.status)}</p>
+              {application.latestReviewDecision === "supplement" ||
+              application.latestReviewDecision === "waitlist" ? (
+                <p>跟进优先级：{getOrganizerFollowUpLabel(application.followUpState)}</p>
+              ) : null}
+              {application.latestReviewDecision === "supplement" ||
+              application.latestReviewDecision === "waitlist" ? (
+                <p>
+                  规则提醒：
+                  {getOrganizerFollowUpNote({
+                    latestReviewDecision: application.latestReviewDecision,
+                    reviewedAt: application.reviewedAt
+                  })}
+                </p>
+              ) : null}
               <p>报名备注：{application.applicationNote ?? "无"}</p>
               <p>审核备注：{application.reviewNote ?? "无"}</p>
               <p>最近审核时间：{application.reviewedAt ? formatDate(application.reviewedAt) : "未审核"}</p>

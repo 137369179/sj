@@ -1,4 +1,5 @@
 import { db } from "../../lib/db";
+import { getOrganizerFollowUpState } from "../../lib/role-play";
 import type { ApplicationStatus } from "../applications/status";
 
 export type DashboardSummaryInput = {
@@ -8,6 +9,9 @@ export type DashboardSummaryInput = {
   rejectedCount: number;
   assignedCount: number;
   paidCount: number;
+  supplementPendingCount: number;
+  waitlistPendingCount: number;
+  followUpUrgentCount: number;
   totalStalls: number;
   activeStalls: number;
   occupiedStalls: number;
@@ -53,6 +57,9 @@ export function buildDashboardSummary(input: DashboardSummaryInput) {
     rejectedCount: input.rejectedCount,
     assignedCount: input.assignedCount,
     paidCount: input.paidCount,
+    supplementPendingCount: input.supplementPendingCount,
+    waitlistPendingCount: input.waitlistPendingCount,
+    followUpUrgentCount: input.followUpUrgentCount,
     approvalRate: totalApplications === 0 ? 0 : acceptedCount / totalApplications,
     totalStalls: input.totalStalls,
     activeStalls: input.activeStalls,
@@ -92,7 +99,18 @@ export async function getMarketDashboardSummary(input: {
       marketId: input.marketId
     },
     select: {
-      status: true
+      status: true,
+      reviewedAt: true,
+      reviews: {
+        select: {
+          decision: true,
+          createdAt: true
+        },
+        orderBy: {
+          createdAt: "desc"
+        },
+        take: 1
+      }
     }
   });
   const stalls = await db.stall.findMany({
@@ -125,13 +143,25 @@ export async function getMarketDashboardSummary(input: {
     },
     metrics: buildDashboardSummary({
       ...countStatuses(applications.map((item) => item.status)),
+      ...countOrganizerFollowUps(applications),
       ...countStalls(stalls),
       totalRevenue
     })
   };
 }
 
-function countStatuses(statuses: ApplicationStatus[]): Omit<DashboardSummaryInput, "totalStalls" | "activeStalls" | "occupiedStalls" | "totalRevenue"> {
+function countStatuses(
+  statuses: ApplicationStatus[]
+): Omit<
+  DashboardSummaryInput,
+  | "supplementPendingCount"
+  | "waitlistPendingCount"
+  | "followUpUrgentCount"
+  | "totalStalls"
+  | "activeStalls"
+  | "occupiedStalls"
+  | "totalRevenue"
+> {
   const counts = {
     submittedCount: 0,
     underReviewCount: 0,
@@ -161,6 +191,50 @@ function countStatuses(statuses: ApplicationStatus[]): Omit<DashboardSummaryInpu
       case "paid":
         counts.paidCount += 1;
         break;
+    }
+  }
+
+  return counts;
+}
+
+function countOrganizerFollowUps(
+  applications: Array<{
+    status: ApplicationStatus;
+    reviewedAt: Date | null;
+    reviews: Array<{
+      decision: string;
+      createdAt: Date;
+    }>;
+  }>
+) {
+  const counts = {
+    supplementPendingCount: 0,
+    waitlistPendingCount: 0,
+    followUpUrgentCount: 0
+  };
+
+  for (const application of applications) {
+    const latestReviewDecision = application.reviews[0]?.decision ?? null;
+
+    if (application.status !== "under_review") {
+      continue;
+    }
+
+    if (latestReviewDecision === "supplement") {
+      counts.supplementPendingCount += 1;
+    }
+
+    if (latestReviewDecision === "waitlist") {
+      counts.waitlistPendingCount += 1;
+    }
+
+    const followUpState = getOrganizerFollowUpState({
+      latestReviewDecision,
+      reviewedAt: application.reviewedAt
+    });
+
+    if (followUpState === "urgent") {
+      counts.followUpUrgentCount += 1;
     }
   }
 

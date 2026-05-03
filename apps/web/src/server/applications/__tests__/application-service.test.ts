@@ -157,6 +157,8 @@ describe("application service", () => {
         vendorId: "vendor_1",
         vendorName: "山野咖啡",
         status: "submitted",
+        latestReviewDecision: null,
+        followUpState: "idle",
         note: "主营手作咖啡",
         applicationNote: "主营手作咖啡",
         attachments: [],
@@ -166,6 +168,90 @@ describe("application service", () => {
         createdAt: new Date("2026-05-01T00:00:00.000Z")
       }
     ]);
+  });
+
+  it("maps supplement and waitlist reviews into organizer follow-up states", async () => {
+    vi.spyOn(db.application, "findMany").mockResolvedValue([
+      {
+        id: "app_2",
+        marketId: "market_2",
+        vendorId: "vendor_1",
+        status: "under_review",
+        note: "主营手作咖啡",
+        applicationNote: "主营手作咖啡",
+        reviewNote: "请补充近三次摆摊照片",
+        attachmentsJson: [],
+        reviewedAt: new Date("2026-05-01T06:00:00.000Z"),
+        createdAt: new Date("2026-05-01T00:00:00.000Z"),
+        reviews: [
+          {
+            id: "review_3",
+            applicationId: "app_2",
+            organizerId: "org_1",
+            decision: "supplement",
+            reviewNote: "请补充近三次摆摊照片",
+            createdAt: new Date("2026-05-01T06:00:00.000Z")
+          }
+        ],
+        market: {
+          id: "market_2",
+          organizerId: "org_1",
+          title: "夏夜面包市集",
+          city: "上海"
+        },
+        vendor: {
+          id: "vendor_1",
+          name: "山野咖啡"
+        }
+      },
+      {
+        id: "app_3",
+        marketId: "market_3",
+        vendorId: "vendor_2",
+        status: "under_review",
+        note: "主营烘焙",
+        applicationNote: "主营烘焙",
+        reviewNote: "先列入候补观察",
+        attachmentsJson: [],
+        reviewedAt: new Date("2026-05-01T00:00:00.000Z"),
+        createdAt: new Date("2026-05-01T01:00:00.000Z"),
+        reviews: [
+          {
+            id: "review_4",
+            applicationId: "app_3",
+            organizerId: "org_1",
+            decision: "waitlist",
+            reviewNote: "先列入候补观察",
+            createdAt: new Date("2026-05-01T00:00:00.000Z")
+          }
+        ],
+        market: {
+          id: "market_3",
+          organizerId: "org_1",
+          title: "秋日手作市集",
+          city: "南京"
+        },
+        vendor: {
+          id: "vendor_2",
+          name: "木野手作"
+        }
+      }
+    ] as unknown as Awaited<ReturnType<typeof db.application.findMany>>);
+
+    vi.useFakeTimers();
+    vi.setSystemTime(new Date("2026-05-03T12:00:00.000Z"));
+
+    const applications = await listOrganizerApplications("org_1");
+
+    const supplementApplication = applications.find((application) => application.id === "app_2");
+    const waitlistApplication = applications.find((application) => application.id === "app_3");
+
+    expect(waitlistApplication?.latestReviewDecision).toBe("waitlist");
+    expect(waitlistApplication?.followUpState).toBe("urgent");
+    expect(supplementApplication?.latestReviewDecision).toBe("supplement");
+    expect(supplementApplication?.followUpState).toBe("urgent");
+
+    vi.useRealTimers();
   });
 
   it("lists vendor applications with split notes and assigned stall result", async () => {

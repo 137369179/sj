@@ -1,5 +1,5 @@
 import { render, screen, within } from "@testing-library/react";
-import { beforeEach, describe, expect, it, vi } from "vitest";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
 import { getSessionUser } from "../../lib/auth";
 import { listOrganizerMarketOptions } from "../../server/markets/service";
@@ -31,6 +31,10 @@ vi.mock("../../components/layout/app-shell", () => ({
 describe("Organizer applications page", () => {
   beforeEach(() => {
     vi.clearAllMocks();
+  });
+
+  afterEach(() => {
+    vi.useRealTimers();
   });
 
   it("renders organizer applications from session identity with split notes", async () => {
@@ -387,6 +391,68 @@ describe("Organizer applications page", () => {
     render(page);
 
     expect(screen.getByText("当前还没有报名申请。")).toBeInTheDocument();
+  });
+
+  it("surfaces organizer follow-up rules for supplement and waitlist applications", async () => {
+    vi.useFakeTimers();
+    vi.setSystemTime(new Date("2026-05-03T12:00:00.000Z"));
+    vi.mocked(getSessionUser).mockResolvedValue({
+      userId: "org_1",
+      role: "organizer"
+    });
+    vi.mocked(listOrganizerMarketOptions).mockResolvedValue([]);
+    vi.mocked(listOrganizerApplications).mockResolvedValue([
+      {
+        id: "app_2",
+        marketId: "market_2",
+        marketTitle: "夏夜面包市集",
+        marketCity: "上海",
+        vendorId: "vendor_2",
+        vendorName: "木野手作",
+        status: "under_review",
+        latestReviewDecision: "supplement",
+        followUpState: "urgent",
+        note: "主营木作器物",
+        applicationNote: "主营木作器物",
+        reviewNote: "请补充近三次摆摊照片",
+        reviewedAt: new Date("2026-05-01T06:00:00.000Z"),
+        reviews: [],
+        attachments: [],
+        createdAt: new Date("2026-05-01T01:00:00.000Z")
+      },
+      {
+        id: "app_3",
+        marketId: "market_3",
+        marketTitle: "秋日手作市集",
+        marketCity: "南京",
+        vendorId: "vendor_3",
+        vendorName: "雨巷面包",
+        status: "under_review",
+        latestReviewDecision: "waitlist",
+        followUpState: "urgent",
+        note: "主营面包甜点",
+        applicationNote: "主营面包甜点",
+        reviewNote: "先列入候补观察",
+        reviewedAt: new Date("2026-04-30T00:00:00.000Z"),
+        reviews: [],
+        attachments: [],
+        createdAt: new Date("2026-05-01T02:00:00.000Z")
+      }
+    ] as Awaited<ReturnType<typeof listOrganizerApplications>>);
+
+    const page = await OrganizerApplicationsPage({
+      searchParams: Promise.resolve({})
+    });
+
+    render(page);
+
+    expect(screen.getAllByText("跟进优先级：立即催办")).toHaveLength(2);
+    expect(
+      screen.getByText("规则提醒：补件已超时，建议立即催办摊主，仍无回应则改判。")
+    ).toBeInTheDocument();
+    expect(
+      screen.getByText("规则提醒：候补观察已到期，建议立即确认补位或释放名额。")
+    ).toBeInTheDocument();
   });
 
   it("renders a markets return link when opened from organizer markets", async () => {

@@ -7,6 +7,10 @@ import {
   type StoredAttachment
 } from "../../lib/storage";
 import {
+  getOrganizerFollowUpState,
+  type OrganizerFollowUpState
+} from "../../lib/role-play";
+import {
   buildApplicationReviewNotification,
   createNotification
 } from "../notifications/service";
@@ -105,6 +109,8 @@ export type OrganizerApplicationListItem = {
   vendorId: string;
   vendorName: string;
   status: ApplicationStatus;
+  latestReviewDecision: ApplicationReviewAuditRecord["decision"] | null;
+  followUpState: OrganizerFollowUpState;
   note: string | null;
   applicationNote: string | null;
   reviewNote: string | null;
@@ -365,6 +371,9 @@ export async function reviewApplication(input: ReviewApplicationInput) {
 function formatOrganizerApplication(
   application: OrganizerApplicationRecord
 ): OrganizerApplicationListItem {
+  const normalizedReviews = normalizeReviewRecords(application.reviews);
+  const latestReviewDecision = normalizedReviews[0]?.decision ?? null;
+
   return {
     id: application.id,
     marketId: application.marketId,
@@ -373,12 +382,17 @@ function formatOrganizerApplication(
     vendorId: application.vendorId,
     vendorName: application.vendor.name,
     status: application.status,
+    latestReviewDecision,
+    followUpState: getOrganizerFollowUpState({
+      latestReviewDecision,
+      reviewedAt: application.reviewedAt
+    }),
     note: application.note,
     applicationNote: application.applicationNote ?? application.note,
     reviewNote: application.reviewNote,
     attachments: normalizeAttachments(application.attachmentsJson),
     reviewedAt: application.reviewedAt,
-    reviews: normalizeReviewRecords(application.reviews),
+    reviews: normalizedReviews,
     createdAt: application.createdAt
   };
 }
