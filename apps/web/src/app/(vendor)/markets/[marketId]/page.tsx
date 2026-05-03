@@ -1,4 +1,5 @@
 import Link from "next/link";
+import Image from "next/image";
 
 import { AppShell } from "../../../../components/layout/app-shell";
 import { getPublishedMarketById } from "../../../../server/markets/service";
@@ -39,9 +40,12 @@ export default async function MarketDetailPage({
         {market ? (
           <>
             {market.coverUrl && (
-              <img
+              <Image
                 src={market.coverUrl}
                 alt={`${market.title} 海报`}
+                width={1200}
+                height={675}
+                unoptimized
                 style={{ maxWidth: "100%", height: "auto", borderRadius: "8px", margin: "1rem 0" }}
               />
             )}

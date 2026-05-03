@@ -1,4 +1,5 @@
 import Link from "next/link";
+import Image from "next/image";
 
 import { AppShell } from "../../../components/layout/app-shell";
 import { listPublishedMarkets } from "../../../server/markets/service";
@@ -48,9 +49,12 @@ export default async function VendorMarketsPage({
               <li key={market.id}>
                 <article style={{ display: "flex", gap: "1rem", border: "1px solid #e5e7eb", padding: "1rem", borderRadius: "8px" }}>
                   {market.coverUrl && (
-                    <img
+                    <Image
                       src={market.coverUrl}
                       alt={`${market.title} 缩略图`}
+                      width={120}
+                      height={120}
+                      unoptimized
                       style={{ width: "120px", height: "120px", objectFit: "cover", borderRadius: "4px" }}
                     />
                   )}

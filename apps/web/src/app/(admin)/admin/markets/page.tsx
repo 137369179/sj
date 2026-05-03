@@ -1,4 +1,5 @@
 import { redirect } from "next/navigation";
+import Image from "next/image";
 
 import { AppShell } from "../../../../components/layout/app-shell";
 import { getSessionUser } from "../../../../lib/auth";
@@ -72,10 +73,13 @@ export default async function AdminMarketsPage() {
                   </div>
                   {market.coverUrl && (
                     <div style={{ flexShrink: 0 }}>
-                      <img 
-                        src={market.coverUrl} 
-                        alt="海报" 
-                        style={{ width: "80px", height: "80px", objectFit: "cover", borderRadius: "4px" }} 
+                      <Image
+                        src={market.coverUrl}
+                        alt={`${market.title} 海报`}
+                        width={80}
+                        height={80}
+                        unoptimized
+                        style={{ width: "80px", height: "80px", objectFit: "cover", borderRadius: "4px" }}
                       />
                     </div>
                   )}

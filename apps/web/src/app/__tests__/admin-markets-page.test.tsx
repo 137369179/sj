@@ -35,6 +35,7 @@ describe("AdminMarketsPage", () => {
         city: "杭州",
         status: "published",
         isPlatformApproved: false,
+        coverUrl: "https://example.com/admin-market-cover.jpg",
         organizer: { name: "Org 1" },
         _count: { stalls: 5, applications: 2 }
       } as any
@@ -48,6 +49,10 @@ describe("AdminMarketsPage", () => {
     expect(screen.getByText("平台巡检中")).toBeInTheDocument();
     expect(screen.getByText("主办方：Org 1")).toBeInTheDocument();
     expect(screen.getByText("摊位：5 个 | 报名：2 份")).toBeInTheDocument();
+    expect(screen.getByRole("img", { name: "咖啡市集 海报" })).toHaveAttribute(
+      "src",
+      "https://example.com/admin-market-cover.jpg"
+    );
     expect(screen.getByRole("button", { name: "通过上架审核" })).toBeInTheDocument();
     expect(screen.getByRole("button", { name: "强制下架/退回草稿" })).toBeInTheDocument();
   });
