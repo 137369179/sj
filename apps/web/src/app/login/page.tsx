@@ -1,6 +1,6 @@
 import { redirect } from "next/navigation";
 import { cookies } from "next/headers";
-import { getSessionUser, SESSION_ROLE_COOKIE_NAME, SESSION_USER_ID_COOKIE_NAME } from "../../lib/auth";
+import { getSessionUser, SESSION_COOKIE_NAME, createSessionToken } from "../../lib/auth";
 import { isUserRole } from "../../lib/roles";
 import { AppShell } from "../../components/layout/app-shell";
 
@@ -26,16 +26,14 @@ export default async function LoginPage({
       redirect("/login?error=invalid_input");
     }
 
+    const sessionToken = await createSessionToken(userId, role);
     const cookieStore = await cookies();
-    cookieStore.set(SESSION_ROLE_COOKIE_NAME, role, {
+
+    cookieStore.set(SESSION_COOKIE_NAME, sessionToken, {
       httpOnly: true,
       path: "/",
-      sameSite: "lax"
-    });
-    cookieStore.set(SESSION_USER_ID_COOKIE_NAME, userId, {
-      httpOnly: true,
-      path: "/",
-      sameSite: "lax"
+      sameSite: "lax",
+      maxAge: 60 * 60 * 24 * 7 // 7 days
     });
     
     redirect(resolvedSearchParams.returnTo ?? "/");

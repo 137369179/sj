@@ -1,9 +1,10 @@
+// @vitest-environment node
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import { cookies } from "next/headers";
 import { NextRequest } from "next/server";
 
 import { POST } from "../../../app/api/auth/login/route";
-import { getSessionRole, getSessionUser } from "../../../lib/auth";
+import { getSessionRole, getSessionUser, createSessionToken, verifySessionToken } from "../../../lib/auth";
 import { canAccessRoute } from "../../../lib/roles";
 import { middleware } from "../../../middleware";
 
@@ -27,17 +28,19 @@ describe("getSessionRole", () => {
   });
 
   it("returns the session role from cookies", async () => {
+    const token = await createSessionToken("admin_1", "admin");
     vi.mocked(cookies).mockResolvedValue({
       get: (name: string) =>
-        name === "mrp_session_role" ? { name, value: "admin" } : undefined
+        name === "mrp_session" ? { name, value: token } : undefined
     } as Awaited<ReturnType<typeof cookies>>);
 
     await expect(getSessionRole()).resolves.toBe("admin");
   });
 
   it("returns null for an unsupported role", async () => {
+    const token = await createSessionToken("guest_1", "guest" as any);
     vi.mocked(cookies).mockResolvedValue({
-      get: () => ({ name: "mrp_session_role", value: "guest" })
+      get: () => ({ name: "mrp_session", value: token })
     } as Awaited<ReturnType<typeof cookies>>);
 
     await expect(getSessionRole()).resolves.toBeNull();
@@ -50,15 +53,10 @@ describe("getSessionUser", () => {
   });
 
   it("returns both userId and role from cookies", async () => {
+    const token = await createSessionToken("vendor_1", "vendor");
     vi.mocked(cookies).mockResolvedValue({
-      get: (name: string) => {
-        const values: Record<string, { name: string; value: string }> = {
-          mrp_session_role: { name: "mrp_session_role", value: "vendor" },
-          mrp_session_user_id: { name: "mrp_session_user_id", value: "vendor_1" }
-        };
-
-        return values[name];
-      }
+      get: (name: string) =>
+        name === "mrp_session" ? { name, value: token } : undefined
     } as Awaited<ReturnType<typeof cookies>>);
 
     await expect(getSessionUser()).resolves.toEqual({
@@ -67,10 +65,9 @@ describe("getSessionUser", () => {
     });
   });
 
-  it("returns null when userId cookie is missing", async () => {
+  it("returns null when cookie is missing", async () => {
     vi.mocked(cookies).mockResolvedValue({
-      get: (name: string) =>
-        name === "mrp_session_role" ? { name, value: "vendor" } : undefined
+      get: () => undefined
     } as Awaited<ReturnType<typeof cookies>>);
 
     await expect(getSessionUser()).resolves.toBeNull();
@@ -78,7 +75,7 @@ describe("getSessionUser", () => {
 });
 
 describe("POST /api/auth/login", () => {
-  it("sets the role and userId cookies for a valid session payload", async () => {
+  it("sets the session cookie for a valid payload", async () => {
     const request = new Request("http://localhost/api/auth/login", {
       method: "POST",
       headers: {
@@ -91,8 +88,13 @@ describe("POST /api/auth/login", () => {
 
     expect(response.status).toBe(200);
     await expect(response.json()).resolves.toEqual({ ok: true });
-    expect(response.cookies.get("mrp_session_role")?.value).toBe("vendor");
-    expect(response.cookies.get("mrp_session_user_id")?.value).toBe("vendor_1");
+    
+    const token = response.cookies.get("mrp_session")?.value;
+    expect(token).toBeDefined();
+    
+    const payload = await verifySessionToken(token as string);
+    expect(payload?.role).toBe("vendor");
+    expect(payload?.userId).toBe("vendor_1");
   });
 
   it("rejects an invalid session payload", async () => {
@@ -112,14 +114,15 @@ describe("POST /api/auth/login", () => {
 });
 
 describe("middleware", () => {
-  it("redirects a vendor away from organizer routes", () => {
+  it("redirects a vendor away from organizer routes", async () => {
+    const token = await createSessionToken("vendor_1", "vendor");
     const request = new NextRequest("http://localhost/organizer/markets", {
       headers: {
-        cookie: "mrp_session_role=vendor"
+        cookie: `mrp_session=${token}`
       }
     });
 
-    const response = middleware(request);
+    const response = await middleware(request);
 
     expect(response.status).toBe(307);
     expect(response.headers.get("location")).toBe("http://localhost/");

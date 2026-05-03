@@ -10,7 +10,6 @@ describe("POST /api/auth/logout", () => {
     expect(json.ok).toBe(true);
 
     const setCookieHeader = response.headers.get("set-cookie");
-    expect(setCookieHeader).toContain("mrp_session_role=;");
-    expect(setCookieHeader).toContain("mrp_session_user_id=;");
+    expect(setCookieHeader).toContain("mrp_session=;");
   });
 });

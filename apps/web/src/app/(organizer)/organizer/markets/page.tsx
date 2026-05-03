@@ -110,46 +110,74 @@ export default async function OrganizerMarketsPage({
 
         <form action={createMarketAction} aria-label="市集表单">
           {createMarketErrors.formError ? (
-            <p role="alert">{createMarketErrors.formError}</p>
+            <div role="alert" aria-live="assertive" className="error-summary">
+              <p>{createMarketErrors.formError}</p>
+              <ul>
+                {createMarketErrors.title ? (
+                  <li>
+                    <a href="#input-title">市集标题：{createMarketErrors.title}</a>
+                  </li>
+                ) : null}
+                {createMarketErrors.city ? (
+                  <li>
+                    <a href="#input-city">城市：{createMarketErrors.city}</a>
+                  </li>
+                ) : null}
+                {createMarketErrors.startsAt ? (
+                  <li>
+                    <a href="#input-startsAt">开始时间：{createMarketErrors.startsAt}</a>
+                  </li>
+                ) : null}
+                {createMarketErrors.endsAt ? (
+                  <li>
+                    <a href="#input-endsAt">结束时间：{createMarketErrors.endsAt}</a>
+                  </li>
+                ) : null}
+              </ul>
+            </div>
           ) : null}
           <label>
             市集标题
             <input
+              id="input-title"
               aria-invalid={createMarketErrors.title ? "true" : "false"}
               name="title"
               type="text"
             />
           </label>
-          {createMarketErrors.title ? <p>{createMarketErrors.title}</p> : null}
+          {createMarketErrors.title ? <p className="field-error">{createMarketErrors.title}</p> : null}
           <label>
             城市
             <input
+              id="input-city"
               aria-invalid={createMarketErrors.city ? "true" : "false"}
               name="city"
               type="text"
             />
           </label>
-          {createMarketErrors.city ? <p>{createMarketErrors.city}</p> : null}
+          {createMarketErrors.city ? <p className="field-error">{createMarketErrors.city}</p> : null}
           <label>
             开始时间
             <input
+              id="input-startsAt"
               aria-invalid={createMarketErrors.startsAt ? "true" : "false"}
               aria-label="开始时间"
               name="startsAt"
               type="datetime-local"
             />
           </label>
-          {createMarketErrors.startsAt ? <p>{createMarketErrors.startsAt}</p> : null}
+          {createMarketErrors.startsAt ? <p className="field-error">{createMarketErrors.startsAt}</p> : null}
           <label>
             结束时间
             <input
+              id="input-endsAt"
               aria-invalid={createMarketErrors.endsAt ? "true" : "false"}
               aria-label="结束时间"
               name="endsAt"
               type="datetime-local"
             />
           </label>
-          {createMarketErrors.endsAt ? <p>{createMarketErrors.endsAt}</p> : null}
+          {createMarketErrors.endsAt ? <p className="field-error">{createMarketErrors.endsAt}</p> : null}
           <button type="submit">创建草稿</button>
         </form>
 

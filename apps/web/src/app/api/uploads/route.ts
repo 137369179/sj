@@ -1,7 +1,5 @@
-import { mkdir, writeFile } from "node:fs/promises";
-import path from "node:path";
-
 import { NextResponse } from "next/server";
+import { storage } from "../../../server/storage";
 
 const MAX_UPLOAD_SIZE_BYTES = 5 * 1024 * 1024;
 const ALLOWED_FILE_TYPES = new Set([
@@ -27,23 +25,18 @@ export async function POST(request: Request) {
     return NextResponse.json({ message: "file too large" }, { status: 413 });
   }
 
-  const uploadDir = path.join(process.cwd(), "public", "uploads");
-  const storedName = `${Date.now()}-${sanitizeFileName(file.name)}`;
-  const filePath = path.join(uploadDir, storedName);
-  const fileBuffer = Buffer.from(await file.arrayBuffer());
+  try {
+    const { url } = await storage.upload(file);
 
-  await mkdir(uploadDir, { recursive: true });
-  await writeFile(filePath, fileBuffer);
-
-  return NextResponse.json(
-    {
-      url: `/uploads/${storedName}`,
-      originalName: file.name
-    },
-    { status: 201 }
-  );
-}
-
-function sanitizeFileName(fileName: string) {
-  return fileName.replace(/[^a-zA-Z0-9._-]/g, "-");
+    return NextResponse.json(
+      {
+        url,
+        originalName: file.name
+      },
+      { status: 201 }
+    );
+  } catch (error) {
+    console.error("Upload failed", error);
+    return NextResponse.json({ message: "upload failed" }, { status: 500 });
+  }
 }

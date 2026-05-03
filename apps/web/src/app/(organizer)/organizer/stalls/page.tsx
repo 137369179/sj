@@ -322,8 +322,25 @@ export default async function OrganizerStallsPage({
             <section aria-label="创建摊位">
               <h3>创建摊位</h3>
               <form action={createStallAction} aria-label="创建摊位表单">
-                {resolvedSearchParams.createError ? (
-                  <p role="alert">{getStallCreationErrorMessage(resolvedSearchParams.createError)}</p>
+                {(resolvedSearchParams.createError || resolvedSearchParams.codeError || resolvedSearchParams.nameError) ? (
+                  <div role="alert" aria-live="assertive" className="error-summary">
+                    <p>创建摊位失败，请修正以下错误后重试：</p>
+                    <ul>
+                      {resolvedSearchParams.createError ? (
+                        <li>{getStallCreationErrorMessage(resolvedSearchParams.createError)}</li>
+                      ) : null}
+                      {resolvedSearchParams.codeError ? (
+                        <li>
+                          <a href="#input-code">摊位编码：{resolvedSearchParams.codeError}</a>
+                        </li>
+                      ) : null}
+                      {resolvedSearchParams.nameError ? (
+                        <li>
+                          <a href="#input-name">摊位名称：{resolvedSearchParams.nameError}</a>
+                        </li>
+                      ) : null}
+                    </ul>
+                  </div>
                 ) : null}
                 <input name="from" type="hidden" value={resolvedSearchParams.from ?? ""} />
                 <input name="marketStatus" type="hidden" value={resolvedSearchParams.marketStatus ?? ""} />
@@ -349,23 +366,25 @@ export default async function OrganizerStallsPage({
                 <label>
                   摊位编码
                   <input 
+                    id="input-code"
                     name="code" 
                     type="text" 
                     required 
                     aria-invalid={resolvedSearchParams.codeError ? "true" : "false"}
                   />
                 </label>
-                {resolvedSearchParams.codeError ? <p>{resolvedSearchParams.codeError}</p> : null}
+                {resolvedSearchParams.codeError ? <p className="field-error">{resolvedSearchParams.codeError}</p> : null}
                 <label>
                   摊位名称
                   <input 
+                    id="input-name"
                     name="name" 
                     type="text" 
                     required 
                     aria-invalid={resolvedSearchParams.nameError ? "true" : "false"}
                   />
                 </label>
-                {resolvedSearchParams.nameError ? <p>{resolvedSearchParams.nameError}</p> : null}
+                {resolvedSearchParams.nameError ? <p className="field-error">{resolvedSearchParams.nameError}</p> : null}
                 <button type="submit">创建摊位</button>
               </form>
             </section>

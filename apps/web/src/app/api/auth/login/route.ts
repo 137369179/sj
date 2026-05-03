@@ -1,9 +1,6 @@
 import { NextResponse } from "next/server";
 
-import {
-  SESSION_ROLE_COOKIE_NAME,
-  SESSION_USER_ID_COOKIE_NAME
-} from "../../../../lib/auth";
+import { createSessionToken, SESSION_COOKIE_NAME } from "../../../../lib/auth";
 import { isUserRole } from "../../../../lib/roles";
 
 export async function POST(request: Request) {
@@ -15,16 +12,13 @@ export async function POST(request: Request) {
     return NextResponse.json({ message: "invalid session payload" }, { status: 400 });
   }
 
+  const sessionToken = await createSessionToken(userId, role);
   const response = NextResponse.json({ ok: true });
-  response.cookies.set(SESSION_ROLE_COOKIE_NAME, role, {
+  response.cookies.set(SESSION_COOKIE_NAME, sessionToken, {
     httpOnly: true,
     path: "/",
-    sameSite: "lax"
-  });
-  response.cookies.set(SESSION_USER_ID_COOKIE_NAME, userId, {
-    httpOnly: true,
-    path: "/",
-    sameSite: "lax"
+    sameSite: "lax",
+    maxAge: 60 * 60 * 24 * 7 // 7 days
   });
 
   return response;

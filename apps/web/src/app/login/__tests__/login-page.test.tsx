@@ -6,8 +6,8 @@ import LoginPage from "../page";
 
 vi.mock("../../../lib/auth", () => ({
   getSessionUser: vi.fn(),
-  SESSION_ROLE_COOKIE_NAME: "mrp_session_role",
-  SESSION_USER_ID_COOKIE_NAME: "mrp_session_user_id"
+  SESSION_COOKIE_NAME: "mrp_session",
+  createSessionToken: vi.fn().mockResolvedValue("mock-jwt-token")
 }));
 
 // Mock AppShell to avoid testing async components deeply in the page test
