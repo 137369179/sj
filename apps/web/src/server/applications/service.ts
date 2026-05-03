@@ -113,6 +113,7 @@ export type VendorApplicationListItem = {
   marketCity: string;
   status: ApplicationStatus;
   taskGroup: "pending-action" | "in-progress" | "done";
+  latestReviewDecision: ApplicationReviewAuditRecord["decision"] | null;
   note: string | null;
   applicationNote: string | null;
   reviewNote: string | null;
@@ -371,19 +372,23 @@ function formatOrganizerApplication(
 function formatVendorApplication(
   application: VendorApplicationRecord
 ): VendorApplicationListItem {
+  const normalizedReviews = normalizeReviewRecords(application.reviews);
+  const latestReviewDecision = normalizedReviews[0]?.decision ?? null;
+
   return {
     id: application.id,
     marketId: application.marketId,
     marketTitle: application.market.title,
     marketCity: application.market.city,
     status: application.status,
-    taskGroup: getVendorApplicationTaskGroup(application.status),
+    taskGroup: getVendorApplicationTaskGroup(application.status, latestReviewDecision),
+    latestReviewDecision,
     note: application.note,
     applicationNote: application.applicationNote ?? application.note,
     reviewNote: application.reviewNote,
     attachments: normalizeAttachments(application.attachmentsJson),
     reviewedAt: application.reviewedAt,
-    reviews: normalizeReviewRecords(application.reviews),
+    reviews: normalizedReviews,
     createdAt: application.createdAt,
     assignedStallId: application.assignedStall?.id ?? null,
     assignedStallCode: application.assignedStall?.code ?? null,
@@ -398,13 +403,18 @@ function formatVendorApplication(
 }
 
 function getVendorApplicationTaskGroup(
-  status: ApplicationStatus
+  status: ApplicationStatus,
+  latestReviewDecision: ApplicationReviewAuditRecord["decision"] | null
 ): "pending-action" | "in-progress" | "done" {
   if (status === "submitted") {
     return "pending-action";
   }
 
   if (status === "under_review") {
+    if (latestReviewDecision === "supplement") {
+      return "pending-action";
+    }
+
     return "in-progress";
   }
 

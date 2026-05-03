@@ -28,6 +28,7 @@ function buildVendorApplication(
     marketTitle: overrides.marketTitle,
     marketCity: overrides.marketCity,
     status: overrides.status,
+    latestReviewDecision: overrides.latestReviewDecision ?? null,
     taskGroup:
       overrides.taskGroup ??
       (overrides.status === "submitted"
@@ -311,6 +312,7 @@ describe("Vendor applications page", () => {
         marketTitle: "夏夜面包市集",
         marketCity: "上海",
         status: "under_review",
+        latestReviewDecision: "supplement",
         createdAt: new Date("2026-05-01T01:00:00.000Z")
       }),
       buildVendorApplication({
@@ -323,6 +325,15 @@ describe("Vendor applications page", () => {
         assignedStallId: "stall_3",
         assignedStallCode: "B-03",
         assignedStallName: "内场 3 号位"
+      }),
+      buildVendorApplication({
+        id: "app_4",
+        marketId: "market_4",
+        marketTitle: "冬日烘焙市集",
+        marketCity: "苏州",
+        status: "under_review",
+        latestReviewDecision: "waitlist",
+        createdAt: new Date("2026-05-01T03:00:00.000Z")
       })
     ]);
 
@@ -336,8 +347,11 @@ describe("Vendor applications page", () => {
     expect(screen.getByRole("heading", { name: "处理中" })).toBeInTheDocument();
     expect(screen.getByRole("heading", { name: "已完成" })).toBeInTheDocument();
     expect(screen.getByText(/等待主办方处理/)).toBeInTheDocument();
-    expect(screen.getByText(/审核中，请耐心等待/)).toBeInTheDocument();
+    expect(screen.getByText(/请尽快补充资料后继续审核/)).toBeInTheDocument();
+    expect(screen.getByText(/已进入候补队列，建议保留档期/)).toBeInTheDocument();
     expect(screen.getByText(/查看分配结果与后续安排/)).toBeInTheDocument();
+    expect(screen.getByText("当前处理：待补件")).toBeInTheDocument();
+    expect(screen.getByText("当前处理：候补中")).toBeInTheDocument();
   });
 
   it("filters vendor applications by marketId and preserves status context", async () => {

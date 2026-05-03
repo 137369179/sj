@@ -5,6 +5,7 @@ import { AppShell } from "../../../components/layout/app-shell";
 import { getApplicationStatusLabel } from "../../../lib/application-status";
 import { getSessionUser } from "../../../lib/auth";
 import {
+  getVendorCurrentStepLabel,
   getVendorStatusHint,
   VENDOR_APPLICATION_TASK_GROUPS
 } from "../../../lib/role-play";
@@ -76,7 +77,11 @@ export default async function VendorApplicationsPage({
                       <ul>
                         {groupedApplications.map((application) => (
                           <li key={application.id}>
-                            {application.marketTitle}：{getVendorStatusHint(application.status)}
+                            {application.marketTitle}：
+                            {getVendorStatusHint(
+                              application.status,
+                              application.latestReviewDecision
+                            )}
                           </li>
                         ))}
                       </ul>
@@ -159,6 +164,13 @@ export default async function VendorApplicationsPage({
                 {application.marketTitle} · {application.marketCity}
               </h3>
               <p>状态：{getApplicationStatusLabel(application.status)}</p>
+              <p>
+                当前处理：
+                {getVendorCurrentStepLabel(
+                  application.status,
+                  application.latestReviewDecision
+                )}
+              </p>
               <p>报名备注：{application.applicationNote ?? "无"}</p>
               <p>审核备注：{application.reviewNote ?? "无"}</p>
               <p>最近审核时间：{application.reviewedAt ? formatDate(application.reviewedAt) : "未审核"}</p>

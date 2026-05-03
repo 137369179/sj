@@ -273,6 +273,7 @@ describe("application service", () => {
         marketCity: "杭州",
         status: "stall_assigned",
         taskGroup: "done",
+        latestReviewDecision: "approve",
         note: "主营手作咖啡",
         applicationNote: "主营手作咖啡",
         attachments: [
@@ -311,6 +312,44 @@ describe("application service", () => {
         orderPaidAt: null
       }
     ]);
+  });
+
+  it("maps supplement reviews back to pending vendor actions", async () => {
+    vi.spyOn(db.application, "findMany").mockResolvedValue([
+      {
+        id: "app_2",
+        marketId: "market_2",
+        vendorId: "vendor_1",
+        status: "under_review",
+        note: "主营手作咖啡",
+        applicationNote: "主营手作咖啡",
+        reviewNote: "请补充近三次摆摊照片",
+        reviewedAt: new Date("2026-05-02T08:30:00.000Z"),
+        createdAt: new Date("2026-05-01T00:00:00.000Z"),
+        reviews: [
+          {
+            id: "review_3",
+            applicationId: "app_2",
+            organizerId: "org_1",
+            decision: "supplement",
+            reviewNote: "请补充近三次摆摊照片",
+            createdAt: new Date("2026-05-02T09:00:00.000Z")
+          }
+        ],
+        market: {
+          id: "market_2",
+          title: "夏夜面包市集",
+          city: "上海"
+        },
+        assignedStall: null,
+        order: null
+      }
+    ] as unknown as Awaited<ReturnType<typeof db.application.findMany>>);
+
+    const [application] = await listVendorApplications("vendor_1");
+
+    expect(application.taskGroup).toBe("pending-action");
+    expect(application.latestReviewDecision).toBe("supplement");
   });
 
   it("reviews an application and creates a notification", async () => {
