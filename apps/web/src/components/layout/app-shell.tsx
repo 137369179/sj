@@ -26,6 +26,9 @@ export async function AppShell({ children }: PropsWithChildren) {
             </>
           )}
           <Link href="/organizer/markets">主办方端</Link>
+          {sessionUser?.role === "admin" && (
+            <Link href="/admin/organizers">管理后台</Link>
+          )}
         </nav>
         <AuthStatus sessionUser={sessionUser} />
       </header>

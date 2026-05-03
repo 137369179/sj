@@ -1,0 +1,16 @@
+version: '3.8'
+
+services:
+  db:
+    image: postgres:15-alpine
+    environment:
+      POSTGRES_USER: mrp_user
+      POSTGRES_PASSWORD: mrp_password
+      POSTGRES_DB: mrp_db
+    ports:
+      - "5432:5432"
+    volumes:
+      - mrp_pgdata:/var/lib/postgresql/data
+
+volumes:
+  mrp_pgdata:

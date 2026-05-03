@@ -56,6 +56,7 @@ export default async function LoginPage({
             <select name="role" required defaultValue="vendor">
               <option value="vendor">摊主</option>
               <option value="organizer">主办方</option>
+              <option value="admin">平台管理员</option>
             </select>
           </label>
           <label>

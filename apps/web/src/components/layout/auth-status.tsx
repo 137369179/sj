@@ -26,7 +26,7 @@ export function AuthStatus({
     return (
       <div className="auth-status" style={{ display: "flex", gap: "1rem", alignItems: "center" }}>
         <span aria-label="当前用户">
-          {sessionUser.role === "organizer" ? "主办方" : "摊主"}: {sessionUser.userId}
+          {sessionUser.role === "admin" ? "平台管理员" : sessionUser.role === "organizer" ? "主办方" : "摊主"}: {sessionUser.userId}
         </span>
         <button onClick={handleLogout} disabled={isLoggingOut}>
           退出登录
