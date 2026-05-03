@@ -2,6 +2,7 @@ import { beforeEach, describe, expect, it, vi } from "vitest";
 
 import { db } from "../../../lib/db";
 import {
+  buildApplicationFollowUpNotification,
   buildApplicationReviewNotification,
   buildStallAssignmentNotification,
   createNotification,
@@ -69,6 +70,34 @@ describe("notification service", () => {
         title: "申请需要补充资料",
         content:
           "你在春日咖啡市集的申请需要补充资料后继续审核。备注：请补充近三次摆摊照片"
+      });
+    });
+
+    it("builds follow-up notifications for supplement reminders and waitlist confirmations", () => {
+      expect(
+        buildApplicationFollowUpNotification({
+          userId: "vendor_2",
+          marketTitle: "春日咖啡市集",
+          action: "supplement_reminder",
+          note: "请补充近三次摆摊照片"
+        })
+      ).toEqual({
+        userId: "vendor_2",
+        title: "补件进度提醒",
+        content:
+          "主办方提醒你尽快完成春日咖啡市集的补件要求，以免错过本轮审核。备注：请补充近三次摆摊照片"
+      });
+
+      expect(
+        buildApplicationFollowUpNotification({
+          userId: "vendor_2",
+          marketTitle: "春日咖啡市集",
+          action: "waitlist_confirmation"
+        })
+      ).toEqual({
+        userId: "vendor_2",
+        title: "候补补位通知",
+        content: "春日咖啡市集出现补位机会，请尽快确认是否接受本次候补递补。"
       });
     });
   });

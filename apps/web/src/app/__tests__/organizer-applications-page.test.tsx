@@ -453,6 +453,68 @@ describe("Organizer applications page", () => {
     expect(
       screen.getByText("规则提醒：候补观察已到期，建议立即确认补位或释放名额。")
     ).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "催办补件" })).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "通知补位" })).toBeInTheDocument();
+  });
+
+  it("renders follow-up receipts when organizer has sent reminders", async () => {
+    vi.mocked(getSessionUser).mockResolvedValue({
+      userId: "org_1",
+      role: "organizer"
+    });
+    vi.mocked(listOrganizerMarketOptions).mockResolvedValue([]);
+    vi.mocked(listOrganizerApplications).mockResolvedValue([
+      {
+        id: "app_2",
+        marketId: "market_2",
+        marketTitle: "夏夜面包市集",
+        marketCity: "上海",
+        vendorId: "vendor_2",
+        vendorName: "木野手作",
+        status: "under_review",
+        latestReviewDecision: "supplement",
+        followUpState: "urgent",
+        note: "主营木作器物",
+        applicationNote: "主营木作器物",
+        reviewNote: "请补充近三次摆摊照片",
+        reviewedAt: new Date("2026-05-01T06:00:00.000Z"),
+        reviews: [],
+        attachments: [],
+        createdAt: new Date("2026-05-01T01:00:00.000Z")
+      },
+      {
+        id: "app_3",
+        marketId: "market_3",
+        marketTitle: "秋日手作市集",
+        marketCity: "南京",
+        vendorId: "vendor_3",
+        vendorName: "雨巷面包",
+        status: "under_review",
+        latestReviewDecision: "waitlist",
+        followUpState: "urgent",
+        note: "主营面包甜点",
+        applicationNote: "主营面包甜点",
+        reviewNote: "先列入候补观察",
+        reviewedAt: new Date("2026-04-30T00:00:00.000Z"),
+        reviews: [],
+        attachments: [],
+        createdAt: new Date("2026-05-01T02:00:00.000Z")
+      }
+    ] as Awaited<ReturnType<typeof listOrganizerApplications>>);
+
+    const page = await OrganizerApplicationsPage({
+      searchParams: Promise.resolve({
+        followUpSent: "supplement_reminder",
+        followUpApplicationId: "app_2",
+        followUpSentWaitlist: "waitlist_confirmation",
+        followUpWaitlistApplicationId: "app_3"
+      } as any)
+    });
+
+    render(page);
+
+    expect(screen.getByText("已发送补件催办，摊主会收到提醒。")).toBeInTheDocument();
+    expect(screen.getByText("已发送补位通知，请等待摊主确认。")).toBeInTheDocument();
   });
 
   it("renders a markets return link when opened from organizer markets", async () => {

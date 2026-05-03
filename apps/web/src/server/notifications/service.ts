@@ -19,6 +19,17 @@ export type BuildApplicationReviewNotificationInput = {
   note?: string;
 };
 
+export type ApplicationFollowUpAction =
+  | "supplement_reminder"
+  | "waitlist_confirmation";
+
+export type BuildApplicationFollowUpNotificationInput = {
+  userId: string;
+  marketTitle: string;
+  action: ApplicationFollowUpAction;
+  note?: string;
+};
+
 export type BuildStallAssignmentNotificationInput = {
   userId: string;
   marketTitle: string;
@@ -42,6 +53,25 @@ export function buildApplicationReviewNotification(
     userId: input.userId,
     title,
     content
+  };
+}
+
+export function buildApplicationFollowUpNotification(
+  input: BuildApplicationFollowUpNotificationInput
+): CreateNotificationInput {
+  const title =
+    input.action === "supplement_reminder"
+      ? "补件进度提醒"
+      : "候补补位通知";
+  const baseContent =
+    input.action === "supplement_reminder"
+      ? `主办方提醒你尽快完成${input.marketTitle}的补件要求，以免错过本轮审核。`
+      : `${input.marketTitle}出现补位机会，请尽快确认是否接受本次候补递补。`;
+
+  return {
+    userId: input.userId,
+    title,
+    content: input.note ? `${baseContent}备注：${input.note}` : baseContent
   };
 }
 

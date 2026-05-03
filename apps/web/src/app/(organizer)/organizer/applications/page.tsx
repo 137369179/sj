@@ -17,7 +17,8 @@ import {
   ApplicationReviewError,
   buildApplicationReviewPayload,
   listOrganizerApplications,
-  reviewApplication
+  reviewApplication,
+  sendApplicationFollowUp
 } from "../../../../server/applications/service";
 
 async function reviewApplicationAction(formData: FormData) {
@@ -78,6 +79,43 @@ async function reviewApplicationAction(formData: FormData) {
   }
 }
 
+async function sendApplicationFollowUpAction(formData: FormData) {
+  "use server";
+
+  const sessionUser = await getSessionUser();
+
+  if (!sessionUser || sessionUser.role !== "organizer") {
+    return;
+  }
+
+  const applicationId = String(formData.get("applicationId") ?? "");
+  const action = String(formData.get("followUpAction") ?? "");
+
+  try {
+    await sendApplicationFollowUp({
+      applicationId,
+      organizerId: sessionUser.userId,
+      action: action as "supplement_reminder" | "waitlist_confirmation"
+    });
+    revalidatePath("/organizer/applications");
+    revalidatePath("/notifications");
+
+    const params = buildOrganizerApplicationsRedirectParams(formData);
+    params.set("followUpSent", action);
+    params.set("followUpApplicationId", applicationId);
+    redirect(`/organizer/applications?${params.toString()}`);
+  } catch (error) {
+    if (error instanceof ApplicationReviewError) {
+      const params = buildOrganizerApplicationsRedirectParams(formData);
+      params.set("followUpError", error.code);
+      params.set("followUpApplicationId", applicationId);
+      redirect(`/organizer/applications?${params.toString()}`);
+    }
+
+    throw error;
+  }
+}
+
 type OrganizerApplicationsPageProps = {
   searchParams?: Promise<{
     status?: string;
@@ -89,6 +127,11 @@ type OrganizerApplicationsPageProps = {
     decisionError?: string;
     reviewNoteError?: string;
     errorApplicationId?: string;
+    followUpSent?: string;
+    followUpApplicationId?: string;
+    followUpError?: string;
+    followUpSentWaitlist?: string;
+    followUpWaitlistApplicationId?: string;
   }>;
 };
 
@@ -274,7 +317,13 @@ export default async function OrganizerApplicationsPage({
         ) : null}
 
         <section aria-label="申请列表">
-          {filteredApplications.map((application) => (
+          {filteredApplications.map((application) => {
+            const followUpReceipts = getFollowUpReceipts(
+              resolvedSearchParams,
+              application.id
+            );
+
+            return (
             <article key={application.id}>
               <h3>{application.vendorName}</h3>
               <p>
@@ -308,6 +357,9 @@ export default async function OrganizerApplicationsPage({
                 </p>
               ))}
               <p>提交时间：{formatDate(application.createdAt)}</p>
+              {followUpReceipts.map((receipt) => (
+                <p key={receipt}>{receipt}</p>
+              ))}
 
               <form action={reviewApplicationAction} aria-label={`${application.vendorName} 审核表单`}>
                 {resolvedSearchParams.reviewError && resolvedSearchParams.errorApplicationId === application.id ? (
@@ -349,8 +401,51 @@ export default async function OrganizerApplicationsPage({
                   <p>{resolvedSearchParams.decisionError}</p>
                 ) : null}
               </form>
+              {application.latestReviewDecision === "supplement" ||
+              application.latestReviewDecision === "waitlist" ? (
+                <form
+                  action={sendApplicationFollowUpAction}
+                  aria-label={`${application.vendorName} 跟进表单`}
+                >
+                  {resolvedSearchParams.followUpError &&
+                  resolvedSearchParams.followUpApplicationId === application.id ? (
+                    <p role="alert">
+                      {getFollowUpErrorMessage(resolvedSearchParams.followUpError)}
+                    </p>
+                  ) : null}
+                  <input name="applicationId" type="hidden" value={application.id} />
+                  <input
+                    name="followUpAction"
+                    type="hidden"
+                    value={
+                      application.latestReviewDecision === "supplement"
+                        ? "supplement_reminder"
+                        : "waitlist_confirmation"
+                    }
+                  />
+                  <input name="marketId" type="hidden" value={resolvedSearchParams.marketId ?? ""} />
+                  <input name="from" type="hidden" value={resolvedSearchParams.from ?? ""} />
+                  <input
+                    name="marketStatus"
+                    type="hidden"
+                    value={resolvedSearchParams.marketStatus ?? ""}
+                  />
+                  <input name="status" type="hidden" value={resolvedSearchParams.status ?? ""} />
+                  <input
+                    name="sourceStatus"
+                    type="hidden"
+                    value={resolvedSearchParams.sourceStatus ?? ""}
+                  />
+                  <button type="submit">
+                    {application.latestReviewDecision === "supplement"
+                      ? "催办补件"
+                      : "通知补位"}
+                  </button>
+                </form>
+              ) : null}
             </article>
-          ))}
+            );
+          })}
         </section>
       </main>
     </AppShell>
@@ -371,6 +466,76 @@ function getReviewErrorMessage(code: string | undefined) {
   }
 
   return "审核失败：请重试。";
+}
+
+function getFollowUpErrorMessage(code: string | undefined) {
+  if (code === "NOT_FOUND") {
+    return "跟进失败：申请不存在。";
+  }
+
+  if (code === "FORBIDDEN") {
+    return "跟进失败：无权操作该申请。";
+  }
+
+  if (code === "INVALID_STATUS") {
+    return "跟进失败：当前申请暂不需要发送该类通知。";
+  }
+
+  return "跟进失败：请重试。";
+}
+
+function getFollowUpSuccessMessage(action: string | undefined) {
+  if (action === "supplement_reminder") {
+    return "已发送补件催办，摊主会收到提醒。";
+  }
+
+  if (action === "waitlist_confirmation") {
+    return "已发送补位通知，请等待摊主确认。";
+  }
+
+  return null;
+}
+
+function getFollowUpReceipts(
+  searchParams: Awaited<OrganizerApplicationsPageProps["searchParams"]>,
+  applicationId: string
+) {
+  const receipts: string[] = [];
+
+  if (searchParams?.followUpApplicationId === applicationId) {
+    const message = getFollowUpSuccessMessage(searchParams.followUpSent);
+
+    if (message) {
+      receipts.push(message);
+    }
+  }
+
+  if (searchParams?.followUpWaitlistApplicationId === applicationId) {
+    const message = getFollowUpSuccessMessage(searchParams.followUpSentWaitlist);
+
+    if (message) {
+      receipts.push(message);
+    }
+  }
+
+  return receipts;
+}
+
+function buildOrganizerApplicationsRedirectParams(formData: FormData) {
+  const params = new URLSearchParams();
+  const marketId = String(formData.get("marketId") ?? "");
+  const from = String(formData.get("from") ?? "");
+  const marketStatus = String(formData.get("marketStatus") ?? "");
+  const status = String(formData.get("status") ?? "");
+  const sourceStatus = String(formData.get("sourceStatus") ?? "");
+
+  if (marketId) params.set("marketId", marketId);
+  if (from) params.set("from", from);
+  if (marketStatus) params.set("marketStatus", marketStatus);
+  if (status) params.set("status", status);
+  if (sourceStatus) params.set("sourceStatus", sourceStatus);
+
+  return params;
 }
 
 function formatDate(value: Date) {

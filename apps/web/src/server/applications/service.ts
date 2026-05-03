@@ -11,6 +11,8 @@ import {
   type OrganizerFollowUpState
 } from "../../lib/role-play";
 import {
+  type ApplicationFollowUpAction,
+  buildApplicationFollowUpNotification,
   buildApplicationReviewNotification,
   createNotification
 } from "../notifications/service";
@@ -148,6 +150,12 @@ export type VendorApplicationListItem = {
 
 export type ReviewApplicationInput = ApplicationReviewPayload & {
   applicationId: string;
+};
+
+export type SendApplicationFollowUpInput = {
+  applicationId: string;
+  organizerId: string;
+  action: ApplicationFollowUpAction;
 };
 
 export type ApplicationReviewAuditRecord = {
@@ -364,6 +372,49 @@ export async function reviewApplication(input: ReviewApplicationInput) {
   return {
     application: updatedApplication,
     review,
+    notification
+  };
+}
+
+export async function sendApplicationFollowUp(input: SendApplicationFollowUpInput) {
+  const application = await db.application.findUnique({
+    where: {
+      id: input.applicationId
+    },
+    include: organizerApplicationInclude
+  });
+
+  if (!application) {
+    throw new ApplicationReviewError("NOT_FOUND");
+  }
+
+  if (application.market.organizerId !== input.organizerId) {
+    throw new ApplicationReviewError("FORBIDDEN");
+  }
+
+  const latestReviewDecision = normalizeReviewRecords(application.reviews)[0]?.decision ?? null;
+
+  if (
+    (input.action === "supplement_reminder" &&
+      !(application.status === "under_review" && latestReviewDecision === "supplement")) ||
+    (input.action === "waitlist_confirmation" &&
+      !(application.status === "under_review" && latestReviewDecision === "waitlist"))
+  ) {
+    throw new ApplicationReviewError("INVALID_STATUS");
+  }
+
+  const notification = await createNotification(
+    buildApplicationFollowUpNotification({
+      userId: application.vendor.id,
+      marketTitle: application.market.title,
+      action: input.action,
+      note: application.reviewNote ?? undefined
+    })
+  );
+
+  return {
+    applicationId: application.id,
+    action: input.action,
     notification
   };
 }

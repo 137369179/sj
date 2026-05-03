@@ -8,6 +8,7 @@ import {
   listOrganizerApplications,
   listVendorApplications,
   makeApplicationKey,
+  sendApplicationFollowUp,
   reviewApplication
 } from "../service";
 
@@ -660,6 +661,109 @@ describe("application service", () => {
     });
     expect(result.application.status).toBe("under_review");
     expect(result.review.decision).toBe("supplement");
+  });
+
+  it("sends a supplement reminder notification for organizer follow-up", async () => {
+    vi.spyOn(db.application, "findUnique").mockResolvedValue({
+      id: "app_2",
+      marketId: "market_1",
+      vendorId: "vendor_1",
+      status: "under_review",
+      note: "主营手作咖啡",
+      applicationNote: "主营手作咖啡",
+      reviewNote: "请补充近三次摆摊照片",
+      reviewedAt: new Date("2026-05-01T01:00:00.000Z"),
+      createdAt: new Date("2026-05-01T00:00:00.000Z"),
+      reviews: [
+        {
+          id: "review_2",
+          applicationId: "app_2",
+          organizerId: "org_1",
+          decision: "supplement",
+          reviewNote: "请补充近三次摆摊照片",
+          createdAt: new Date("2026-05-01T01:00:00.000Z")
+        }
+      ],
+      market: {
+        id: "market_1",
+        organizerId: "org_1",
+        title: "春日咖啡市集",
+        city: "杭州"
+      },
+      vendor: {
+        id: "vendor_1",
+        name: "山野咖啡"
+      }
+    } as unknown as Awaited<ReturnType<typeof db.application.findUnique>>);
+    const notificationSpy = vi.spyOn(db.notification, "create").mockResolvedValue({
+      id: "notice_follow_1",
+      userId: "vendor_1",
+      title: "补件进度提醒",
+      content:
+        "主办方提醒你尽快完成春日咖啡市集的补件要求，以免错过本轮审核。备注：请补充近三次摆摊照片",
+      readAt: null,
+      createdAt: new Date("2026-05-03T10:00:00.000Z")
+    } as Awaited<ReturnType<typeof db.notification.create>>);
+
+    const result = await sendApplicationFollowUp({
+      applicationId: "app_2",
+      organizerId: "org_1",
+      action: "supplement_reminder"
+    });
+
+    expect(notificationSpy).toHaveBeenCalledWith({
+      data: {
+        userId: "vendor_1",
+        title: "补件进度提醒",
+        content:
+          "主办方提醒你尽快完成春日咖啡市集的补件要求，以免错过本轮审核。备注：请补充近三次摆摊照片"
+      }
+    });
+    expect(result.action).toBe("supplement_reminder");
+  });
+
+  it("rejects follow-up notifications when the application is not in a compatible state", async () => {
+    vi.spyOn(db.application, "findUnique").mockResolvedValue({
+      id: "app_3",
+      marketId: "market_1",
+      vendorId: "vendor_1",
+      status: "approved",
+      note: "主营手作咖啡",
+      applicationNote: "主营手作咖啡",
+      reviewNote: "已通过",
+      reviewedAt: new Date("2026-05-01T01:00:00.000Z"),
+      createdAt: new Date("2026-05-01T00:00:00.000Z"),
+      reviews: [
+        {
+          id: "review_3",
+          applicationId: "app_3",
+          organizerId: "org_1",
+          decision: "approve",
+          reviewNote: "已通过",
+          createdAt: new Date("2026-05-01T01:00:00.000Z")
+        }
+      ],
+      market: {
+        id: "market_1",
+        organizerId: "org_1",
+        title: "春日咖啡市集",
+        city: "杭州"
+      },
+      vendor: {
+        id: "vendor_1",
+        name: "山野咖啡"
+      }
+    } as unknown as Awaited<ReturnType<typeof db.application.findUnique>>);
+
+    await expect(
+      sendApplicationFollowUp({
+        applicationId: "app_3",
+        organizerId: "org_1",
+        action: "waitlist_confirmation"
+      })
+    ).rejects.toMatchObject({
+      code: "INVALID_STATUS"
+    });
   });
 
   it("rejects reviews for applications outside the organizer scope", async () => {
