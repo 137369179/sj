@@ -175,53 +175,65 @@ describe("stall service", () => {
   });
 
   it("assigns a stall to an approved application and creates a notification", async () => {
-    vi.spyOn(db.stall, "findUnique").mockResolvedValue({
-      id: "stall_1",
-      marketId: "market_1",
-      code: "A-01",
-      name: "主通道 1 号位",
-      isActive: true,
-      assignedApplicationId: null,
-      market: {
-        id: "market_1",
-        organizerId: "org_1",
-        title: "春日咖啡市集"
-      }
-    } as Awaited<ReturnType<typeof db.stall.findUnique>>);
-    vi.spyOn(db.application, "findUnique").mockResolvedValue({
-      id: "app_1",
-      marketId: "market_1",
-      vendorId: "vendor_1",
-      status: "approved",
-      note: "主营手作咖啡",
-      createdAt: new Date("2026-05-01T00:00:00.000Z"),
-      vendor: {
-        id: "vendor_1",
-        name: "山野咖啡"
+    const transaction = {
+      stall: {
+        findUnique: vi
+          .fn()
+          .mockResolvedValueOnce({
+            id: "stall_1",
+            marketId: "market_1",
+            code: "A-01",
+            name: "主通道 1 号位",
+            isActive: true,
+            assignedApplicationId: null,
+            market: {
+              id: "market_1",
+              organizerId: "org_1",
+              title: "春日咖啡市集"
+            }
+          })
+          .mockResolvedValueOnce({
+            id: "stall_1",
+            marketId: "market_1",
+            code: "A-01",
+            name: "主通道 1 号位",
+            isActive: true,
+            assignedApplicationId: "app_1"
+          }),
+        updateMany: vi.fn().mockResolvedValue({ count: 1 })
       },
-      market: {
-        id: "market_1",
-        organizerId: "org_1",
-        title: "春日咖啡市集",
-        city: "杭州"
+      application: {
+        findUnique: vi
+          .fn()
+          .mockResolvedValueOnce({
+            id: "app_1",
+            marketId: "market_1",
+            vendorId: "vendor_1",
+            status: "approved",
+            note: "主营手作咖啡",
+            createdAt: new Date("2026-05-01T00:00:00.000Z"),
+            vendor: {
+              id: "vendor_1",
+              name: "山野咖啡"
+            },
+            market: {
+              id: "market_1",
+              organizerId: "org_1",
+              title: "春日咖啡市集",
+              city: "杭州"
+            }
+          })
+          .mockResolvedValueOnce({
+            id: "app_1",
+            marketId: "market_1",
+            vendorId: "vendor_1",
+            status: "stall_assigned",
+            note: "主营手作咖啡",
+            createdAt: new Date("2026-05-01T00:00:00.000Z")
+          }),
+        updateMany: vi.fn().mockResolvedValue({ count: 1 })
       }
-    } as unknown as Awaited<ReturnType<typeof db.application.findUnique>>);
-    const stallUpdateSpy = vi.spyOn(db.stall, "update").mockResolvedValue({
-      id: "stall_1",
-      marketId: "market_1",
-      code: "A-01",
-      name: "主通道 1 号位",
-      isActive: true,
-      assignedApplicationId: "app_1"
-    } as Awaited<ReturnType<typeof db.stall.update>>);
-    const applicationUpdateSpy = vi.spyOn(db.application, "update").mockResolvedValue({
-      id: "app_1",
-      marketId: "market_1",
-      vendorId: "vendor_1",
-      status: "stall_assigned",
-      note: "主营手作咖啡",
-      createdAt: new Date("2026-05-01T00:00:00.000Z")
-    } as Awaited<ReturnType<typeof db.application.update>>);
+    };
     const transactionSpy = vi
       .spyOn(db, "$transaction")
       .mockImplementation(async (callback) => {
@@ -229,10 +241,11 @@ describe("stall service", () => {
           throw new Error("expected interactive transaction");
         }
 
-        return callback(db);
+        return callback(transaction as never);
       });
     const notificationSpy = vi.spyOn(db.notification, "create").mockResolvedValue({
-      id: "notice_1",
+      id: "stall_1",
+      vendorId: "vendor_1",
       userId: "vendor_1",
       title: "摊位分配已确认",
       content: "你在春日咖啡市集的申请已完成摊位分配，摊位为主通道 1 号位（A-01）。",
@@ -247,17 +260,20 @@ describe("stall service", () => {
     });
 
     expect(transactionSpy).toHaveBeenCalledTimes(1);
-    expect(stallUpdateSpy).toHaveBeenCalledWith({
+    expect(transaction.stall.updateMany).toHaveBeenCalledWith({
       where: {
-        id: "stall_1"
+        id: "stall_1",
+        isActive: true,
+        assignedApplicationId: null
       },
       data: {
         assignedApplicationId: "app_1"
       }
     });
-    expect(applicationUpdateSpy).toHaveBeenCalledWith({
+    expect(transaction.application.updateMany).toHaveBeenCalledWith({
       where: {
-        id: "app_1"
+        id: "app_1",
+        status: "approved"
       },
       data: {
         status: "stall_assigned"
@@ -275,20 +291,181 @@ describe("stall service", () => {
     expect(result.stall.assignedApplicationId).toBe("app_1");
   });
 
-  it("rejects assignment when the stall is unavailable", async () => {
-    vi.spyOn(db.stall, "findUnique").mockResolvedValue({
-      id: "stall_1",
-      marketId: "market_1",
-      code: "A-01",
-      name: "主通道 1 号位",
-      isActive: true,
-      assignedApplicationId: "app_2",
-      market: {
-        id: "market_1",
-        organizerId: "org_1",
-        title: "春日咖啡市集"
+  it("rejects assignment when the stall becomes unavailable during the transaction", async () => {
+    const transaction = {
+      stall: {
+        findUnique: vi.fn().mockResolvedValue({
+          id: "stall_1",
+          marketId: "market_1",
+          code: "A-01",
+          name: "主通道 1 号位",
+          isActive: true,
+          assignedApplicationId: null,
+          market: {
+            id: "market_1",
+            organizerId: "org_1",
+            title: "春日咖啡市集"
+          }
+        }),
+        update: vi.fn().mockResolvedValue({
+          id: "stall_1",
+          marketId: "market_1",
+          code: "A-01",
+          name: "主通道 1 号位",
+          isActive: true,
+          assignedApplicationId: "app_1"
+        }),
+        updateMany: vi.fn().mockResolvedValue({ count: 0 })
+      },
+      application: {
+        findUnique: vi.fn().mockResolvedValue({
+          id: "app_1",
+          marketId: "market_1",
+          vendorId: "vendor_1",
+          status: "approved",
+          note: "主营手作咖啡",
+          createdAt: new Date("2026-05-01T00:00:00.000Z"),
+          vendor: {
+            id: "vendor_1",
+            name: "山野咖啡"
+          },
+          market: {
+            id: "market_1",
+            organizerId: "org_1",
+            title: "春日咖啡市集",
+            city: "杭州"
+          }
+        }),
+        update: vi.fn().mockResolvedValue({
+          id: "app_1",
+          marketId: "market_1",
+          vendorId: "vendor_1",
+          status: "stall_assigned",
+          note: "主营手作咖啡",
+          createdAt: new Date("2026-05-01T00:00:00.000Z")
+        }),
+        updateMany: vi.fn().mockResolvedValue({ count: 1 })
       }
-    } as Awaited<ReturnType<typeof db.stall.findUnique>>);
+    };
+    vi.spyOn(db, "$transaction").mockImplementation(async (callback) => {
+      if (typeof callback !== "function") {
+        throw new Error("expected interactive transaction");
+      }
+
+      return callback(transaction as never);
+    });
+
+    await expect(
+      assignStall({
+        organizerId: "org_1",
+        stallId: "stall_1",
+        applicationId: "app_1"
+      })
+    ).rejects.toEqual(new StallAssignmentError("STALL_UNAVAILABLE"));
+  });
+
+  it("rejects assignment when the application status changes during the transaction", async () => {
+    const transaction = {
+      stall: {
+        findUnique: vi.fn().mockResolvedValue({
+          id: "stall_1",
+          marketId: "market_1",
+          code: "A-01",
+          name: "主通道 1 号位",
+          isActive: true,
+          assignedApplicationId: null,
+          market: {
+            id: "market_1",
+            organizerId: "org_1",
+            title: "春日咖啡市集"
+          }
+        }),
+        update: vi.fn().mockResolvedValue({
+          id: "stall_1",
+          marketId: "market_1",
+          code: "A-01",
+          name: "主通道 1 号位",
+          isActive: true,
+          assignedApplicationId: "app_1"
+        }),
+        updateMany: vi.fn().mockResolvedValue({ count: 1 })
+      },
+      application: {
+        findUnique: vi.fn().mockResolvedValue({
+          id: "app_1",
+          marketId: "market_1",
+          vendorId: "vendor_1",
+          status: "approved",
+          note: "主营手作咖啡",
+          createdAt: new Date("2026-05-01T00:00:00.000Z"),
+          vendor: {
+            id: "vendor_1",
+            name: "山野咖啡"
+          },
+          market: {
+            id: "market_1",
+            organizerId: "org_1",
+            title: "春日咖啡市集",
+            city: "杭州"
+          }
+        }),
+        update: vi.fn().mockResolvedValue({
+          id: "app_1",
+          marketId: "market_1",
+          vendorId: "vendor_1",
+          status: "stall_assigned",
+          note: "主营手作咖啡",
+          createdAt: new Date("2026-05-01T00:00:00.000Z")
+        }),
+        updateMany: vi.fn().mockResolvedValue({ count: 0 })
+      }
+    };
+    const notificationSpy = vi.spyOn(db.notification, "create");
+    vi.spyOn(db, "$transaction").mockImplementation(async (callback) => {
+      if (typeof callback !== "function") {
+        throw new Error("expected interactive transaction");
+      }
+
+      return callback(transaction as never);
+    });
+
+    await expect(
+      assignStall({
+        organizerId: "org_1",
+        stallId: "stall_1",
+        applicationId: "app_1"
+      })
+    ).rejects.toEqual(new StallAssignmentError("INVALID_APPLICATION_STATUS"));
+    expect(notificationSpy).not.toHaveBeenCalled();
+  });
+
+  it("rejects assignment when the stall is unavailable", async () => {
+    vi.spyOn(db, "$transaction").mockImplementation(async (callback) => {
+      if (typeof callback !== "function") {
+        throw new Error("expected interactive transaction");
+      }
+
+      return callback({
+        stall: {
+          findUnique: vi.fn().mockResolvedValue({
+            id: "stall_1",
+            marketId: "market_1",
+            code: "A-01",
+            name: "主通道 1 号位",
+            isActive: true,
+            assignedApplicationId: "app_2",
+            market: {
+              id: "market_1",
+              organizerId: "org_1",
+              title: "春日咖啡市集"
+            }
+          })
+        },
+        application: {
+          findUnique: vi.fn()
+        }
+      } as never);
+    });
 
     await expect(
       assignStall({

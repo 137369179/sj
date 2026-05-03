@@ -165,6 +165,27 @@ describe("Organizer markets page", () => {
     expect(screen.getByText("当前还没有市集，请先创建草稿。")).toBeInTheDocument();
   });
 
+  it("renders field errors from create market validation feedback", async () => {
+    vi.mocked(getSessionUser).mockResolvedValue({
+      userId: "org_1",
+      role: "organizer"
+    });
+    vi.mocked(listOrganizerMarkets).mockResolvedValue([]);
+
+    const page = await OrganizerMarketsPage({
+      searchParams: Promise.resolve({
+        startsAtError: "开始时间不能晚于结束时间",
+        endsAtError: "结束时间不能早于开始时间"
+      })
+    });
+
+    render(page);
+
+    expect(screen.getByText("开始时间不能晚于结束时间")).toBeInTheDocument();
+    expect(screen.getByText("结束时间不能早于开始时间")).toBeInTheDocument();
+    expect(screen.getByRole("alert")).toHaveTextContent("创建市集失败，请修正后重试。");
+  });
+
   it("prompts for organizer login when the session identity is missing", async () => {
     vi.mocked(getSessionUser).mockResolvedValue(null);
 

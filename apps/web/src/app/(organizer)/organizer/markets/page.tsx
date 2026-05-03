@@ -1,5 +1,7 @@
 import { revalidatePath } from "next/cache";
 import Link from "next/link";
+import { redirect } from "next/navigation";
+import { ZodError } from "zod";
 
 import { AppShell } from "../../../../components/layout/app-shell";
 import { getSessionUser } from "../../../../lib/auth";
@@ -18,14 +20,29 @@ async function createMarketAction(formData: FormData) {
     return;
   }
 
-  await createOrganizerMarket({
-    organizerId: sessionUser.userId,
-    title: String(formData.get("title") ?? ""),
-    city: String(formData.get("city") ?? ""),
-    startsAt: normalizeDateTimeInput(String(formData.get("startsAt") ?? "")),
-    endsAt: normalizeDateTimeInput(String(formData.get("endsAt") ?? ""))
-  });
-  revalidatePath("/organizer/markets");
+  try {
+    await createOrganizerMarket({
+      organizerId: sessionUser.userId,
+      title: String(formData.get("title") ?? ""),
+      city: String(formData.get("city") ?? ""),
+      startsAt: normalizeDateTimeInput(String(formData.get("startsAt") ?? "")),
+      endsAt: normalizeDateTimeInput(String(formData.get("endsAt") ?? ""))
+    });
+    revalidatePath("/organizer/markets");
+  } catch (error) {
+    if (error instanceof ZodError) {
+      redirect(
+        buildCreateMarketErrorHref({
+          titleError: getFirstFieldError(error, "title"),
+          cityError: getFirstFieldError(error, "city"),
+          startsAtError: getFirstFieldError(error, "startsAt"),
+          endsAtError: getFirstFieldError(error, "endsAt")
+        })
+      );
+    }
+
+    throw error;
+  }
 }
 
 async function publishMarketAction(formData: FormData) {
@@ -47,6 +64,10 @@ async function publishMarketAction(formData: FormData) {
 type OrganizerMarketsPageProps = {
   searchParams?: Promise<{
     status?: string;
+    titleError?: string;
+    cityError?: string;
+    startsAtError?: string;
+    endsAtError?: string;
   }>;
 };
 
@@ -60,6 +81,7 @@ export default async function OrganizerMarketsPage({
     : [];
   const resolvedSearchParams = (await searchParams) ?? {};
   const selectedStatus = getSelectedMarketStatus(resolvedSearchParams.status);
+  const createMarketErrors = getCreateMarketErrors(resolvedSearchParams);
   const filteredMarkets =
     selectedStatus === "all"
       ? markets
@@ -75,22 +97,47 @@ export default async function OrganizerMarketsPage({
         {!isOrganizerSession ? <p>请先以主办方身份登录后管理市集。</p> : null}
 
         <form action={createMarketAction} aria-label="市集表单">
+          {createMarketErrors.formError ? (
+            <p role="alert">{createMarketErrors.formError}</p>
+          ) : null}
           <label>
             市集标题
-            <input name="title" type="text" />
+            <input
+              aria-invalid={createMarketErrors.title ? "true" : "false"}
+              name="title"
+              type="text"
+            />
           </label>
+          {createMarketErrors.title ? <p>{createMarketErrors.title}</p> : null}
           <label>
             城市
-            <input name="city" type="text" />
+            <input
+              aria-invalid={createMarketErrors.city ? "true" : "false"}
+              name="city"
+              type="text"
+            />
           </label>
+          {createMarketErrors.city ? <p>{createMarketErrors.city}</p> : null}
           <label>
             开始时间
-            <input aria-label="开始时间" name="startsAt" type="datetime-local" />
+            <input
+              aria-invalid={createMarketErrors.startsAt ? "true" : "false"}
+              aria-label="开始时间"
+              name="startsAt"
+              type="datetime-local"
+            />
           </label>
+          {createMarketErrors.startsAt ? <p>{createMarketErrors.startsAt}</p> : null}
           <label>
             结束时间
-            <input aria-label="结束时间" name="endsAt" type="datetime-local" />
+            <input
+              aria-invalid={createMarketErrors.endsAt ? "true" : "false"}
+              aria-label="结束时间"
+              name="endsAt"
+              type="datetime-local"
+            />
           </label>
+          {createMarketErrors.endsAt ? <p>{createMarketErrors.endsAt}</p> : null}
           <button type="submit">创建草稿</button>
         </form>
 
@@ -231,6 +278,59 @@ function getMarketStatusLabel(status: string) {
 function normalizeDateTimeInput(value: string) {
   const normalized = new Date(value);
   return Number.isNaN(normalized.getTime()) ? value : normalized.toISOString();
+}
+
+function getFirstFieldError(error: ZodError, field: string) {
+  return error.flatten().fieldErrors[field]?.[0];
+}
+
+function buildCreateMarketErrorHref(input: {
+  titleError?: string;
+  cityError?: string;
+  startsAtError?: string;
+  endsAtError?: string;
+}) {
+  const params = new URLSearchParams();
+
+  if (input.titleError) {
+    params.set("titleError", input.titleError);
+  }
+
+  if (input.cityError) {
+    params.set("cityError", input.cityError);
+  }
+
+  if (input.startsAtError) {
+    params.set("startsAtError", input.startsAtError);
+  }
+
+  if (input.endsAtError) {
+    params.set("endsAtError", input.endsAtError);
+  }
+
+  return `/organizer/markets?${params.toString()}`;
+}
+
+function getCreateMarketErrors(searchParams: {
+  titleError?: string;
+  cityError?: string;
+  startsAtError?: string;
+  endsAtError?: string;
+}) {
+  const errors = {
+    title: searchParams.titleError,
+    city: searchParams.cityError,
+    startsAt: searchParams.startsAtError,
+    endsAt: searchParams.endsAtError
+  };
+
+  return {
+    ...errors,
+    formError:
+      errors.title || errors.city || errors.startsAt || errors.endsAt
+        ? "创建市集失败，请修正后重试。"
+        : null
+  };
 }
 
 function buildOrganizerMarketsTargetHref(input: {

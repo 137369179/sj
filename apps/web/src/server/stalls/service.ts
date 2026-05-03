@@ -1,3 +1,4 @@
+import { Prisma } from "@prisma/client";
 import { z } from "zod";
 
 import { db } from "../../lib/db";
@@ -200,88 +201,130 @@ export async function createStall(input: StallPayload) {
 }
 
 export async function assignStall(input: AssignStallInput) {
-  const stall = await db.stall.findUnique({
-    where: {
-      id: input.stallId
-    },
-    include: stallAssignmentInclude
-  });
+  let result: {
+    updatedStall: Awaited<ReturnType<typeof db.stall.update>>;
+    updatedApplication: Awaited<ReturnType<typeof db.application.update>>;
+    notificationInput: ReturnType<typeof buildStallAssignmentNotification>;
+  };
 
-  if (!stall) {
-    throw new StallAssignmentError("NOT_FOUND");
-  }
-
-  if (stall.market.organizerId !== input.organizerId) {
-    throw new StallAssignmentError("FORBIDDEN");
-  }
-
-  if (
-    !canAssignStall({
-      isActive: stall.isActive,
-      assignedApplicationId: stall.assignedApplicationId
-    })
-  ) {
-    throw new StallAssignmentError("STALL_UNAVAILABLE");
-  }
-
-  const application = await db.application.findUnique({
-    where: {
-      id: input.applicationId
-    },
-    include: assignableApplicationInclude
-  });
-
-  if (!application || application.market.organizerId !== input.organizerId) {
-    throw new StallAssignmentError("INVALID_APPLICATION");
-  }
-
-  if (application.marketId !== stall.marketId) {
-    throw new StallAssignmentError("INVALID_APPLICATION");
-  }
-
-  if (application.status !== "approved") {
-    throw new StallAssignmentError("INVALID_APPLICATION_STATUS");
-  }
-
-  const { updatedStall, updatedApplication } = await db.$transaction(
-    async (transaction) => {
-      const updatedStall = await transaction.stall.update({
+  try {
+    result = await db.$transaction(async (transaction) => {
+      const stall = await transaction.stall.findUnique({
         where: {
           id: input.stallId
+        },
+        include: stallAssignmentInclude
+      });
+
+      if (!stall) {
+        throw new StallAssignmentError("NOT_FOUND");
+      }
+
+      if (stall.market.organizerId !== input.organizerId) {
+        throw new StallAssignmentError("FORBIDDEN");
+      }
+
+      if (
+        !canAssignStall({
+          isActive: stall.isActive,
+          assignedApplicationId: stall.assignedApplicationId
+        })
+      ) {
+        throw new StallAssignmentError("STALL_UNAVAILABLE");
+      }
+
+      const application = await transaction.application.findUnique({
+        where: {
+          id: input.applicationId
+        },
+        include: assignableApplicationInclude
+      });
+
+      if (!application || application.market.organizerId !== input.organizerId) {
+        throw new StallAssignmentError("INVALID_APPLICATION");
+      }
+
+      if (application.marketId !== stall.marketId) {
+        throw new StallAssignmentError("INVALID_APPLICATION");
+      }
+
+      if (application.status !== "approved") {
+        throw new StallAssignmentError("INVALID_APPLICATION_STATUS");
+      }
+
+      const updatedStallResult = await transaction.stall.updateMany({
+        where: {
+          id: input.stallId,
+          isActive: true,
+          assignedApplicationId: null
         },
         data: {
           assignedApplicationId: input.applicationId
         }
       });
 
-      const updatedApplication = await transaction.application.update({
+      if (updatedStallResult.count === 0) {
+        throw new StallAssignmentError("STALL_UNAVAILABLE");
+      }
+
+      const updatedApplicationResult = await transaction.application.updateMany({
         where: {
-          id: input.applicationId
+          id: input.applicationId,
+          status: "approved"
         },
         data: {
           status: "stall_assigned"
         }
       });
 
+      if (updatedApplicationResult.count === 0) {
+        throw new StallAssignmentError("INVALID_APPLICATION_STATUS");
+      }
+
+      const updatedStall = await transaction.stall.findUnique({
+        where: {
+          id: input.stallId
+        }
+      });
+      const updatedApplication = await transaction.application.findUnique({
+        where: {
+          id: input.applicationId
+        }
+      });
+
+      if (!updatedStall || !updatedApplication) {
+        throw new StallAssignmentError("NOT_FOUND");
+      }
+
       return {
         updatedStall,
-        updatedApplication
+        updatedApplication,
+        notificationInput: buildStallAssignmentNotification({
+          userId: application.vendor.id,
+          marketTitle: stall.market.title,
+          stallCode: stall.code,
+          stallName: stall.name
+        })
       };
+    });
+  } catch (error) {
+    if (
+      error instanceof Prisma.PrismaClientKnownRequestError &&
+      error.code === "P2002"
+    ) {
+      throw new StallAssignmentError("INVALID_APPLICATION");
     }
-  );
+
+    throw error;
+  }
 
   const notification = await createNotification(
-    buildStallAssignmentNotification({
-      userId: application.vendor.id,
-      marketTitle: stall.market.title,
-      stallCode: stall.code,
-      stallName: stall.name
-    })
+    result.notificationInput
   );
 
   return {
-    stall: updatedStall,
-    application: updatedApplication,
+    stall: result.updatedStall,
+    application: result.updatedApplication,
     notification
   };
 }
