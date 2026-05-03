@@ -87,8 +87,10 @@ model Order {
   id             String      @id @default(cuid())
   applicationId  String      @unique
   vendorId       String
-  amount         Float
-  status         OrderStatus @default(pending)
+  amount           Float
+  commissionAmount Float?
+  netAmount        Float?
+  status           OrderStatus @default(pending)
   paymentMethod  String?
   paidAt         DateTime?
   createdAt      DateTime    @default(now())

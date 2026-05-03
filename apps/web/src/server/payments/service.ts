@@ -25,11 +25,16 @@ export async function payOrder(orderId: string, vendorId: string, method: string
     throw new PaymentError("INVALID_STATUS");
   }
 
+  const commissionAmount = order.amount * 0.05; // 5% platform fee
+  const netAmount = order.amount - commissionAmount;
+
   return db.$transaction(async (tx) => {
     const updatedOrder = await tx.order.update({
       where: { id: orderId },
       data: {
         status: "paid",
+        commissionAmount,
+        netAmount,
         paymentMethod: method,
         paidAt: new Date()
       }

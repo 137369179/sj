@@ -28,7 +28,7 @@
 - [x] 摊位定价与 Order 模型引入
 - [x] 分配摊位自动生成待支付账单
 - [x] 摊主端收银台模拟与状态闭环
-- [ ] 主办方提现与平台抽佣 (待探索)
+- [x] 平台抽佣与分账 (Commission Amount & Net Amount)
 
 ### P3-3 数据大屏与高级分析
 - [x] 引入 Recharts 图表库
@@ -38,7 +38,7 @@
 ### P3-4 基础设施与运维监控
 - [x] 引入 Prisma 真实数据 Seed 脚本，优化开发期数据填充。
 - [x] Docker 化部署编排（Dockerfile/docker-compose）。
-- [ ] 错误追踪与日志系统（Sentry/Datadog 等，待探索）。
+- [x] 错误追踪与结构化日志系统 (`logger.ts`)。
 
 ---
 **交接建议**：

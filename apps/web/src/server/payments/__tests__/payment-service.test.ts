@@ -14,7 +14,8 @@ describe("payments service", () => {
         id: "order_1",
         vendorId: "vendor_1",
         applicationId: "app_1",
-        status: "pending"
+        status: "pending",
+        amount: 100
       } as any);
 
       const transactionMock = {
@@ -31,7 +32,12 @@ describe("payments service", () => {
       expect(transactionMock.order.update).toHaveBeenCalledWith(
         expect.objectContaining({
           where: { id: "order_1" },
-          data: expect.objectContaining({ status: "paid", paymentMethod: "wechat" })
+          data: expect.objectContaining({
+            status: "paid",
+            paymentMethod: "wechat",
+            commissionAmount: 5,
+            netAmount: 95
+          })
         })
       );
       expect(transactionMock.application.update).toHaveBeenCalledWith({
