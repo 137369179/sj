@@ -10,6 +10,7 @@ export async function AppShell({ children }: PropsWithChildren) {
   } catch (error) {
     // Graceful fallback for components that don't mock this in tests
   }
+  const currentRole = sessionUser?.activeRole ?? sessionUser?.role ?? null;
 
   return (
     <div className="app-shell">
@@ -19,7 +20,7 @@ export async function AppShell({ children }: PropsWithChildren) {
         </Link>
         <nav className="shell-nav" aria-label="角色导航">
           <Link href="/markets">摊主端</Link>
-          {sessionUser?.role === "vendor" && (
+          {currentRole === "vendor" && (
             <>
               <Link href="/applications">我的报名</Link>
               <Link href="/notifications">我的通知</Link>
@@ -27,11 +28,11 @@ export async function AppShell({ children }: PropsWithChildren) {
           )}
           <Link
             href="/organizer/markets"
-            prefetch={sessionUser?.role === "organizer" || sessionUser?.role === "admin" ? undefined : false}
+            prefetch={currentRole === "organizer" || currentRole === "admin" ? undefined : false}
           >
             主办方端
           </Link>
-          {sessionUser?.role === "admin" && (
+          {currentRole === "admin" && (
             <>
               <Link href="/admin/organizers">主办方管理</Link>
               <Link href="/admin/markets">市集巡检</Link>

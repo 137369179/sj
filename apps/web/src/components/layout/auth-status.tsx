@@ -6,10 +6,16 @@ import { useState } from "react";
 export function AuthStatus({
   sessionUser
 }: {
-  sessionUser: { userId: string; role: string } | null;
+  sessionUser: {
+    userId: string;
+    role: "vendor" | "organizer" | "admin" | null;
+    activeRole?: "vendor" | "organizer" | "admin" | null;
+    name?: string;
+  } | null;
 }) {
   const router = useRouter();
   const [isLoggingOut, setIsLoggingOut] = useState(false);
+  const currentRole = sessionUser?.activeRole ?? sessionUser?.role ?? null;
 
   async function handleLogout() {
     setIsLoggingOut(true);
@@ -26,7 +32,8 @@ export function AuthStatus({
     return (
       <div className="auth-status" style={{ display: "flex", gap: "1rem", alignItems: "center" }}>
         <span aria-label="当前用户">
-          {sessionUser.role === "admin" ? "平台管理员" : sessionUser.role === "organizer" ? "主办方" : "摊主"}: {sessionUser.userId}
+          {currentRole === "admin" ? "平台管理员" : currentRole === "organizer" ? "主办方" : "摊主"}:{" "}
+          {sessionUser.name ?? sessionUser.userId}
         </span>
         <button onClick={handleLogout} disabled={isLoggingOut}>
           退出登录

@@ -2,16 +2,25 @@ import type { NextRequest } from "next/server";
 import { NextResponse } from "next/server";
 
 import { canAccessRoute, isUserRole } from "./lib/roles";
-import { verifySessionToken, SESSION_COOKIE_NAME } from "./lib/auth";
+import { verifySessionToken, SESSION_COOKIE_NAME } from "./lib/auth-jwt";
 
 export async function middleware(request: NextRequest) {
+  const pathname = request.nextUrl.pathname;
   const sessionToken = request.cookies.get(SESSION_COOKIE_NAME)?.value;
-  
+  const requiresProtectedSession =
+    pathname.startsWith("/organizer") || pathname.startsWith("/admin");
+
+  if (!sessionToken && requiresProtectedSession) {
+    return NextResponse.redirect(
+      getRedirectUrl(request, `/login?returnTo=${encodeURIComponent(pathname)}`)
+    );
+  }
+
   if (sessionToken) {
     const payload = await verifySessionToken(sessionToken);
     const role = payload?.role;
 
-    if (isUserRole(role) && !canAccessRoute(role, request.nextUrl.pathname)) {
+    if (isUserRole(role) && !canAccessRoute(role, pathname)) {
       return NextResponse.redirect(getRedirectUrl(request, "/"));
     }
   }

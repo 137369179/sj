@@ -3,7 +3,7 @@ import { db } from "../../lib/db";
 export type OrganizerListItem = {
   id: string;
   name: string;
-  phone: string;
+  phone: string | null;
   isVerified: boolean;
   createdAt: Date;
   marketCount: number;
