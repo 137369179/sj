@@ -52,6 +52,8 @@ describe("Organizer dashboard page", () => {
       },
       metrics: {
         totalApplications: 5,
+        submittedCount: 2,
+        underReviewCount: 0,
         pendingReviewCount: 2,
         approvedCount: 1,
         rejectedCount: 1,
@@ -127,6 +129,8 @@ describe("Organizer dashboard page", () => {
       },
       metrics: {
         totalApplications: 5,
+        submittedCount: 2,
+        underReviewCount: 0,
         pendingReviewCount: 2,
         approvedCount: 1,
         rejectedCount: 1,
@@ -182,6 +186,8 @@ describe("Organizer dashboard page", () => {
       },
       metrics: {
         totalApplications: 5,
+        submittedCount: 2,
+        underReviewCount: 0,
         pendingReviewCount: 2,
         approvedCount: 1,
         rejectedCount: 1,
@@ -237,6 +243,8 @@ describe("Organizer dashboard page", () => {
       },
       metrics: {
         totalApplications: 5,
+        submittedCount: 2,
+        underReviewCount: 0,
         pendingReviewCount: 2,
         approvedCount: 1,
         rejectedCount: 1,

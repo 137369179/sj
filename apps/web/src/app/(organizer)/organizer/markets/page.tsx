@@ -5,6 +5,7 @@ import { ZodError } from "zod";
 
 import { AppShell } from "../../../../components/layout/app-shell";
 import { getSessionUser } from "../../../../lib/auth";
+import { getMarketStatusLabel } from "../../../../lib/market-status";
 import {
   MarketPublishError,
   createOrganizerMarket,
@@ -253,38 +254,6 @@ function buildMarketSummary(markets: Awaited<ReturnType<typeof listOrganizerMark
     published: markets.filter((market) => market.status === "published").length,
     completed: markets.filter((market) => market.status === "completed").length
   };
-}
-
-function getMarketStatusLabel(status: string) {
-  if (status === "draft") {
-    return "草稿";
-  }
-
-  if (status === "published") {
-    return "已发布";
-  }
-
-  if (status === "recruiting") {
-    return "招募中";
-  }
-
-  if (status === "reviewing") {
-    return "审核中";
-  }
-
-  if (status === "confirmed") {
-    return "已确认";
-  }
-
-  if (status === "ongoing") {
-    return "进行中";
-  }
-
-  if (status === "completed") {
-    return "已完成";
-  }
-
-  return status;
 }
 
 function getPublishErrorMessage(code: string | undefined) {

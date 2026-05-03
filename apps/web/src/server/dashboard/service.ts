@@ -43,6 +43,8 @@ export function buildDashboardSummary(input: DashboardSummaryInput) {
 
   return {
     totalApplications,
+    submittedCount: input.submittedCount,
+    underReviewCount: input.underReviewCount,
     pendingReviewCount: input.submittedCount + input.underReviewCount,
     approvedCount: input.approvedCount,
     rejectedCount: input.rejectedCount,

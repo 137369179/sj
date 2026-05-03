@@ -26,6 +26,8 @@ describe("dashboard service", () => {
       })
     ).toEqual({
       totalApplications: 12,
+      submittedCount: 3,
+      underReviewCount: 2,
       pendingReviewCount: 5,
       approvedCount: 4,
       rejectedCount: 1,
@@ -108,6 +110,8 @@ describe("dashboard service", () => {
       },
       metrics: {
         totalApplications: 5,
+        submittedCount: 1,
+        underReviewCount: 1,
         pendingReviewCount: 2,
         approvedCount: 1,
         rejectedCount: 1,

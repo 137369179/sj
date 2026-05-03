@@ -1,6 +1,7 @@
 import Link from "next/link";
 
 import { AppShell } from "../../../../../components/layout/app-shell";
+import { DashboardCharts } from "../../../../../components/dashboard/dashboard-charts";
 import { getSessionUser } from "../../../../../lib/auth";
 import { getMarketDashboardSummary } from "../../../../../server/dashboard/service";
 import { listOrganizerMarketOptions } from "../../../../../server/markets/service";
@@ -150,6 +151,20 @@ export default async function OrganizerDashboardPage({
             <p>{stallOccupancyRateLabel}</p>
           </article>
         </section>
+
+        <DashboardCharts
+          applications={{
+            submitted: summary.metrics.submittedCount,
+            underReview: summary.metrics.underReviewCount,
+            approved: summary.metrics.approvedCount,
+            rejected: summary.metrics.rejectedCount,
+            assigned: summary.metrics.assignedCount
+          }}
+          stalls={{
+            active: summary.metrics.activeStalls,
+            occupied: summary.metrics.occupiedStalls
+          }}
+        />
       </main>
     </AppShell>
   );
