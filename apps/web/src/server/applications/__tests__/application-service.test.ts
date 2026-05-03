@@ -68,6 +68,20 @@ describe("application service", () => {
     expect(payload.reviewNote).toBe("资质完整，允许进入分配");
   });
 
+  it("accepts supplement as a structured review action", () => {
+    const payload = buildApplicationReviewPayload({
+      organizerId: "org_1",
+      decision: "supplement",
+      reviewNote: "请补充近三次摆摊照片"
+    });
+
+    expect(payload).toEqual({
+      organizerId: "org_1",
+      decision: "supplement",
+      reviewNote: "请补充近三次摆摊照片"
+    });
+  });
+
   it("lists organizer applications with market, vendor, and split note semantics", async () => {
     const findManySpy = vi.spyOn(db.application, "findMany").mockResolvedValue([
       {
@@ -428,6 +442,99 @@ describe("application service", () => {
     expect(result.application.status).toBe("approved");
     expect(result.review.id).toBe("review_1");
     expect(result.notification.userId).toBe("vendor_1");
+  });
+
+  it("moves an application into under_review when organizer requests supplement", async () => {
+    vi.spyOn(db.application, "findUnique").mockResolvedValue({
+      id: "app_2",
+      marketId: "market_1",
+      vendorId: "vendor_1",
+      status: "submitted",
+      note: "主营手作咖啡",
+      createdAt: new Date("2026-05-01T00:00:00.000Z"),
+      market: {
+        id: "market_1",
+        organizerId: "org_1",
+        title: "春日咖啡市集",
+        city: "杭州"
+      },
+      vendor: {
+        id: "vendor_1",
+        name: "山野咖啡"
+      }
+    } as unknown as Awaited<ReturnType<typeof db.application.findUnique>>);
+    const updateSpy = vi.spyOn(db.application, "update").mockResolvedValue({
+      id: "app_2",
+      marketId: "market_1",
+      vendorId: "vendor_1",
+      status: "under_review",
+      note: "主营手作咖啡",
+      reviewNote: "请补充近三次摆摊照片",
+      reviewedAt: new Date("2026-05-01T01:00:00.000Z"),
+      reviewedByUserId: "org_1",
+      createdAt: new Date("2026-05-01T00:00:00.000Z")
+    } as Awaited<ReturnType<typeof db.application.update>>);
+    const reviewCreateSpy = vi
+      .spyOn(db.applicationReview, "create")
+      .mockResolvedValue({
+        id: "review_2",
+        applicationId: "app_2",
+        organizerId: "org_1",
+        decision: "supplement",
+        reviewNote: "请补充近三次摆摊照片",
+        createdAt: new Date("2026-05-01T01:00:00.000Z")
+      } as never);
+    vi.spyOn(db, "$transaction").mockImplementation(async (callback) => {
+      if (typeof callback !== "function") {
+        throw new Error("expected interactive transaction");
+      }
+
+      return callback(db);
+    });
+    const notificationSpy = vi.spyOn(db.notification, "create").mockResolvedValue({
+      id: "notice_2",
+      userId: "vendor_1",
+      title: "申请需要补充资料",
+      content: "你在春日咖啡市集的申请需要补充资料后继续审核。备注：请补充近三次摆摊照片",
+      readAt: null,
+      createdAt: new Date("2026-05-01T01:00:00.000Z")
+    } as Awaited<ReturnType<typeof db.notification.create>>);
+
+    const result = await reviewApplication({
+      applicationId: "app_2",
+      organizerId: "org_1",
+      decision: "supplement",
+      reviewNote: "请补充近三次摆摊照片"
+    });
+
+    expect(updateSpy).toHaveBeenCalledWith({
+      where: {
+        id: "app_2"
+      },
+      data: {
+        status: "under_review",
+        reviewNote: "请补充近三次摆摊照片",
+        reviewedAt: expect.any(Date),
+        reviewedByUserId: "org_1"
+      }
+    });
+    expect(reviewCreateSpy).toHaveBeenCalledWith({
+      data: {
+        applicationId: "app_2",
+        organizerId: "org_1",
+        decision: "supplement",
+        reviewNote: "请补充近三次摆摊照片"
+      }
+    });
+    expect(notificationSpy).toHaveBeenCalledWith({
+      data: {
+        userId: "vendor_1",
+        title: "申请需要补充资料",
+        content: "你在春日咖啡市集的申请需要补充资料后继续审核。备注：请补充近三次摆摊照片"
+      }
+    });
+    expect(result.application.status).toBe("under_review");
+    expect(result.review.decision).toBe("supplement");
   });
 
   it("rejects reviews for applications outside the organizer scope", async () => {

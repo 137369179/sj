@@ -1,4 +1,4 @@
-import { render, screen } from "@testing-library/react";
+import { render, screen, within } from "@testing-library/react";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
 import { getSessionUser } from "../../lib/auth";
@@ -96,8 +96,6 @@ describe("Organizer applications page", () => {
     expect(listOrganizerApplications).toHaveBeenCalledWith("org_1");
     expect(screen.getByRole("heading", { name: "报名申请" })).toBeInTheDocument();
     expect(screen.getByText("优先处理申请")).toBeInTheDocument();
-    expect(screen.getByRole("button", { name: "候补" })).toBeInTheDocument();
-    expect(screen.getByRole("button", { name: "补件" })).toBeInTheDocument();
     expect(screen.getByText("山野咖啡")).toBeInTheDocument();
     expect(screen.getByText("春日咖啡市集 · 杭州")).toBeInTheDocument();
     expect(screen.getByText("状态：待审核")).toBeInTheDocument();
@@ -111,8 +109,11 @@ describe("Organizer applications page", () => {
       "href",
       "/uploads/license.pdf"
     );
-    expect(screen.getByRole("button", { name: "通过" })).toBeInTheDocument();
-    expect(screen.getByRole("button", { name: "拒绝" })).toBeInTheDocument();
+    const reviewForm = screen.getByRole("form", { name: "山野咖啡 审核表单" });
+    expect(within(reviewForm).getByRole("button", { name: "候补" })).toBeInTheDocument();
+    expect(within(reviewForm).getByRole("button", { name: "补件" })).toBeInTheDocument();
+    expect(within(reviewForm).getByRole("button", { name: "通过" })).toBeInTheDocument();
+    expect(within(reviewForm).getByRole("button", { name: "拒绝" })).toBeInTheDocument();
   });
 
   it("renders summary metrics and filters applications by status from search params", async () => {

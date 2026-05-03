@@ -28,6 +28,20 @@ function formatDate(value: Date) {
   return value.toISOString().slice(0, 10);
 }
 
-function getReviewDecisionLabel(decision: "approve" | "reject") {
-  return decision === "approve" ? "通过" : "拒绝";
+function getReviewDecisionLabel(
+  decision: "approve" | "reject" | "supplement" | "waitlist"
+) {
+  if (decision === "approve") {
+    return "通过";
+  }
+
+  if (decision === "supplement") {
+    return "补件";
+  }
+
+  if (decision === "waitlist") {
+    return "候补";
+  }
+
+  return "拒绝";
 }

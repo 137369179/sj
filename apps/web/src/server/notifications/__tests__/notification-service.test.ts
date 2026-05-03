@@ -55,6 +55,22 @@ describe("notification service", () => {
           "你在春日咖啡市集的申请未通过审核，请调整后重新报名。备注：主推品类与市集调性不符"
       });
     });
+
+    it("builds a supplement notification with note", () => {
+      const result = buildApplicationReviewNotification({
+        userId: "vendor_2",
+        marketTitle: "春日咖啡市集",
+        decision: "supplement",
+        note: "请补充近三次摆摊照片"
+      });
+
+      expect(result).toEqual({
+        userId: "vendor_2",
+        title: "申请需要补充资料",
+        content:
+          "你在春日咖啡市集的申请需要补充资料后继续审核。备注：请补充近三次摆摊照片"
+      });
+    });
   });
 
   describe("buildStallAssignmentNotification", () => {

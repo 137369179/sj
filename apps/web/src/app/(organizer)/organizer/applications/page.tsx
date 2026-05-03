@@ -141,10 +141,7 @@ export default async function OrganizerApplicationsPage({
             <section aria-label="优先处理申请" style={{ marginBottom: "1.5rem" }}>
               <h3>优先处理申请</h3>
               <p>优先处理资料完整、履约稳定且匹配当前市集主题的申请，减少后续补位压力。</p>
-              <div style={{ display: "flex", gap: "0.75rem", flexWrap: "wrap" }}>
-                <button type="button">候补</button>
-                <button type="button">补件</button>
-              </div>
+              <p>可直接在单条申请表单中执行“候补”“补件”“通过”“拒绝”四类结构化动作。</p>
             </section>
             {stallReturnHref ? (
               <section aria-label="来源回跳">
@@ -316,12 +313,20 @@ export default async function OrganizerApplicationsPage({
                 {resolvedSearchParams.errorApplicationId === application.id && resolvedSearchParams.reviewNoteError ? (
                   <p>{resolvedSearchParams.reviewNoteError}</p>
                 ) : null}
-                <button name="decision" type="submit" value="approve">
-                  通过
-                </button>
-                <button name="decision" type="submit" value="reject">
-                  拒绝
-                </button>
+                <div style={{ display: "flex", gap: "0.75rem", flexWrap: "wrap" }}>
+                  <button name="decision" type="submit" value="waitlist">
+                    候补
+                  </button>
+                  <button name="decision" type="submit" value="supplement">
+                    补件
+                  </button>
+                  <button name="decision" type="submit" value="approve">
+                    通过
+                  </button>
+                  <button name="decision" type="submit" value="reject">
+                    拒绝
+                  </button>
+                </div>
                 {resolvedSearchParams.errorApplicationId === application.id && resolvedSearchParams.decisionError ? (
                   <p>{resolvedSearchParams.decisionError}</p>
                 ) : null}

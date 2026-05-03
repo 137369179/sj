@@ -29,7 +29,7 @@ export type ApplicationPayload = z.infer<typeof applicationSchema>;
 
 export const applicationReviewSchema = z.object({
   organizerId: z.string().trim().min(1),
-  decision: z.enum(["approve", "reject"]),
+  decision: z.enum(["approve", "reject", "supplement", "waitlist"]),
   reviewNote: optionalTextSchema
 });
 
@@ -139,7 +139,7 @@ export type ApplicationReviewAuditRecord = {
   id: string;
   applicationId: string;
   organizerId: string;
-  decision: ApplicationReviewPayload["decision"];
+  decision: "approve" | "reject" | "supplement" | "waitlist";
   reviewNote: string | null;
   createdAt: Date;
 };
@@ -296,10 +296,9 @@ export async function reviewApplication(input: ReviewApplicationInput) {
     throw new ApplicationReviewError("FORBIDDEN");
   }
 
-  const nextStatus: ApplicationStatus =
-    input.decision === "approve" ? "approved" : "rejected";
+  const nextStatus = resolveReviewNextStatus(application.status, input.decision);
 
-  if (!canTransitionApplication(application.status, nextStatus)) {
+  if (!nextStatus) {
     throw new ApplicationReviewError("INVALID_STATUS");
   }
 
@@ -426,5 +425,33 @@ function normalizeReviewRecords(
 function isSupportedReviewDecision(
   review: RawApplicationReviewRecord
 ): review is ApplicationReviewAuditRecord {
-  return review.decision === "approve" || review.decision === "reject";
+  return (
+    review.decision === "approve" ||
+    review.decision === "reject" ||
+    review.decision === "supplement" ||
+    review.decision === "waitlist"
+  );
+}
+
+function resolveReviewNextStatus(
+  currentStatus: ApplicationStatus,
+  decision: ApplicationReviewPayload["decision"]
+): ApplicationStatus | null {
+  if (decision === "approve") {
+    return canTransitionApplication(currentStatus, "approved") ? "approved" : null;
+  }
+
+  if (decision === "reject") {
+    return canTransitionApplication(currentStatus, "rejected") ? "rejected" : null;
+  }
+
+  if (currentStatus === "submitted") {
+    return "under_review";
+  }
+
+  if (currentStatus === "under_review") {
+    return "under_review";
+  }
+
+  return null;
 }

@@ -1,6 +1,10 @@
 import { db } from "../../lib/db";
 
-export type ApplicationReviewDecision = "approve" | "reject";
+export type ApplicationReviewDecision =
+  | "approve"
+  | "reject"
+  | "supplement"
+  | "waitlist";
 
 export type CreateNotificationInput = {
   userId: string;
@@ -25,12 +29,11 @@ export type BuildStallAssignmentNotificationInput = {
 export function buildApplicationReviewNotification(
   input: BuildApplicationReviewNotificationInput
 ): CreateNotificationInput {
-  const title =
-    input.decision === "approve" ? "申请审核已通过" : "申请未通过审核";
-  const baseContent =
-    input.decision === "approve"
-      ? `你在${input.marketTitle}的申请已审核通过。`
-      : `你在${input.marketTitle}的申请未通过审核，请调整后重新报名。`;
+  const title = getApplicationReviewNotificationTitle(input.decision);
+  const baseContent = getApplicationReviewNotificationContent(
+    input.marketTitle,
+    input.decision
+  );
   const content = input.note
     ? `${baseContent}备注：${input.note}`
     : baseContent;
@@ -40,6 +43,41 @@ export function buildApplicationReviewNotification(
     title,
     content
   };
+}
+
+function getApplicationReviewNotificationTitle(decision: ApplicationReviewDecision) {
+  if (decision === "approve") {
+    return "申请审核已通过";
+  }
+
+  if (decision === "supplement") {
+    return "申请需要补充资料";
+  }
+
+  if (decision === "waitlist") {
+    return "申请已进入候补";
+  }
+
+  return "申请未通过审核";
+}
+
+function getApplicationReviewNotificationContent(
+  marketTitle: string,
+  decision: ApplicationReviewDecision
+) {
+  if (decision === "approve") {
+    return `你在${marketTitle}的申请已审核通过。`;
+  }
+
+  if (decision === "supplement") {
+    return `你在${marketTitle}的申请需要补充资料后继续审核。`;
+  }
+
+  if (decision === "waitlist") {
+    return `你在${marketTitle}的申请当前进入候补名单，如有空位将优先通知。`;
+  }
+
+  return `你在${marketTitle}的申请未通过审核，请调整后重新报名。`;
 }
 
 export function buildStallAssignmentNotification(
