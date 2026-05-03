@@ -68,8 +68,8 @@ describe("VendorNotificationsPage", () => {
       },
       {
         id: "n_2",
-        title: "申请已进入候补",
-        content: "你在夏夜面包市集的申请当前进入候补名单，如有空位将优先通知。",
+        title: "候补补位通知",
+        content: "夏夜面包市集出现补位机会，请尽快确认是否接受本次候补递补。",
         isRead: false,
         createdAt: new Date("2026-05-01T11:00:00Z")
       }
@@ -82,6 +82,7 @@ describe("VendorNotificationsPage", () => {
     expect(screen.getByText("补件通知请尽快处理，候补通知建议保留档期。")).toBeInTheDocument();
     expect(screen.getByText("补件将在 22 小时内截止，请优先处理。")).toBeInTheDocument();
     expect(screen.getByText("建议动作优先级：先处理补件，再持续关注候补结果。")).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "确认补位" })).toBeInTheDocument();
   });
 
   it("renders empty state when no notifications exist", async () => {

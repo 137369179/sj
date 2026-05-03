@@ -5,6 +5,7 @@ import {
   ApplicationReviewError,
   buildApplicationPayload,
   buildApplicationReviewPayload,
+  confirmWaitlistOffer,
   listOrganizerApplications,
   listVendorApplications,
   makeApplicationKey,
@@ -764,6 +765,104 @@ describe("application service", () => {
     ).rejects.toMatchObject({
       code: "INVALID_STATUS"
     });
+  });
+
+  it("confirms a waitlist offer from vendor notification and reopens the application as approved", async () => {
+    vi.spyOn(db.notification, "findUnique").mockResolvedValue({
+      id: "n_waitlist_1",
+      userId: "vendor_1",
+      title: "候补补位通知",
+      content: "春日咖啡市集出现补位机会，请尽快确认是否接受本次候补递补。",
+      readAt: null,
+      createdAt: new Date("2026-05-03T10:00:00.000Z")
+    } as Awaited<ReturnType<typeof db.notification.findUnique>>);
+    vi.spyOn(db.application, "findFirst").mockResolvedValue({
+      id: "app_9",
+      marketId: "market_1",
+      vendorId: "vendor_1",
+      status: "under_review",
+      note: "主营手作咖啡",
+      applicationNote: "主营手作咖啡",
+      reviewNote: "先列入候补观察",
+      reviewedAt: new Date("2026-05-01T01:00:00.000Z"),
+      createdAt: new Date("2026-05-01T00:00:00.000Z"),
+      reviews: [
+        {
+          id: "review_waitlist_1",
+          applicationId: "app_9",
+          organizerId: "org_1",
+          decision: "waitlist",
+          reviewNote: "先列入候补观察",
+          createdAt: new Date("2026-05-01T01:00:00.000Z")
+        }
+      ],
+      market: {
+        id: "market_1",
+        organizerId: "org_1",
+        title: "春日咖啡市集",
+        city: "杭州"
+      },
+      vendor: {
+        id: "vendor_1",
+        name: "山野咖啡"
+      }
+    } as unknown as Awaited<ReturnType<typeof db.application.findFirst>>);
+    const applicationUpdateSpy = vi.fn().mockResolvedValue({
+      id: "app_9",
+      status: "approved"
+    });
+    const reviewCreateSpy = vi.fn().mockResolvedValue({
+      id: "review_approve_1",
+      applicationId: "app_9",
+      organizerId: "org_1",
+      decision: "approve",
+      reviewNote: "摊主已确认候补补位",
+      createdAt: new Date("2026-05-03T12:00:00.000Z")
+    });
+    vi.spyOn(db, "$transaction").mockImplementation(async (callback) =>
+      callback({
+        application: { update: applicationUpdateSpy },
+        applicationReview: { create: reviewCreateSpy },
+        notification: { update: vi.fn() }
+      } as never)
+    );
+    const notificationUpdateSpy = vi.spyOn(db.notification, "update").mockResolvedValue({
+      id: "n_waitlist_1",
+      userId: "vendor_1",
+      title: "候补补位通知",
+      content: "春日咖啡市集出现补位机会，请尽快确认是否接受本次候补递补。",
+      readAt: new Date("2026-05-03T12:00:00.000Z"),
+      createdAt: new Date("2026-05-03T10:00:00.000Z")
+    } as Awaited<ReturnType<typeof db.notification.update>>);
+
+    const result = await confirmWaitlistOffer({
+      notificationId: "n_waitlist_1",
+      userId: "vendor_1"
+    });
+
+    expect(applicationUpdateSpy).toHaveBeenCalledWith({
+      where: { id: "app_9" },
+      data: {
+        status: "approved",
+        reviewNote: "摊主已确认候补补位",
+        reviewedAt: expect.any(Date),
+        reviewedByUserId: "org_1"
+      }
+    });
+    expect(reviewCreateSpy).toHaveBeenCalledWith({
+      data: {
+        applicationId: "app_9",
+        organizerId: "org_1",
+        decision: "approve",
+        reviewNote: "摊主已确认候补补位"
+      }
+    });
+    expect(notificationUpdateSpy).toHaveBeenCalledWith({
+      where: { id: "n_waitlist_1" },
+      data: { readAt: expect.any(Date) }
+    });
+    expect(result.application.status).toBe("approved");
+    expect(result.review.reviewNote).toBe("摊主已确认候补补位");
   });
 
   it("rejects reviews for applications outside the organizer scope", async () => {

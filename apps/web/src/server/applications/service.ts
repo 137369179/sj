@@ -158,6 +158,11 @@ export type SendApplicationFollowUpInput = {
   action: ApplicationFollowUpAction;
 };
 
+export type ConfirmWaitlistOfferInput = {
+  notificationId: string;
+  userId: string;
+};
+
 export type ApplicationReviewAuditRecord = {
   id: string;
   applicationId: string;
@@ -419,6 +424,89 @@ export async function sendApplicationFollowUp(input: SendApplicationFollowUpInpu
   };
 }
 
+export async function confirmWaitlistOffer(input: ConfirmWaitlistOfferInput) {
+  const notification = await db.notification.findUnique({
+    where: {
+      id: input.notificationId
+    }
+  });
+
+  if (!notification) {
+    throw new ApplicationReviewError("NOT_FOUND");
+  }
+
+  if (notification.userId !== input.userId) {
+    throw new ApplicationReviewError("FORBIDDEN");
+  }
+
+  const marketTitle = extractWaitlistMarketTitle(notification.content);
+
+  if (notification.title !== "候补补位通知" || !marketTitle) {
+    throw new ApplicationReviewError("INVALID_STATUS");
+  }
+
+  const application = await db.application.findFirst({
+    where: {
+      vendorId: input.userId,
+      status: "under_review",
+      market: {
+        title: marketTitle
+      }
+    },
+    include: organizerApplicationInclude
+  });
+
+  if (!application) {
+    throw new ApplicationReviewError("INVALID_STATUS");
+  }
+
+  const latestReview = normalizeReviewRecords(application.reviews)[0];
+
+  if (!latestReview || latestReview.decision !== "waitlist") {
+    throw new ApplicationReviewError("INVALID_STATUS");
+  }
+
+  const reviewTimestamp = new Date();
+  const result = await db.$transaction(async (transaction) => {
+    const updatedApplication = await transaction.application.update({
+      where: {
+        id: application.id
+      },
+      data: {
+        status: "approved",
+        reviewNote: "摊主已确认候补补位",
+        reviewedAt: reviewTimestamp,
+        reviewedByUserId: latestReview.organizerId
+      }
+    });
+
+    const review = await transaction.applicationReview.create({
+      data: {
+        applicationId: application.id,
+        organizerId: latestReview.organizerId,
+        decision: "approve",
+        reviewNote: "摊主已确认候补补位"
+      }
+    });
+
+    return {
+      application: updatedApplication,
+      review
+    };
+  });
+
+  await db.notification.update({
+    where: {
+      id: notification.id
+    },
+    data: {
+      readAt: notification.readAt ?? reviewTimestamp
+    }
+  });
+
+  return result;
+}
+
 function formatOrganizerApplication(
   application: OrganizerApplicationRecord
 ): OrganizerApplicationListItem {
@@ -520,6 +608,11 @@ function isSupportedReviewDecision(
     review.decision === "supplement" ||
     review.decision === "waitlist"
   );
+}
+
+function extractWaitlistMarketTitle(content: string) {
+  const match = content.match(/^(.*?)出现补位机会/);
+  return match?.[1]?.trim() || null;
 }
 
 function resolveReviewNextStatus(
