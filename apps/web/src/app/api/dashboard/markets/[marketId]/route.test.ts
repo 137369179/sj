@@ -1,6 +1,6 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
-import { getSessionRole } from "../../../../../lib/auth";
+import { getSessionUser } from "../../../../../lib/auth";
 import {
   DashboardQueryError,
   getMarketDashboardSummary
@@ -8,7 +8,7 @@ import {
 import { GET } from "./route";
 
 vi.mock("../../../../../lib/auth", () => ({
-  getSessionRole: vi.fn()
+  getSessionUser: vi.fn()
 }));
 
 vi.mock("../../../../../server/dashboard/service", () => ({
@@ -29,10 +29,13 @@ describe("GET /api/dashboard/markets/[marketId]", () => {
   });
 
   it("rejects non-organizer roles", async () => {
-    vi.mocked(getSessionRole).mockResolvedValue("vendor");
+    vi.mocked(getSessionUser).mockResolvedValue({
+      userId: "vendor_1",
+      role: "vendor"
+    });
 
     const response = await GET(
-      new Request("http://localhost/api/dashboard/markets/market_1?organizerId=org_1"),
+      new Request("http://localhost/api/dashboard/markets/market_1"),
       {
         params: Promise.resolve({
           marketId: "market_1"
@@ -45,8 +48,11 @@ describe("GET /api/dashboard/markets/[marketId]", () => {
     expect(getMarketDashboardSummary).not.toHaveBeenCalled();
   });
 
-  it("returns the market dashboard summary for organizers", async () => {
-    vi.mocked(getSessionRole).mockResolvedValue("organizer");
+  it("uses the session userId for dashboard queries without requiring organizerId in search params", async () => {
+    vi.mocked(getSessionUser).mockResolvedValue({
+      userId: "org_session_1",
+      role: "organizer"
+    });
     vi.mocked(getMarketDashboardSummary).mockResolvedValue({
       market: {
         id: "market_1",
@@ -59,12 +65,16 @@ describe("GET /api/dashboard/markets/[marketId]", () => {
         approvedCount: 1,
         rejectedCount: 1,
         assignedCount: 1,
-        approvalRate: 0.4
+        approvalRate: 0.4,
+        totalStalls: 6,
+        activeStalls: 5,
+        occupiedStalls: 2,
+        stallOccupancyRate: 0.4
       }
     });
 
     const response = await GET(
-      new Request("http://localhost/api/dashboard/markets/market_1?organizerId=org_1"),
+      new Request("http://localhost/api/dashboard/markets/market_1"),
       {
         params: Promise.resolve({
           marketId: "market_1"
@@ -73,7 +83,7 @@ describe("GET /api/dashboard/markets/[marketId]", () => {
     );
 
     expect(getMarketDashboardSummary).toHaveBeenCalledWith({
-      organizerId: "org_1",
+      organizerId: "org_session_1",
       marketId: "market_1"
     });
     expect(response.status).toBe(200);
@@ -89,19 +99,26 @@ describe("GET /api/dashboard/markets/[marketId]", () => {
         approvedCount: 1,
         rejectedCount: 1,
         assignedCount: 1,
-        approvalRate: 0.4
+        approvalRate: 0.4,
+        totalStalls: 6,
+        activeStalls: 5,
+        occupiedStalls: 2,
+        stallOccupancyRate: 0.4
       }
     });
   });
 
   it("returns not found when the market does not exist", async () => {
-    vi.mocked(getSessionRole).mockResolvedValue("organizer");
+    vi.mocked(getSessionUser).mockResolvedValue({
+      userId: "org_session_1",
+      role: "organizer"
+    });
     vi.mocked(getMarketDashboardSummary).mockRejectedValue(
       new DashboardQueryError("NOT_FOUND")
     );
 
     const response = await GET(
-      new Request("http://localhost/api/dashboard/markets/market_404?organizerId=org_1"),
+      new Request("http://localhost/api/dashboard/markets/market_404"),
       {
         params: Promise.resolve({
           marketId: "market_404"

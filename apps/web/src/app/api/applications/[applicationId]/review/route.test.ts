@@ -96,20 +96,33 @@ describe("POST /api/applications/[applicationId]/review", () => {
     vi.mocked(reviewApplication).mockResolvedValue({
       application: {
         id: "app_1",
+        marketId: "market_1",
+        vendorId: "vendor_1",
         status: "rejected",
-        reviewNote: "资质与本场主题不匹配"
+        note: "主营手作咖啡",
+        applicationNote: "主营手作咖啡",
+        reviewNote: "资质与本场主题不匹配",
+        boothPreference: "靠近主通道",
+        attachmentsJson: [],
+        reviewedAt: new Date("2026-05-01T01:00:00.000Z"),
+        reviewedByUserId: "organizer_session_1",
+        createdAt: new Date("2026-05-01T00:00:00.000Z")
       },
       review: {
         id: "review_1",
+        applicationId: "app_1",
+        organizerId: "organizer_session_1",
         decision: "reject",
         reviewNote: "资质与本场主题不匹配",
-        createdAt: "2026-05-01T01:00:00.000Z"
+        createdAt: new Date("2026-05-01T01:00:00.000Z")
       },
       notification: {
         id: "notice_1",
         userId: "vendor_1",
         title: "申请未通过审核",
-        content: "你在春日咖啡市集的申请未通过审核，请调整后重新报名。"
+        content: "你在春日咖啡市集的申请未通过审核，请调整后重新报名。",
+        readAt: null,
+        createdAt: new Date("2026-05-01T01:00:00.000Z")
       }
     });
 
@@ -144,11 +157,22 @@ describe("POST /api/applications/[applicationId]/review", () => {
     await expect(response.json()).resolves.toEqual({
       application: {
         id: "app_1",
+        marketId: "market_1",
+        vendorId: "vendor_1",
         status: "rejected",
-        reviewNote: "资质与本场主题不匹配"
+        note: "主营手作咖啡",
+        applicationNote: "主营手作咖啡",
+        reviewNote: "资质与本场主题不匹配",
+        boothPreference: "靠近主通道",
+        attachmentsJson: [],
+        reviewedAt: "2026-05-01T01:00:00.000Z",
+        reviewedByUserId: "organizer_session_1",
+        createdAt: "2026-05-01T00:00:00.000Z"
       },
       review: {
         id: "review_1",
+        applicationId: "app_1",
+        organizerId: "organizer_session_1",
         decision: "reject",
         reviewNote: "资质与本场主题不匹配",
         createdAt: "2026-05-01T01:00:00.000Z"
@@ -157,7 +181,9 @@ describe("POST /api/applications/[applicationId]/review", () => {
         id: "notice_1",
         userId: "vendor_1",
         title: "申请未通过审核",
-        content: "你在春日咖啡市集的申请未通过审核，请调整后重新报名。"
+        content: "你在春日咖啡市集的申请未通过审核，请调整后重新报名。",
+        readAt: null,
+        createdAt: "2026-05-01T01:00:00.000Z"
       }
     });
   });

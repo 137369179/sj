@@ -91,7 +91,7 @@ describe("application service", () => {
           name: "山野咖啡"
         }
       }
-    ] as Awaited<ReturnType<typeof db.application.findMany>>);
+    ] as unknown as Awaited<ReturnType<typeof db.application.findMany>>);
 
     const applications = await listOrganizerApplications("org_1");
 
@@ -199,7 +199,7 @@ describe("application service", () => {
           name: "主通道 1 号位"
         }
       }
-    ] as Awaited<ReturnType<typeof db.application.findMany>>);
+    ] as unknown as Awaited<ReturnType<typeof db.application.findMany>>);
 
     const applications = await listVendorApplications("vendor_1");
 
@@ -299,7 +299,7 @@ describe("application service", () => {
         id: "vendor_1",
         name: "山野咖啡"
       }
-    } as Awaited<ReturnType<typeof db.application.findUnique>>);
+    } as unknown as Awaited<ReturnType<typeof db.application.findUnique>>);
     const updateSpy = vi.spyOn(db.application, "update").mockResolvedValue({
       id: "app_1",
       marketId: "market_1",
@@ -430,7 +430,7 @@ describe("application service", () => {
         id: "vendor_1",
         name: "山野咖啡"
       }
-    } as Awaited<ReturnType<typeof db.application.findUnique>>);
+    } as unknown as Awaited<ReturnType<typeof db.application.findUnique>>);
 
     await expect(
       reviewApplication({
@@ -439,7 +439,7 @@ describe("application service", () => {
         decision: "reject",
         reviewNote: "资质与本场主题不匹配"
       })
-    ).rejects.toMatchObject<ApplicationReviewError>({
+    ).rejects.toMatchObject({
       code: "FORBIDDEN"
     });
   });

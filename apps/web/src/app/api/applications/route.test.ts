@@ -24,9 +24,13 @@ describe("POST /api/applications", () => {
       marketId: "m1",
       vendorId: "vendor_session_1",
       status: "submitted",
+      note: "主营手作咖啡",
       applicationNote: "主营手作咖啡",
+      reviewNote: null,
       boothPreference: "靠近主通道",
       attachmentsJson: [],
+      reviewedAt: null,
+      reviewedByUserId: null,
       createdAt: new Date("2026-05-01T00:00:00.000Z")
     } as Awaited<ReturnType<typeof db.application.findFirst>>);
 
@@ -66,8 +70,10 @@ describe("POST /api/applications", () => {
       id: "app_1",
       marketId: "m1",
       vendorId: "vendor_session_1",
+      note: "主营手作咖啡",
       boothPreference: "靠近主通道",
       applicationNote: "主营手作咖啡",
+      reviewNote: null,
       attachmentsJson: [
         {
           url: "/uploads/license.pdf",
@@ -75,6 +81,8 @@ describe("POST /api/applications", () => {
         }
       ],
       status: "submitted",
+      reviewedAt: null,
+      reviewedByUserId: null,
       createdAt: new Date("2026-05-01T00:00:00.000Z")
     } as Awaited<ReturnType<typeof db.application.create>>);
 
@@ -119,8 +127,10 @@ describe("POST /api/applications", () => {
       id: "app_1",
       marketId: "m1",
       vendorId: "vendor_session_1",
+      note: "主营手作咖啡",
       boothPreference: "靠近主通道",
       applicationNote: "主营手作咖啡",
+      reviewNote: null,
       attachmentsJson: [
         {
           url: "/uploads/license.pdf",
@@ -128,6 +138,8 @@ describe("POST /api/applications", () => {
         }
       ],
       status: "submitted",
+      reviewedAt: null,
+      reviewedByUserId: null,
       createdAt: "2026-05-01T00:00:00.000Z"
     });
   });

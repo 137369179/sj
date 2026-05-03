@@ -86,7 +86,7 @@ describe("stall service", () => {
           }
         }
       }
-    ] as Awaited<ReturnType<typeof db.stall.findMany>>);
+    ] as unknown as Awaited<ReturnType<typeof db.stall.findMany>>);
 
     const stalls = await listOrganizerStalls("org_1");
 
@@ -205,7 +205,7 @@ describe("stall service", () => {
         title: "春日咖啡市集",
         city: "杭州"
       }
-    } as Awaited<ReturnType<typeof db.application.findUnique>>);
+    } as unknown as Awaited<ReturnType<typeof db.application.findUnique>>);
     const stallUpdateSpy = vi.spyOn(db.stall, "update").mockResolvedValue({
       id: "stall_1",
       marketId: "market_1",
@@ -296,7 +296,7 @@ describe("stall service", () => {
         stallId: "stall_1",
         applicationId: "app_1"
       })
-    ).rejects.toMatchObject<StallAssignmentError>({
+    ).rejects.toMatchObject({
       code: "STALL_UNAVAILABLE"
     });
   });
@@ -316,7 +316,7 @@ describe("stall service", () => {
         name: "主通道 1 号位",
         isActive: true
       })
-    ).rejects.toMatchObject<StallCreationError>({
+    ).rejects.toMatchObject({
       code: "FORBIDDEN"
     });
   });

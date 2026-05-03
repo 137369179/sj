@@ -134,7 +134,7 @@ describe("dashboard service", () => {
         organizerId: "org_1",
         marketId: "market_1"
       })
-    ).rejects.toMatchObject<DashboardQueryError>({
+    ).rejects.toMatchObject({
       code: "FORBIDDEN"
     });
   });

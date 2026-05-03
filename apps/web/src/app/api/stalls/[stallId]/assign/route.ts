@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 
-import { getSessionRole } from "../../../../../lib/auth";
+import { getSessionUser } from "../../../../../lib/auth";
 import {
   StallAssignmentError,
   assignStall,
@@ -11,9 +11,9 @@ export async function POST(
   request: Request,
   { params }: { params: Promise<{ stallId: string }> }
 ) {
-  const role = await getSessionRole();
+  const sessionUser = await getSessionUser();
 
-  if (role !== "organizer" && role !== "admin") {
+  if (!sessionUser || (sessionUser.role !== "organizer" && sessionUser.role !== "admin")) {
     return NextResponse.json({ message: "forbidden" }, { status: 403 });
   }
 
@@ -24,7 +24,8 @@ export async function POST(
   try {
     const result = await assignStall({
       stallId,
-      ...payload
+      ...payload,
+      organizerId: sessionUser.userId
     });
 
     return NextResponse.json(result);
