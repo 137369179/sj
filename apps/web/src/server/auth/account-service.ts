@@ -1,0 +1,125 @@
+import { headers } from "next/headers";
+
+import { auth } from "../../lib/auth-config";
+
+export type AccountSessionSummary = {
+  id: string;
+  label: string;
+  expiresAtLabel?: string;
+};
+
+export type AccountPasskeySummary = {
+  id: string;
+  name: string;
+  createdAtLabel?: string;
+};
+
+function asRecord(value: unknown): Record<string, unknown> | null {
+  return value !== null && typeof value === "object" ? (value as Record<string, unknown>) : null;
+}
+
+function readString(value: unknown): string | undefined {
+  return typeof value === "string" && value.length > 0 ? value : undefined;
+}
+
+function readDateLabel(value: unknown, prefix: string): string | undefined {
+  if (typeof value !== "string" && !(value instanceof Date)) {
+    return undefined;
+  }
+
+  const date = value instanceof Date ? value : new Date(value);
+
+  if (Number.isNaN(date.getTime())) {
+    return undefined;
+  }
+
+  const formatted = new Intl.DateTimeFormat("zh-CN", {
+    year: "numeric",
+    month: "2-digit",
+    day: "2-digit",
+    hour: "2-digit",
+    minute: "2-digit",
+    hour12: false,
+  }).format(date);
+
+  return `${prefix} ${formatted}`;
+}
+
+function readArray(input: unknown): unknown[] {
+  if (Array.isArray(input)) {
+    return input;
+  }
+
+  const record = asRecord(input);
+  if (!record) {
+    return [];
+  }
+
+  if (Array.isArray(record.sessions)) {
+    return record.sessions;
+  }
+
+  if (Array.isArray(record.passkeys)) {
+    return record.passkeys;
+  }
+
+  return [];
+}
+
+function normalizeSession(value: unknown): AccountSessionSummary | null {
+  const record = asRecord(value);
+  if (!record) {
+    return null;
+  }
+
+  const id = readString(record.id) ?? readString(record.token);
+  if (!id) {
+    return null;
+  }
+
+  const userAgent = readString(record.userAgent);
+  const ipAddress = readString(record.ipAddress);
+  const label = userAgent ?? ipAddress ?? "当前设备会话";
+
+  return {
+    id,
+    label,
+    expiresAtLabel: readDateLabel(record.expiresAt, "过期时间"),
+  };
+}
+
+function normalizePasskey(value: unknown): AccountPasskeySummary | null {
+  const record = asRecord(value);
+  if (!record) {
+    return null;
+  }
+
+  const id = readString(record.id) ?? readString(record.credentialID);
+  if (!id) {
+    return null;
+  }
+
+  return {
+    id,
+    name: readString(record.name) ?? "未命名 Passkey",
+    createdAtLabel: readDateLabel(record.createdAt, "创建于"),
+  };
+}
+
+export async function listAccountSessions(): Promise<AccountSessionSummary[]> {
+  const requestHeaders = await headers();
+  const result = await auth.api.listSessions({
+    headers: requestHeaders,
+  });
+
+  return readArray(result).map(normalizeSession).filter((item): item is AccountSessionSummary => item !== null);
+}
+
+export async function listAccountPasskeys(): Promise<AccountPasskeySummary[]> {
+  const requestHeaders = await headers();
+  const result = await auth.api.listPasskeys({
+    headers: requestHeaders,
+  });
+
+  return readArray(result).map(normalizePasskey).filter((item): item is AccountPasskeySummary => item !== null);
+}
