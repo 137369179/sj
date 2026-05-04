@@ -51,6 +51,8 @@ export default async function OrganizerDashboardPage({
 
   const approvalRateLabel = `${Math.round(summary.metrics.approvalRate * 100)}%`;
   const stallOccupancyRateLabel = `${Math.round(summary.metrics.stallOccupancyRate * 100)}%`;
+  const paymentCompletionRateLabel = `${Math.round(summary.metrics.paymentCompletionRate * 100)}%`;
+  const paymentReleaseRateLabel = `${Math.round(summary.metrics.paymentReleaseRate * 100)}%`;
 
   return (
     <AppShell>
@@ -185,6 +187,31 @@ export default async function OrganizerDashboardPage({
           <article>
             <h3>摊位利用率</h3>
             <p>{stallOccupancyRateLabel}</p>
+          </article>
+        </section>
+
+        <section aria-labelledby="payment-funnel-title" style={{ marginTop: "1.5rem" }}>
+          <h3 id="payment-funnel-title">支付漏斗</h3>
+          <p>用于快速判断当前市集从已创建支付单到完成支付、释放档期的转化情况。</p>
+          <article>
+            <h3>已创建支付单</h3>
+            <p>{summary.metrics.paymentCreatedCount}</p>
+          </article>
+          <article>
+            <h3>已完成支付</h3>
+            <p>{summary.metrics.paymentCompletedCount}</p>
+          </article>
+          <article>
+            <h3>已释放档期</h3>
+            <p>{summary.metrics.paymentReleasedCount}</p>
+          </article>
+          <article>
+            <h3>支付完成率</h3>
+            <p>{paymentCompletionRateLabel}</p>
+          </article>
+          <article>
+            <h3>释放率</h3>
+            <p>{paymentReleaseRateLabel}</p>
           </article>
         </section>
 

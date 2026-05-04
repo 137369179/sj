@@ -18,6 +18,9 @@ export type DashboardSummaryInput = {
   paymentPendingCount: number;
   paymentUrgentCount: number;
   paymentOverdueCount: number;
+  paymentCreatedCount: number;
+  paymentCompletedCount: number;
+  paymentReleasedCount: number;
   totalStalls: number;
   activeStalls: number;
   occupiedStalls: number;
@@ -53,6 +56,14 @@ export function buildDashboardSummary(input: DashboardSummaryInput) {
     input.assignedCount +
     input.paidCount;
   const acceptedCount = input.approvedCount + input.assignedCount + input.paidCount;
+  const paymentCompletionRate =
+    input.paymentCreatedCount === 0
+      ? 0
+      : input.paymentCompletedCount / input.paymentCreatedCount;
+  const paymentReleaseRate =
+    input.paymentCreatedCount === 0
+      ? 0
+      : input.paymentReleasedCount / input.paymentCreatedCount;
 
   return {
     totalApplications,
@@ -69,6 +80,11 @@ export function buildDashboardSummary(input: DashboardSummaryInput) {
     paymentPendingCount: input.paymentPendingCount,
     paymentUrgentCount: input.paymentUrgentCount,
     paymentOverdueCount: input.paymentOverdueCount,
+    paymentCreatedCount: input.paymentCreatedCount,
+    paymentCompletedCount: input.paymentCompletedCount,
+    paymentReleasedCount: input.paymentReleasedCount,
+    paymentCompletionRate,
+    paymentReleaseRate,
     approvalRate: totalApplications === 0 ? 0 : acceptedCount / totalApplications,
     totalStalls: input.totalStalls,
     activeStalls: input.activeStalls,
@@ -157,6 +173,7 @@ export async function getMarketDashboardSummary(input: {
       ...countStatuses(applications.map((item) => item.status)),
       ...countOrganizerFollowUps(applications),
       ...countPaymentRisks(orders),
+      ...countPaymentFunnel(orders),
       ...countStalls(stalls),
       totalRevenue
     })
@@ -173,6 +190,9 @@ function countStatuses(
   | "paymentPendingCount"
   | "paymentUrgentCount"
   | "paymentOverdueCount"
+  | "paymentCreatedCount"
+  | "paymentCompletedCount"
+  | "paymentReleasedCount"
   | "totalStalls"
   | "activeStalls"
   | "occupiedStalls"
@@ -289,6 +309,31 @@ function countPaymentRisks(
     );
     if (remainingHours <= 0) {
       counts.paymentOverdueCount += 1;
+    }
+  }
+
+  return counts;
+}
+
+function countPaymentFunnel(
+  orders: Array<{
+    status: string;
+    createdAt: Date;
+  }>
+) {
+  const counts = {
+    paymentCreatedCount: orders.length,
+    paymentCompletedCount: 0,
+    paymentReleasedCount: 0
+  };
+
+  for (const order of orders) {
+    if (order.status === "paid") {
+      counts.paymentCompletedCount += 1;
+    }
+
+    if (order.status === "cancelled") {
+      counts.paymentReleasedCount += 1;
     }
   }
 

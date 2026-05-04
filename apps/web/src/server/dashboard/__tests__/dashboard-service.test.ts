@@ -27,6 +27,9 @@ describe("dashboard service", () => {
         paymentPendingCount: 2,
         paymentUrgentCount: 1,
         paymentOverdueCount: 1,
+        paymentCreatedCount: 4,
+        paymentCompletedCount: 1,
+        paymentReleasedCount: 1,
         totalStalls: 10,
         activeStalls: 8,
         occupiedStalls: 5,
@@ -47,6 +50,11 @@ describe("dashboard service", () => {
       paymentPendingCount: 2,
       paymentUrgentCount: 1,
       paymentOverdueCount: 1,
+      paymentCreatedCount: 4,
+      paymentCompletedCount: 1,
+      paymentReleasedCount: 1,
+      paymentCompletionRate: 0.25,
+      paymentReleaseRate: 0.25,
       approvalRate: 7 / 13,
       totalStalls: 10,
       activeStalls: 8,
@@ -99,7 +107,8 @@ describe("dashboard service", () => {
       { amount: 100, status: "paid", createdAt: new Date("2026-05-02T08:00:00.000Z") },
       { amount: 150, status: "paid", createdAt: new Date("2026-05-02T09:00:00.000Z") },
       { amount: 80, status: "pending", createdAt: new Date("2026-05-02T06:00:00.000Z") },
-      { amount: 60, status: "pending", createdAt: new Date("2026-05-04T02:00:00.000Z") }
+      { amount: 60, status: "pending", createdAt: new Date("2026-05-04T02:00:00.000Z") },
+      { amount: 70, status: "cancelled", createdAt: new Date("2026-05-02T04:00:00.000Z") }
     ] as any);
 
     const summary = await getMarketDashboardSummary({
@@ -167,6 +176,11 @@ describe("dashboard service", () => {
         paymentPendingCount: 2,
         paymentUrgentCount: 1,
         paymentOverdueCount: 1,
+        paymentCreatedCount: 5,
+        paymentCompletedCount: 2,
+        paymentReleasedCount: 1,
+        paymentCompletionRate: 0.4,
+        paymentReleaseRate: 0.2,
         approvalRate: 2 / 6,
         totalStalls: 3,
         activeStalls: 2,

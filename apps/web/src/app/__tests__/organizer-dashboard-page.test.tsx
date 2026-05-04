@@ -75,6 +75,11 @@ describe("Organizer dashboard page", () => {
         paymentPendingCount: 2,
         paymentUrgentCount: 1,
         paymentOverdueCount: 1,
+        paymentCreatedCount: 4,
+        paymentCompletedCount: 1,
+        paymentReleasedCount: 1,
+        paymentCompletionRate: 0.25,
+        paymentReleaseRate: 0.25,
         approvalRate: 0.4,
         totalStalls: 6,
         activeStalls: 5,
@@ -110,6 +115,11 @@ describe("Organizer dashboard page", () => {
     expect(screen.getByText("待支付")).toBeInTheDocument();
     expect(screen.getByText("支付临期")).toBeInTheDocument();
     expect(screen.getByText("支付超时")).toBeInTheDocument();
+    expect(screen.getByRole("heading", { name: "支付漏斗" })).toBeInTheDocument();
+    expect(screen.getByText("已创建支付单")).toBeInTheDocument();
+    expect(screen.getByText("已释放档期")).toBeInTheDocument();
+    expect(screen.getByText("支付完成率")).toBeInTheDocument();
+    expect(screen.getAllByText("25%").length).toBeGreaterThanOrEqual(2);
     expect(screen.getByText("40%")).toBeInTheDocument();
     expect(screen.getByText("摊位总数")).toBeInTheDocument();
     expect(screen.getByText("6")).toBeInTheDocument();
@@ -168,6 +178,11 @@ describe("Organizer dashboard page", () => {
         paymentPendingCount: 2,
         paymentUrgentCount: 1,
         paymentOverdueCount: 1,
+        paymentCreatedCount: 4,
+        paymentCompletedCount: 1,
+        paymentReleasedCount: 1,
+        paymentCompletionRate: 0.25,
+        paymentReleaseRate: 0.25,
         approvalRate: 0.4,
         totalStalls: 6,
         activeStalls: 5,
@@ -233,6 +248,11 @@ describe("Organizer dashboard page", () => {
         paymentPendingCount: 2,
         paymentUrgentCount: 1,
         paymentOverdueCount: 1,
+        paymentCreatedCount: 4,
+        paymentCompletedCount: 1,
+        paymentReleasedCount: 1,
+        paymentCompletionRate: 0.25,
+        paymentReleaseRate: 0.25,
         approvalRate: 0.4,
         totalStalls: 6,
         activeStalls: 5,
@@ -298,6 +318,11 @@ describe("Organizer dashboard page", () => {
         paymentPendingCount: 2,
         paymentUrgentCount: 1,
         paymentOverdueCount: 1,
+        paymentCreatedCount: 4,
+        paymentCompletedCount: 1,
+        paymentReleasedCount: 1,
+        paymentCompletionRate: 0.25,
+        paymentReleaseRate: 0.25,
         approvalRate: 0.4,
         totalStalls: 6,
         activeStalls: 5,
