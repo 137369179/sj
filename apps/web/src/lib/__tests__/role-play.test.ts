@@ -46,6 +46,14 @@ describe("role-play metadata", () => {
         reviewedAt: new Date("2026-05-02T09:00:00.000Z")
       })
     ).toBe("候补观察期内请保留档期，留意补位通知。");
+
+    expect(
+      getVendorTimingNote({
+        status: "stall_assigned",
+        orderStatus: "pending",
+        orderCreatedAt: new Date("2026-05-02T18:00:00.000Z")
+      })
+    ).toBe("支付将在 6 小时内截止，请尽快完成支付。");
   });
 
   it("derives vendor actions and receipts for supplement, waitlist, and paid states", () => {

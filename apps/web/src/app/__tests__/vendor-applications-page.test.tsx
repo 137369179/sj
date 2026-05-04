@@ -51,6 +51,7 @@ function buildVendorApplication(
     orderAmount: overrides.orderAmount ?? null,
     orderStatus: overrides.orderStatus ?? null,
     orderPaymentMethod: overrides.orderPaymentMethod ?? null,
+    orderCreatedAt: overrides.orderCreatedAt ?? null,
     orderPaidAt: overrides.orderPaidAt ?? null
   };
 }
@@ -373,6 +374,9 @@ describe("Vendor applications page", () => {
   });
 
   it("shows payment-focused action receipts after stall assignment", async () => {
+    vi.useFakeTimers();
+    vi.setSystemTime(new Date("2026-05-03T12:00:00.000Z"));
+
     vi.mocked(getSessionUser).mockResolvedValue({
       userId: "vendor_1",
       role: "vendor"
@@ -392,6 +396,7 @@ describe("Vendor applications page", () => {
         orderAmount: 1200,
         orderStatus: "pending",
         orderPaymentMethod: null,
+        orderCreatedAt: new Date("2026-05-02T18:00:00.000Z"),
         orderPaidAt: null
       })
     ]);
@@ -404,6 +409,7 @@ describe("Vendor applications page", () => {
 
     expect(screen.getByText("建议动作：完成支付")).toBeInTheDocument();
     expect(screen.getByText("进度回执：摊位已锁定，付款后将正式保留本次档期。")).toBeInTheDocument();
+    expect(screen.getByText("时效提醒：支付将在 6 小时内截止，请尽快完成支付。")).toBeInTheDocument();
   });
 
   it("shows a more specific receipt after vendor confirms a waitlist offer", async () => {

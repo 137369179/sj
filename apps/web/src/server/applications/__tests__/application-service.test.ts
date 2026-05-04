@@ -42,6 +42,7 @@ describe("application service", () => {
         originalName: "license.pdf"
       }
     ]);
+
   });
 
   it("creates a deterministic idempotency key", () => {
@@ -347,6 +348,7 @@ describe("application service", () => {
             amount: true,
             status: true,
             paymentMethod: true,
+            createdAt: true,
             paidAt: true
           }
         }
@@ -399,6 +401,7 @@ describe("application service", () => {
         orderAmount: null,
         orderStatus: null,
         orderPaymentMethod: null,
+        orderCreatedAt: null,
         orderPaidAt: null
       }
     ]);

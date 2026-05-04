@@ -166,6 +166,8 @@ export default async function VendorApplicationsPage({
               status: application.status,
               latestReviewDecision: application.latestReviewDecision,
               reviewedAt: application.reviewedAt,
+              orderStatus: application.orderStatus,
+              orderCreatedAt: application.orderCreatedAt,
               reviewNote: application.reviewNote
             });
 
@@ -189,6 +191,7 @@ export default async function VendorApplicationsPage({
                     latestReviewDecision: application.latestReviewDecision,
                     reviewedAt: application.reviewedAt,
                     orderStatus: application.orderStatus,
+                    orderCreatedAt: application.orderCreatedAt,
                     reviewNote: application.reviewNote
                   })}
                 </p>
@@ -199,6 +202,7 @@ export default async function VendorApplicationsPage({
                     latestReviewDecision: application.latestReviewDecision,
                     reviewedAt: application.reviewedAt,
                     orderStatus: application.orderStatus,
+                    orderCreatedAt: application.orderCreatedAt,
                     reviewNote: application.reviewNote
                   })}
                 </p>

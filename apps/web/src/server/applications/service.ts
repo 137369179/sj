@@ -99,6 +99,7 @@ type VendorApplicationRecord = {
     amount: number;
     status: string;
     paymentMethod: string | null;
+    createdAt: Date;
     paidAt: Date | null;
   } | null;
 };
@@ -145,6 +146,7 @@ export type VendorApplicationListItem = {
   orderAmount: number | null;
   orderStatus: string | null;
   orderPaymentMethod: string | null;
+  orderCreatedAt: Date | null;
   orderPaidAt: Date | null;
 };
 
@@ -247,6 +249,7 @@ const vendorApplicationInclude = {
       amount: true,
       status: true,
       paymentMethod: true,
+      createdAt: true,
       paidAt: true
     }
   },
@@ -714,6 +717,7 @@ function formatVendorApplication(
     orderAmount: application.order?.amount ?? null,
     orderStatus: application.order?.status ?? null,
     orderPaymentMethod: application.order?.paymentMethod ?? null,
+    orderCreatedAt: application.order?.createdAt ?? null,
     orderPaidAt: application.order?.paidAt ?? null
   };
 }

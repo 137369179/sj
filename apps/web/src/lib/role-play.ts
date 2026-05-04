@@ -26,6 +26,7 @@ type VendorProgressInput = {
   latestReviewDecision?: string | null;
   reviewedAt?: Date | string | null;
   orderStatus?: string | null;
+  orderCreatedAt?: Date | string | null;
   reviewNote?: string | null;
 };
 
@@ -103,15 +104,18 @@ export function getVendorTimingNote(input: {
   status?: string;
   latestReviewDecision?: string | null;
   reviewedAt?: Date | string | null;
+  orderStatus?: string | null;
+  orderCreatedAt?: Date | string | null;
   reviewNote?: string | null;
 }) {
   const reviewedAt = normalizeDate(input.reviewedAt);
-
-  if (!reviewedAt) {
-    return null;
-  }
+  const orderCreatedAt = normalizeDate(input.orderCreatedAt);
 
   if (input.latestReviewDecision === "supplement") {
+    if (!reviewedAt) {
+      return null;
+    }
+
     const deadline = new Date(reviewedAt.getTime() + 48 * 60 * 60 * 1000);
     const remainingHours = Math.ceil((deadline.getTime() - Date.now()) / (60 * 60 * 1000));
 
@@ -128,6 +132,20 @@ export function getVendorTimingNote(input: {
 
   if (input.latestReviewDecision === "waitlist") {
     return "候补观察期内请保留档期，留意补位通知。";
+  }
+
+  if (input.status === "stall_assigned" && input.orderStatus === "pending" && orderCreatedAt) {
+    const remainingHours = getRemainingHours(orderCreatedAt, 24);
+
+    if (remainingHours <= 0) {
+      return "支付已超时，请立即完成支付并联系主办方确认档期是否仍保留。";
+    }
+
+    if (remainingHours <= 12) {
+      return `支付将在 ${remainingHours} 小时内截止，请尽快完成支付。`;
+    }
+
+    return "建议在 24 小时内完成支付，避免已分配摊位被释放。";
   }
 
   if (input.status === "approved" && input.reviewNote === "摊主已确认候补补位") {
