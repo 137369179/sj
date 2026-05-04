@@ -6,6 +6,7 @@ import {
   buildApplicationPayload,
   buildApplicationReviewPayload,
   declineWaitlistOffer,
+  expireWaitlistOffer,
   confirmWaitlistOffer,
   listOrganizerApplications,
   listVendorApplications,
@@ -962,6 +963,85 @@ describe("application service", () => {
     });
     expect(result.application.status).toBe("rejected");
     expect(result.review.reviewNote).toBe("摊主已放弃候补补位");
+  });
+
+  it("expires a waitlist offer when organizer releases an overdue slot", async () => {
+    vi.useFakeTimers();
+    vi.setSystemTime(new Date("2026-05-03T12:00:00.000Z"));
+    vi.spyOn(db.application, "findUnique").mockResolvedValue({
+      id: "app_11",
+      marketId: "market_1",
+      vendorId: "vendor_1",
+      status: "under_review",
+      note: "主营手作咖啡",
+      applicationNote: "主营手作咖啡",
+      reviewNote: "先列入候补观察",
+      reviewedAt: new Date("2026-04-30T10:00:00.000Z"),
+      createdAt: new Date("2026-05-01T00:00:00.000Z"),
+      reviews: [
+        {
+          id: "review_waitlist_3",
+          applicationId: "app_11",
+          organizerId: "org_1",
+          decision: "waitlist",
+          reviewNote: "先列入候补观察",
+          createdAt: new Date("2026-04-30T10:00:00.000Z")
+        }
+      ],
+      market: {
+        id: "market_1",
+        organizerId: "org_1",
+        title: "春日咖啡市集",
+        city: "杭州"
+      },
+      vendor: {
+        id: "vendor_1",
+        name: "山野咖啡"
+      }
+    } as unknown as Awaited<ReturnType<typeof db.application.findUnique>>);
+    const applicationUpdateSpy = vi.fn().mockResolvedValue({
+      id: "app_11",
+      status: "rejected"
+    });
+    const reviewCreateSpy = vi.fn().mockResolvedValue({
+      id: "review_reject_2",
+      applicationId: "app_11",
+      organizerId: "org_1",
+      decision: "reject",
+      reviewNote: "候补补位超时未确认，已释放名额",
+      createdAt: new Date("2026-05-03T12:00:00.000Z")
+    });
+    vi.spyOn(db, "$transaction").mockImplementation(async (callback) =>
+      callback({
+        application: { update: applicationUpdateSpy },
+        applicationReview: { create: reviewCreateSpy }
+      } as never)
+    );
+
+    const result = await expireWaitlistOffer({
+      applicationId: "app_11",
+      organizerId: "org_1"
+    });
+
+    expect(applicationUpdateSpy).toHaveBeenCalledWith({
+      where: { id: "app_11" },
+      data: {
+        status: "rejected",
+        reviewNote: "候补补位超时未确认，已释放名额",
+        reviewedAt: expect.any(Date),
+        reviewedByUserId: "org_1"
+      }
+    });
+    expect(reviewCreateSpy).toHaveBeenCalledWith({
+      data: {
+        applicationId: "app_11",
+        organizerId: "org_1",
+        decision: "reject",
+        reviewNote: "候补补位超时未确认，已释放名额"
+      }
+    });
+    expect(result.application.status).toBe("rejected");
+    vi.useRealTimers();
   });
 
   it("rejects reviews for applications outside the organizer scope", async () => {

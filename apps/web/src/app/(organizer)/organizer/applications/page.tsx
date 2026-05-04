@@ -16,6 +16,7 @@ import { listOrganizerMarketOptions } from "../../../../server/markets/service";
 import {
   ApplicationReviewError,
   buildApplicationReviewPayload,
+  expireWaitlistOffer,
   listOrganizerApplications,
   reviewApplication,
   sendApplicationFollowUp
@@ -116,6 +117,39 @@ async function sendApplicationFollowUpAction(formData: FormData) {
   }
 }
 
+async function expireWaitlistOfferAction(formData: FormData) {
+  "use server";
+
+  const sessionUser = await getSessionUser();
+
+  if (!sessionUser || sessionUser.role !== "organizer") {
+    return;
+  }
+
+  const applicationId = String(formData.get("applicationId") ?? "");
+
+  try {
+    await expireWaitlistOffer({
+      applicationId,
+      organizerId: sessionUser.userId
+    });
+    revalidatePath("/organizer/applications");
+
+    const params = buildOrganizerApplicationsRedirectParams(formData);
+    params.set("timeoutReleasedApplicationId", applicationId);
+    redirect(`/organizer/applications?${params.toString()}`);
+  } catch (error) {
+    if (error instanceof ApplicationReviewError) {
+      const params = buildOrganizerApplicationsRedirectParams(formData);
+      params.set("followUpError", error.code);
+      params.set("followUpApplicationId", applicationId);
+      redirect(`/organizer/applications?${params.toString()}`);
+    }
+
+    throw error;
+  }
+}
+
 type OrganizerApplicationsPageProps = {
   searchParams?: Promise<{
     status?: string;
@@ -132,6 +166,7 @@ type OrganizerApplicationsPageProps = {
     followUpError?: string;
     followUpSentWaitlist?: string;
     followUpWaitlistApplicationId?: string;
+    timeoutReleasedApplicationId?: string;
   }>;
 };
 
@@ -322,6 +357,12 @@ export default async function OrganizerApplicationsPage({
               resolvedSearchParams,
               application.id
             );
+            const isOverdueWaitlist =
+              application.latestReviewDecision === "waitlist" &&
+              getOrganizerFollowUpNote({
+                latestReviewDecision: application.latestReviewDecision,
+                reviewedAt: application.reviewedAt
+              }) === "候补观察已到期，建议立即确认补位或释放名额。";
 
             return (
             <article key={application.id}>
@@ -443,6 +484,28 @@ export default async function OrganizerApplicationsPage({
                   </button>
                 </form>
               ) : null}
+              {isOverdueWaitlist ? (
+                <form
+                  action={expireWaitlistOfferAction}
+                  aria-label={`${application.vendorName} 超时处理表单`}
+                >
+                  <input name="applicationId" type="hidden" value={application.id} />
+                  <input name="marketId" type="hidden" value={resolvedSearchParams.marketId ?? ""} />
+                  <input name="from" type="hidden" value={resolvedSearchParams.from ?? ""} />
+                  <input
+                    name="marketStatus"
+                    type="hidden"
+                    value={resolvedSearchParams.marketStatus ?? ""}
+                  />
+                  <input name="status" type="hidden" value={resolvedSearchParams.status ?? ""} />
+                  <input
+                    name="sourceStatus"
+                    type="hidden"
+                    value={resolvedSearchParams.sourceStatus ?? ""}
+                  />
+                  <button type="submit">超时释放名额</button>
+                </form>
+              ) : null}
             </article>
             );
           })}
@@ -516,6 +579,10 @@ function getFollowUpReceipts(
     if (message) {
       receipts.push(message);
     }
+  }
+
+  if (searchParams?.timeoutReleasedApplicationId === applicationId) {
+    receipts.push("已按超时释放名额，可继续联系下一位候补。");
   }
 
   return receipts;

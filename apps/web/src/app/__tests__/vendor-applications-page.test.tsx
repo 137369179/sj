@@ -406,6 +406,48 @@ describe("Vendor applications page", () => {
     expect(screen.getByText("进度回执：摊位已锁定，付款后将正式保留本次档期。")).toBeInTheDocument();
   });
 
+  it("shows a more specific receipt after vendor confirms a waitlist offer", async () => {
+    vi.mocked(getSessionUser).mockResolvedValue({
+      userId: "vendor_1",
+      role: "vendor"
+    });
+    vi.mocked(listVendorApplications).mockResolvedValue([
+      buildVendorApplication({
+        id: "app_10",
+        marketId: "market_10",
+        marketTitle: "海风器物市集",
+        marketCity: "青岛",
+        status: "approved",
+        latestReviewDecision: "approve",
+        reviewNote: "摊主已确认候补补位",
+        reviewedAt: new Date("2026-05-03T10:00:00.000Z"),
+        reviews: [
+          {
+            id: "review_10",
+            applicationId: "app_10",
+            organizerId: "org_1",
+            decision: "approve",
+            reviewNote: "摊主已确认候补补位",
+            createdAt: new Date("2026-05-03T10:00:00.000Z")
+          }
+        ],
+        createdAt: new Date("2026-05-01T02:00:00.000Z")
+      })
+    ]);
+
+    const page = await VendorApplicationsPage({
+      searchParams: Promise.resolve({})
+    });
+
+    render(page);
+
+    expect(screen.getByText("当前处理：待分配")).toBeInTheDocument();
+    expect(screen.getByText("建议动作：等待分配结果")).toBeInTheDocument();
+    expect(
+      screen.getByText("进度回执：你已确认候补补位，主办方正在安排摊位分配。")
+    ).toBeInTheDocument();
+  });
+
   it("filters vendor applications by marketId and preserves status context", async () => {
     vi.mocked(getSessionUser).mockResolvedValue({
       userId: "vendor_1",

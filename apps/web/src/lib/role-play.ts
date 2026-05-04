@@ -26,6 +26,7 @@ type VendorProgressInput = {
   latestReviewDecision?: string | null;
   reviewedAt?: Date | string | null;
   orderStatus?: string | null;
+  reviewNote?: string | null;
 };
 
 export function getVendorStatusHint(
@@ -153,6 +154,10 @@ export function getVendorActionLabel(input: VendorProgressInput) {
     return "准备进场";
   }
 
+  if (isConfirmedWaitlistProgress(input)) {
+    return "等待分配结果";
+  }
+
   if (input.status === "approved") {
     return "等待分配";
   }
@@ -179,6 +184,10 @@ export function getVendorReceiptNote(input: VendorProgressInput) {
 
   if (input.status === "paid") {
     return "报名已锁定，可按摊位安排准备进场。";
+  }
+
+  if (isConfirmedWaitlistProgress(input)) {
+    return "你已确认候补补位，主办方正在安排摊位分配。";
   }
 
   if (input.status === "approved") {
@@ -280,6 +289,10 @@ function normalizeDate(value?: Date | string | null) {
 function getRemainingHours(reviewedAt: Date, windowHours: number) {
   const deadline = new Date(reviewedAt.getTime() + windowHours * 60 * 60 * 1000);
   return Math.ceil((deadline.getTime() - Date.now()) / (60 * 60 * 1000));
+}
+
+function isConfirmedWaitlistProgress(input: VendorProgressInput) {
+  return input.status === "approved" && input.reviewNote === "摊主已确认候补补位";
 }
 
 export const ORGANIZER_DASHBOARD_PRIORITIES = [

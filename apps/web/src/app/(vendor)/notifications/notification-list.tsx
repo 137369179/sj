@@ -81,6 +81,33 @@ export function NotificationList({
     }
   }
 
+  async function handleWaitlistLater(notificationId: string) {
+    try {
+      const response = await fetch(`/api/notifications/${notificationId}/waitlist-later`, {
+        method: "POST"
+      });
+
+      if (!response.ok) {
+        return;
+      }
+
+      const result = (await response.json()) as { message: string };
+      setNotifications((prev) =>
+        prev.map((notification) =>
+          notification.id === notificationId
+            ? { ...notification, isRead: true }
+            : notification
+        )
+      );
+      setActionReceipts((prev) => ({
+        ...prev,
+        [notificationId]: result.message
+      }));
+    } catch (error) {
+      console.error("Failed to defer waitlist offer", error);
+    }
+  }
+
   if (notifications.length === 0) {
     return <p>当前暂无通知消息。</p>;
   }
@@ -97,6 +124,7 @@ export function NotificationList({
             <>
               <button onClick={() => handleConfirmWaitlist(notification.id)}>确认补位</button>
               <button onClick={() => handleDeclineWaitlist(notification.id)}>放弃补位</button>
+              <button onClick={() => handleWaitlistLater(notification.id)}>稍后确认</button>
             </>
           ) : null}
           {!notification.isRead && (

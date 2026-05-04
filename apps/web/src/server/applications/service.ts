@@ -163,6 +163,11 @@ export type ConfirmWaitlistOfferInput = {
   userId: string;
 };
 
+export type ExpireWaitlistOfferInput = {
+  applicationId: string;
+  organizerId: string;
+};
+
 export type ApplicationReviewAuditRecord = {
   id: string;
   applicationId: string;
@@ -588,6 +593,67 @@ export async function declineWaitlistOffer(input: ConfirmWaitlistOfferInput) {
   });
 
   return result;
+}
+
+export async function expireWaitlistOffer(input: ExpireWaitlistOfferInput) {
+  const application = await db.application.findUnique({
+    where: {
+      id: input.applicationId
+    },
+    include: organizerApplicationInclude
+  });
+
+  if (!application) {
+    throw new ApplicationReviewError("NOT_FOUND");
+  }
+
+  if (application.market.organizerId !== input.organizerId) {
+    throw new ApplicationReviewError("FORBIDDEN");
+  }
+
+  const latestReview = normalizeReviewRecords(application.reviews)[0];
+
+  if (
+    application.status !== "under_review" ||
+    latestReview?.decision !== "waitlist" ||
+    !application.reviewedAt
+  ) {
+    throw new ApplicationReviewError("INVALID_STATUS");
+  }
+
+  const deadline = new Date(application.reviewedAt.getTime() + 72 * 60 * 60 * 1000);
+  if (deadline.getTime() > Date.now()) {
+    throw new ApplicationReviewError("INVALID_STATUS");
+  }
+
+  const reviewTimestamp = new Date();
+  return db.$transaction(async (transaction) => {
+    const updatedApplication = await transaction.application.update({
+      where: {
+        id: application.id
+      },
+      data: {
+        status: "rejected",
+        reviewNote: "候补补位超时未确认，已释放名额",
+        reviewedAt: reviewTimestamp,
+        reviewedByUserId: input.organizerId
+      }
+    });
+
+    const review = await transaction.applicationReview.create({
+      data: {
+        applicationId: application.id,
+        organizerId: input.organizerId,
+        decision: "reject",
+        reviewNote: "候补补位超时未确认，已释放名额"
+      }
+    });
+
+    return {
+      application: updatedApplication,
+      review
+    };
+  });
 }
 
 function formatOrganizerApplication(

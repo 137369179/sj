@@ -611,6 +611,48 @@ describe("Organizer applications page", () => {
     expect(screen.getByText("2026-05-03 · 拒绝 · 摊主已放弃候补补位")).toBeInTheDocument();
   });
 
+  it("shows overdue waitlist handling actions and timeout result receipts", async () => {
+    vi.useFakeTimers();
+    vi.setSystemTime(new Date("2026-05-03T12:00:00.000Z"));
+    vi.mocked(getSessionUser).mockResolvedValue({
+      userId: "org_1",
+      role: "organizer"
+    });
+    vi.mocked(listOrganizerMarketOptions).mockResolvedValue([]);
+    vi.mocked(listOrganizerApplications).mockResolvedValue([
+      {
+        id: "app_11",
+        marketId: "market_1",
+        marketTitle: "春日咖啡市集",
+        marketCity: "杭州",
+        vendorId: "vendor_1",
+        vendorName: "山野咖啡",
+        status: "under_review",
+        latestReviewDecision: "waitlist",
+        followUpState: "urgent",
+        note: "主营手作咖啡",
+        applicationNote: "主营手作咖啡",
+        reviewNote: "先列入候补观察",
+        reviewedAt: new Date("2026-04-30T10:00:00.000Z"),
+        reviews: [],
+        attachments: [],
+        createdAt: new Date("2026-05-01T00:00:00.000Z")
+      }
+    ] as Awaited<ReturnType<typeof listOrganizerApplications>>);
+
+    const page = await OrganizerApplicationsPage({
+      searchParams: Promise.resolve({
+        timeoutReleasedApplicationId: "app_11"
+      } as any)
+    });
+
+    render(page);
+
+    expect(screen.getByRole("button", { name: "超时释放名额" })).toBeInTheDocument();
+    expect(screen.getByText("已按超时释放名额，可继续联系下一位候补。")).toBeInTheDocument();
+    vi.useRealTimers();
+  });
+
   it("renders a markets return link when opened from organizer markets", async () => {
     vi.mocked(getSessionUser).mockResolvedValue({
       userId: "org_1",

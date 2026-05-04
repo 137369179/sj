@@ -94,6 +94,23 @@ describe("role-play metadata", () => {
         orderStatus: "pending"
       })
     ).toBe("摊位已锁定，付款后将正式保留本次档期。");
+
+    expect(
+      getVendorActionLabel({
+        status: "approved",
+        latestReviewDecision: "approve",
+        reviewedAt: new Date("2026-05-03T10:00:00.000Z"),
+        reviewNote: "摊主已确认候补补位"
+      })
+    ).toBe("等待分配结果");
+    expect(
+      getVendorReceiptNote({
+        status: "approved",
+        latestReviewDecision: "approve",
+        reviewedAt: new Date("2026-05-03T10:00:00.000Z"),
+        reviewNote: "摊主已确认候补补位"
+      })
+    ).toBe("你已确认候补补位，主办方正在安排摊位分配。");
   });
 
   it("derives organizer follow-up priority and timing notes", () => {
