@@ -325,4 +325,58 @@ describe("dashboard service", () => {
       code: "FORBIDDEN"
     });
   });
+
+  it("returns an empty dashboard summary when demo login is enabled and the database is unavailable", async () => {
+    process.env.AUTH_ENABLE_DEMO_LOGIN = "true";
+    process.env.NODE_ENV = "development";
+
+    vi.spyOn(db.market, "findUnique").mockRejectedValue(new Error("database unavailable"));
+
+    await expect(
+      getMarketDashboardSummary({
+        organizerId: "organizer_1",
+        marketId: "market_1"
+      })
+    ).resolves.toEqual({
+      market: {
+        id: "market_1",
+        title: "演示市集看板",
+        city: "演示城市"
+      },
+      metrics: {
+        totalApplications: 0,
+        submittedCount: 0,
+        underReviewCount: 0,
+        pendingReviewCount: 0,
+        approvedCount: 0,
+        rejectedCount: 0,
+        assignedCount: 0,
+        paidCount: 0,
+        supplementPendingCount: 0,
+        waitlistPendingCount: 0,
+        followUpUrgentCount: 0,
+        paymentPendingCount: 0,
+        paymentUrgentCount: 0,
+        paymentOverdueCount: 0,
+        paymentCreatedCount: 0,
+        paymentCompletedCount: 0,
+        paymentReleasedCount: 0,
+        paymentReminderCount: 0,
+        paymentReminderConvertedCount: 0,
+        paymentCompletionRate: 0,
+        paymentReleaseRate: 0,
+        paymentReminderConversionRate: 0,
+        approvalRate: 0,
+        totalStalls: 0,
+        activeStalls: 0,
+        occupiedStalls: 0,
+        stallOccupancyRate: 0,
+        totalRevenue: 0
+      },
+      recentAutomationActivities: []
+    });
+
+    delete process.env.AUTH_ENABLE_DEMO_LOGIN;
+    delete process.env.NODE_ENV;
+  });
 });

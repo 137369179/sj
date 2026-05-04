@@ -113,17 +113,27 @@ export async function getMarketDashboardSummary(input: {
   organizerId: string;
   marketId: string;
 }): Promise<MarketDashboardSummary> {
-  const market = await db.market.findUnique({
-    where: {
-      id: input.marketId
-    },
-    select: {
-      id: true,
-      organizerId: true,
-      title: true,
-      city: true
+  let market;
+
+  try {
+    market = await db.market.findUnique({
+      where: {
+        id: input.marketId
+      },
+      select: {
+        id: true,
+        organizerId: true,
+        title: true,
+        city: true
+      }
+    });
+  } catch (error) {
+    if (isDemoLoginEnabled()) {
+      return buildDemoDashboardSummary(input.marketId);
     }
-  });
+
+    throw error;
+  }
 
   if (!market) {
     throw new DashboardQueryError("NOT_FOUND");
@@ -235,6 +245,44 @@ export async function getMarketDashboardSummary(input: {
     }),
     recentAutomationActivities
   };
+}
+
+function buildDemoDashboardSummary(marketId: string): MarketDashboardSummary {
+  return {
+    market: {
+      id: marketId,
+      title: "演示市集看板",
+      city: "演示城市"
+    },
+    metrics: buildDashboardSummary({
+      submittedCount: 0,
+      underReviewCount: 0,
+      approvedCount: 0,
+      rejectedCount: 0,
+      assignedCount: 0,
+      paidCount: 0,
+      supplementPendingCount: 0,
+      waitlistPendingCount: 0,
+      followUpUrgentCount: 0,
+      paymentPendingCount: 0,
+      paymentUrgentCount: 0,
+      paymentOverdueCount: 0,
+      paymentCreatedCount: 0,
+      paymentCompletedCount: 0,
+      paymentReleasedCount: 0,
+      paymentReminderCount: 0,
+      paymentReminderConvertedCount: 0,
+      totalStalls: 0,
+      activeStalls: 0,
+      occupiedStalls: 0,
+      totalRevenue: 0
+    }),
+    recentAutomationActivities: []
+  };
+}
+
+function isDemoLoginEnabled() {
+  return process.env.AUTH_ENABLE_DEMO_LOGIN === "true" && process.env.NODE_ENV !== "production";
 }
 
 function countStatuses(

@@ -10,7 +10,7 @@ describe("Root layout metadata", () => {
     });
     expect(metadata.description).toBe("让市集招募、报名、审核与摊位管理更高效。");
     expect(metadata.icons).toEqual({
-      icon: "/favicon.svg"
+      icon: ["/favicon.ico", "/favicon.svg"]
     });
   });
 });

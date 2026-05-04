@@ -9,7 +9,7 @@ export const metadata: Metadata = {
   },
   description: "让市集招募、报名、审核与摊位管理更高效。",
   icons: {
-    icon: "/favicon.svg"
+    icon: ["/favicon.ico", "/favicon.svg"]
   }
 };
 
