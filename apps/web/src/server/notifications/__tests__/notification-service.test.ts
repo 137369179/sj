@@ -4,6 +4,7 @@ import { db } from "../../../lib/db";
 import {
   buildApplicationFollowUpNotification,
   buildApplicationReviewNotification,
+  buildOrderExpiredNotification,
   buildOrderPaidNotification,
   buildStallAssignmentNotification,
   createNotification,
@@ -132,6 +133,21 @@ describe("notification service", () => {
         userId: "vendor_1",
         title: "支付已完成",
         content: "你在夏日冰饮市集的摊位费用已支付完成，金额为¥800，本次报名已锁定。"
+      });
+    });
+  });
+
+  describe("buildOrderExpiredNotification", () => {
+    it("builds an order expired notification", () => {
+      const result = buildOrderExpiredNotification({
+        userId: "vendor_1",
+        marketTitle: "夏日冰饮市集"
+      });
+
+      expect(result).toEqual({
+        userId: "vendor_1",
+        title: "支付超时，档期已释放",
+        content: "你在夏日冰饮市集的待支付订单已超时，主办方已释放本次摊位档期，可重新关注后续机会。"
       });
     });
   });

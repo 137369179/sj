@@ -113,6 +113,12 @@ describe("stall service", () => {
         },
         assignedApplication: {
           id: "app_1",
+          status: "stall_assigned",
+          order: {
+            id: "order_1",
+            status: "pending",
+            createdAt: new Date("2026-05-03T06:00:00.000Z")
+          },
           vendor: {
             id: "vendor_1",
             name: "山野咖啡"
@@ -140,6 +146,14 @@ describe("stall service", () => {
         assignedApplication: {
           select: {
             id: true,
+            status: true,
+            order: {
+              select: {
+                id: true,
+                status: true,
+                createdAt: true
+              }
+            },
             vendor: {
               select: {
                 id: true,
@@ -169,7 +183,11 @@ describe("stall service", () => {
         isActive: true,
         assignedApplicationId: "app_1",
         assignedVendorId: "vendor_1",
-        assignedVendorName: "山野咖啡"
+        assignedVendorName: "山野咖啡",
+        assignedApplicationStatus: "stall_assigned",
+        assignedOrderId: "order_1",
+        assignedOrderStatus: "pending",
+        assignedOrderCreatedAt: new Date("2026-05-03T06:00:00.000Z")
       }
     ]);
   });

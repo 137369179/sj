@@ -4,6 +4,7 @@ import { beforeEach, describe, expect, it, vi } from "vitest";
 import { getSessionUser } from "../../lib/auth";
 import { listOrganizerMarketOptions } from "../../server/markets/service";
 import { listOrganizerApplications } from "../../server/applications/service";
+import { expirePendingOrder } from "../../server/payments/service";
 import { listOrganizerStalls } from "../../server/stalls/service";
 import OrganizerStallsPage from "../(organizer)/organizer/stalls/page";
 
@@ -21,6 +22,18 @@ vi.mock("../../server/applications/service", () => ({
 
 vi.mock("../../server/markets/service", () => ({
   listOrganizerMarketOptions: vi.fn()
+}));
+
+vi.mock("../../server/payments/service", () => ({
+  expirePendingOrder: vi.fn(),
+  PaymentError: class PaymentError extends Error {
+    code: string;
+
+    constructor(code: string) {
+      super(code);
+      this.code = code;
+    }
+  }
 }));
 
 vi.mock("../../server/stalls/service", () => ({
@@ -48,7 +61,11 @@ function buildOrganizerStall(overrides: Partial<MockOrganizerStall> & Pick<MockO
     isActive: overrides.isActive ?? true,
     assignedApplicationId: overrides.assignedApplicationId ?? null,
     assignedVendorId: overrides.assignedVendorId ?? null,
-    assignedVendorName: overrides.assignedVendorName ?? null
+    assignedVendorName: overrides.assignedVendorName ?? null,
+    assignedApplicationStatus: overrides.assignedApplicationStatus ?? null,
+    assignedOrderId: overrides.assignedOrderId ?? null,
+    assignedOrderStatus: overrides.assignedOrderStatus ?? null,
+    assignedOrderCreatedAt: overrides.assignedOrderCreatedAt ?? null
   };
 }
 
@@ -353,6 +370,99 @@ describe("OrganizerStallsPage", () => {
       "href",
       "/organizer/dashboard/market_2?from=stalls&status=assigned"
     );
+  });
+
+  it("shows overdue payment release action for assigned stalls", async () => {
+    vi.useFakeTimers();
+    vi.setSystemTime(new Date("2026-05-04T12:00:00.000Z"));
+
+    vi.mocked(getSessionUser).mockResolvedValue({
+      userId: "org_1",
+      role: "organizer"
+    });
+    vi.mocked(listOrganizerMarketOptions).mockResolvedValue([
+      {
+        id: "market_2",
+        title: "夏夜面包市集",
+        city: "上海"
+      }
+    ]);
+    vi.mocked(listOrganizerStalls).mockResolvedValue([
+      buildOrganizerStall({
+        id: "stall_2",
+        marketId: "market_2",
+        marketTitle: "夏夜面包市集",
+        code: "B-01",
+        name: "面包区 1 号位",
+        assignedApplicationId: "app_2",
+        assignedVendorId: "vendor_2",
+        assignedVendorName: "木野手作",
+        assignedApplicationStatus: "stall_assigned",
+        assignedOrderId: "order_2",
+        assignedOrderStatus: "pending",
+        assignedOrderCreatedAt: new Date("2026-05-03T06:00:00.000Z")
+      })
+    ]);
+    vi.mocked(listOrganizerApplications).mockResolvedValue([]);
+
+    const page = await OrganizerStallsPage({
+      searchParams: Promise.resolve({
+        marketId: "market_2"
+      })
+    });
+
+    render(page);
+
+    expect(screen.getByText("支付状态：待支付")).toBeInTheDocument();
+    expect(screen.getByText("支付已超时，建议立即释放档期并通知下一位候补。")).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "超时释放档期" })).toBeInTheDocument();
+
+    vi.useRealTimers();
+  });
+
+  it("shows release receipt after expiring an overdue payment order", async () => {
+    vi.mocked(getSessionUser).mockResolvedValue({
+      userId: "org_1",
+      role: "organizer"
+    });
+    vi.mocked(listOrganizerMarketOptions).mockResolvedValue([
+      {
+        id: "market_2",
+        title: "夏夜面包市集",
+        city: "上海"
+      }
+    ]);
+    vi.mocked(listOrganizerStalls).mockResolvedValue([
+      buildOrganizerStall({
+        id: "stall_2",
+        marketId: "market_2",
+        marketTitle: "夏夜面包市集",
+        code: "B-01",
+        name: "面包区 1 号位",
+        assignedApplicationId: "app_2",
+        assignedVendorId: "vendor_2",
+        assignedVendorName: "木野手作",
+        assignedApplicationStatus: "stall_assigned",
+        assignedOrderId: "order_2",
+        assignedOrderStatus: "pending",
+        assignedOrderCreatedAt: new Date("2026-05-03T06:00:00.000Z")
+      })
+    ]);
+    vi.mocked(listOrganizerApplications).mockResolvedValue([]);
+
+    const page = await OrganizerStallsPage({
+      searchParams: Promise.resolve({
+        marketId: "market_2",
+        paymentReleasedStallId: "stall_2"
+      })
+    });
+
+    render(page);
+
+    expect(
+      screen.getByText("已按支付超时释放档期，可继续分配给下一位摊主。")
+    ).toBeInTheDocument();
+    expect(expirePendingOrder).not.toHaveBeenCalled();
   });
 
   it("renders a markets return link when opened from organizer markets", async () => {

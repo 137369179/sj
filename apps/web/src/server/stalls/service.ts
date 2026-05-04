@@ -36,6 +36,12 @@ type OrganizerStallRecord = {
   };
   assignedApplication: {
     id: string;
+    status: string;
+    order: {
+      id: string;
+      status: string;
+      createdAt: Date;
+    } | null;
     vendor: {
       id: string;
       name: string;
@@ -82,6 +88,10 @@ export type OrganizerStallListItem = {
   assignedApplicationId: string | null;
   assignedVendorId: string | null;
   assignedVendorName: string | null;
+  assignedApplicationStatus: string | null;
+  assignedOrderId: string | null;
+  assignedOrderStatus: string | null;
+  assignedOrderCreatedAt: Date | null;
 };
 
 
@@ -130,6 +140,14 @@ const organizerStallInclude = {
   assignedApplication: {
     select: {
       id: true,
+      status: true,
+      order: {
+        select: {
+          id: true,
+          status: true,
+          createdAt: true
+        }
+      },
       vendor: {
         select: {
           id: true,
@@ -387,6 +405,10 @@ function formatOrganizerStall(stall: OrganizerStallRecord): OrganizerStallListIt
     isActive: stall.isActive,
     assignedApplicationId: stall.assignedApplicationId,
     assignedVendorId: stall.assignedApplication?.vendor.id ?? null,
-    assignedVendorName: stall.assignedApplication?.vendor.name ?? null
+    assignedVendorName: stall.assignedApplication?.vendor.name ?? null,
+    assignedApplicationStatus: stall.assignedApplication?.status ?? null,
+    assignedOrderId: stall.assignedApplication?.order?.id ?? null,
+    assignedOrderStatus: stall.assignedApplication?.order?.status ?? null,
+    assignedOrderCreatedAt: stall.assignedApplication?.order?.createdAt ?? null
   };
 }

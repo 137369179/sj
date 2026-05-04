@@ -7,6 +7,7 @@ import { ZodError } from "zod";
 import { AppShell } from "../../../../components/layout/app-shell";
 import { getSessionUser } from "../../../../lib/auth";
 import { listOrganizerMarketOptions } from "../../../../server/markets/service";
+import { expirePendingOrder, PaymentError } from "../../../../server/payments/service";
 import { listOrganizerApplications } from "../../../../server/applications/service";
 import {
   StallCreationError,
@@ -124,6 +125,40 @@ async function assignStallAction(formData: FormData) {
   }
 }
 
+async function expirePendingPaymentAction(formData: FormData) {
+  "use server";
+
+  const sessionUser = await getSessionUser();
+
+  if (!sessionUser || sessionUser.role !== "organizer") {
+    return;
+  }
+
+  const orderId = String(formData.get("orderId") ?? "");
+  const stallId = String(formData.get("stallId") ?? "");
+
+  try {
+    await expirePendingOrder({
+      orderId,
+      organizerId: sessionUser.userId
+    });
+    revalidatePath("/organizer/stalls");
+
+    const params = buildStallsRedirectParams(formData);
+    params.set("paymentReleasedStallId", stallId);
+    redirect(`/organizer/stalls?${params.toString()}`);
+  } catch (error) {
+    if (error instanceof PaymentError) {
+      const params = buildStallsRedirectParams(formData);
+      params.set("paymentError", error.code);
+      params.set("errorStallId", stallId);
+      redirect(`/organizer/stalls?${params.toString()}`);
+    }
+
+    throw error;
+  }
+}
+
 type OrganizerStallsPageProps = {
   searchParams?: Promise<{
     status?: string;
@@ -137,6 +172,8 @@ type OrganizerStallsPageProps = {
     assignError?: string;
     applicationIdError?: string;
     errorStallId?: string;
+    paymentError?: string;
+    paymentReleasedStallId?: string;
   }>;
 };
 
@@ -413,6 +450,30 @@ export default async function OrganizerStallsPage({
                 </p>
                 <p>状态：{stall.isActive ? "启用中" : "已停用"}</p>
                 <p>已分配摊主：{stall.assignedVendorName ?? "待分配"}</p>
+                {stall.assignedOrderStatus ? (
+                  <p>支付状态：{getOrderStatusLabel(stall.assignedOrderStatus)}</p>
+                ) : null}
+                {stall.assignedOrderStatus === "pending" && stall.assignedOrderCreatedAt ? (
+                  <p>{getPendingOrderNote(stall.assignedOrderCreatedAt)}</p>
+                ) : null}
+                {resolvedSearchParams.paymentReleasedStallId === stall.id ? (
+                  <p>已按支付超时释放档期，可继续分配给下一位摊主。</p>
+                ) : null}
+                {resolvedSearchParams.paymentError && resolvedSearchParams.errorStallId === stall.id ? (
+                  <p role="alert">{getPaymentErrorMessage(resolvedSearchParams.paymentError)}</p>
+                ) : null}
+                {isOverduePendingOrder(stall) ? (
+                  <form action={expirePendingPaymentAction} aria-label={`${stall.name} 支付超时处理表单`}>
+                    <input name="orderId" type="hidden" value={stall.assignedOrderId ?? ""} />
+                    <input name="stallId" type="hidden" value={stall.id} />
+                    <input name="marketId" type="hidden" value={resolvedSearchParams.marketId ?? ""} />
+                    <input name="from" type="hidden" value={resolvedSearchParams.from ?? ""} />
+                    <input name="marketStatus" type="hidden" value={resolvedSearchParams.marketStatus ?? ""} />
+                    <input name="status" type="hidden" value={resolvedSearchParams.status ?? ""} />
+                    <input name="sourceStatus" type="hidden" value={resolvedSearchParams.sourceStatus ?? ""} />
+                    <button type="submit">超时释放档期</button>
+                  </form>
+                ) : null}
 
                 {isAssignable ? (
                   <form action={assignStallAction} aria-label={`${stall.name} 分配表单`}>
@@ -549,6 +610,23 @@ function buildStallsFilterHref(input: {
   return query.length > 0 ? `/organizer/stalls?${query}` : "/organizer/stalls";
 }
 
+function buildStallsRedirectParams(formData: FormData) {
+  const params = new URLSearchParams();
+  const marketId = String(formData.get("marketId") ?? "");
+  const from = String(formData.get("from") ?? "");
+  const marketStatus = String(formData.get("marketStatus") ?? "");
+  const status = String(formData.get("status") ?? "");
+  const sourceStatus = String(formData.get("sourceStatus") ?? "");
+
+  if (marketId) params.set("marketId", marketId);
+  if (from) params.set("from", from);
+  if (marketStatus) params.set("marketStatus", marketStatus);
+  if (status) params.set("status", status);
+  if (sourceStatus) params.set("sourceStatus", sourceStatus);
+
+  return params;
+}
+
 function buildDashboardHref(input: {
   marketId: string;
   from: "stalls" | "markets" | "applications";
@@ -634,6 +712,64 @@ function getOrganizerApplicationStatus(status: string | undefined) {
   }
 
   return null;
+}
+
+function getOrderStatusLabel(status: string) {
+  if (status === "pending") {
+    return "待支付";
+  }
+
+  if (status === "paid") {
+    return "已支付";
+  }
+
+  if (status === "cancelled") {
+    return "已取消";
+  }
+
+  return status;
+}
+
+function getPendingOrderNote(createdAt: Date) {
+  const deadline = new Date(createdAt.getTime() + 24 * 60 * 60 * 1000);
+  const remainingHours = Math.ceil((deadline.getTime() - Date.now()) / (60 * 60 * 1000));
+
+  if (remainingHours <= 0) {
+    return "支付已超时，建议立即释放档期并通知下一位候补。";
+  }
+
+  if (remainingHours <= 12) {
+    return `支付将在 ${remainingHours} 小时内到期，建议提前催办。`;
+  }
+
+  return "待支付订单仍在时效窗口内，可继续观察付款进展。";
+}
+
+function isOverduePendingOrder(
+  stall: Awaited<ReturnType<typeof listOrganizerStalls>>[number]
+) {
+  if (stall.assignedOrderStatus !== "pending" || !stall.assignedOrderCreatedAt) {
+    return false;
+  }
+
+  const deadline = new Date(stall.assignedOrderCreatedAt.getTime() + 24 * 60 * 60 * 1000);
+  return deadline.getTime() <= Date.now();
+}
+
+function getPaymentErrorMessage(code: string | undefined) {
+  if (code === "NOT_FOUND") {
+    return "支付处理失败：订单不存在。";
+  }
+
+  if (code === "FORBIDDEN") {
+    return "支付处理失败：无权处理该订单。";
+  }
+
+  if (code === "INVALID_STATUS") {
+    return "支付处理失败：当前订单还不能执行超时释放。";
+  }
+
+  return "支付处理失败：请重试。";
 }
 
 function buildOrganizerApplicationsReturnHref(input: {

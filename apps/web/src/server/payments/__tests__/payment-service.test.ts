@@ -1,7 +1,7 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
 import { db } from "../../../lib/db";
-import { getVendorOrderForApplication, PaymentError, payOrder } from "../service";
+import { expirePendingOrder, getVendorOrderForApplication, PaymentError, payOrder } from "../service";
 
 describe("payments service", () => {
   beforeEach(() => {
@@ -83,6 +83,94 @@ describe("payments service", () => {
         status: "paid"
       } as any);
       await expect(payOrder("order_1", "vendor_1")).rejects.toThrowError(new PaymentError("INVALID_STATUS"));
+    });
+  });
+
+  describe("expirePendingOrder", () => {
+    it("cancels an overdue pending order and releases the assigned stall", async () => {
+      vi.useFakeTimers();
+      vi.setSystemTime(new Date("2026-05-04T12:00:00.000Z"));
+
+      vi.spyOn(db.order, "findUnique").mockResolvedValue({
+        id: "order_2",
+        vendorId: "vendor_2",
+        applicationId: "app_2",
+        amount: 600,
+        status: "pending",
+        createdAt: new Date("2026-05-03T06:00:00.000Z"),
+        application: {
+          id: "app_2",
+          status: "stall_assigned",
+          vendorId: "vendor_2",
+          market: {
+            title: "夏夜面包市集",
+            organizerId: "org_1"
+          }
+        }
+      } as any);
+
+      const transactionMock = {
+        order: { update: vi.fn().mockResolvedValue({ id: "order_2", status: "cancelled" }) },
+        stall: { updateMany: vi.fn().mockResolvedValue({ count: 1 }) },
+        application: { update: vi.fn().mockResolvedValue({ id: "app_2", status: "rejected" }) },
+        applicationReview: { create: vi.fn().mockResolvedValue({ id: "review_2" }) }
+      };
+
+      vi.spyOn(db, "$transaction").mockImplementation(async (cb) => {
+        return cb(transactionMock as any);
+      });
+      const notificationCreateSpy = vi
+        .spyOn(db.notification, "create")
+        .mockResolvedValue({ id: "notification_2" } as any);
+
+      const result = await expirePendingOrder({
+        orderId: "order_2",
+        organizerId: "org_1"
+      });
+
+      expect(transactionMock.order.update).toHaveBeenCalledWith({
+        where: { id: "order_2" },
+        data: {
+          status: "cancelled"
+        }
+      });
+      expect(transactionMock.stall.updateMany).toHaveBeenCalledWith({
+        where: {
+          assignedApplicationId: "app_2"
+        },
+        data: {
+          assignedApplicationId: null
+        }
+      });
+      expect(transactionMock.application.update).toHaveBeenCalledWith({
+        where: { id: "app_2" },
+        data: {
+          status: "rejected",
+          reviewNote: "摊位支付超时，已释放档期",
+          reviewedAt: expect.any(Date),
+          reviewedByUserId: "org_1"
+        }
+      });
+      expect(transactionMock.applicationReview.create).toHaveBeenCalledWith({
+        data: {
+          applicationId: "app_2",
+          organizerId: "org_1",
+          decision: "reject",
+          reviewNote: "摊位支付超时，已释放档期"
+        }
+      });
+      expect(notificationCreateSpy).toHaveBeenCalledWith({
+        data: {
+          userId: "vendor_2",
+          title: "支付超时，档期已释放",
+          content:
+            "你在夏夜面包市集的待支付订单已超时，主办方已释放本次摊位档期，可重新关注后续机会。"
+        }
+      });
+      expect(result.order.status).toBe("cancelled");
+      expect(result.application.status).toBe("rejected");
+
+      vi.useRealTimers();
     });
   });
 });
