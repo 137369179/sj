@@ -54,6 +54,15 @@ export type BuildOrderPaymentReminderNotificationInput = {
   amount: number;
 };
 
+export type AutomaticPaymentOperationAction = "auto_reminder" | "auto_release";
+
+export type BuildAutomaticPaymentOperationNotificationInput = {
+  userId: string;
+  marketTitle: string;
+  action: AutomaticPaymentOperationAction;
+  count: number;
+};
+
 export function buildApplicationReviewNotification(
   input: BuildApplicationReviewNotificationInput
 ): CreateNotificationInput {
@@ -164,6 +173,19 @@ export function buildOrderPaymentReminderNotification(
     userId: input.userId,
     title: "支付进度提醒",
     content: `主办方提醒你尽快完成${input.marketTitle}的摊位费用支付，当前待支付金额为¥${input.amount}。`
+  };
+}
+
+export function buildAutomaticPaymentOperationNotification(
+  input: BuildAutomaticPaymentOperationNotificationInput
+): CreateNotificationInput {
+  return {
+    userId: input.userId,
+    title: input.action === "auto_reminder" ? "支付自动催办已执行" : "支付自动释放已执行",
+    content:
+      input.action === "auto_reminder"
+        ? `${input.marketTitle}已自动催办 ${input.count} 笔支付临期订单。`
+        : `${input.marketTitle}已自动释放 ${input.count} 笔支付超时订单。`
   };
 }
 

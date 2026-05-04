@@ -312,6 +312,20 @@ export default async function OrganizerDashboardPage({
           </article>
         </section>
 
+        {summary.recentAutomationActivities.length > 0 ? (
+          <section aria-labelledby="recent-automation-title" style={{ marginTop: "1.5rem" }}>
+            <h3 id="recent-automation-title">最近自动处理</h3>
+            <ul>
+              {summary.recentAutomationActivities.map((activity) => (
+                <li key={`${activity.title}-${activity.createdAt.toISOString()}`}>
+                  <p>{activity.title}</p>
+                  <p>{activity.content}</p>
+                </li>
+              ))}
+            </ul>
+          </section>
+        ) : null}
+
         <DashboardCharts
           applications={{
             submitted: summary.metrics.submittedCount,

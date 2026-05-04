@@ -145,22 +145,36 @@ describe("dashboard service", () => {
         paidAt: null
       }
     ] as any);
-    const notificationSpy = vi.spyOn(db.notification, "findMany").mockResolvedValue([
-      {
-        id: "notification_1",
-        userId: "vendor_1",
-        title: "支付进度提醒",
-        content: "主办方提醒你尽快完成春日咖啡市集的摊位费用支付，当前待支付金额为¥100。",
-        createdAt: new Date("2026-05-03T06:00:00.000Z")
-      },
-      {
-        id: "notification_2",
-        userId: "vendor_3",
-        title: "支付进度提醒",
-        content: "主办方提醒你尽快完成春日咖啡市集的摊位费用支付，当前待支付金额为¥80。",
-        createdAt: new Date("2026-05-03T08:00:00.000Z")
-      }
-    ] as any);
+    const notificationSpy = vi
+      .spyOn(db.notification, "findMany")
+      .mockResolvedValueOnce([
+        {
+          id: "notification_1",
+          userId: "vendor_1",
+          title: "支付进度提醒",
+          content: "主办方提醒你尽快完成春日咖啡市集的摊位费用支付，当前待支付金额为¥100。",
+          createdAt: new Date("2026-05-03T06:00:00.000Z")
+        },
+        {
+          id: "notification_2",
+          userId: "vendor_3",
+          title: "支付进度提醒",
+          content: "主办方提醒你尽快完成春日咖啡市集的摊位费用支付，当前待支付金额为¥80。",
+          createdAt: new Date("2026-05-03T08:00:00.000Z")
+        }
+      ] as any)
+      .mockResolvedValueOnce([
+        {
+          title: "支付自动释放已执行",
+          content: "春日咖啡市集已自动释放 1 笔支付超时订单。",
+          createdAt: new Date("2026-05-03T11:00:00.000Z")
+        },
+        {
+          title: "支付自动催办已执行",
+          content: "春日咖啡市集已自动催办 2 笔支付临期订单。",
+          createdAt: new Date("2026-05-03T10:30:00.000Z")
+        }
+      ] as any);
 
     const summary = await getMarketDashboardSummary({
       organizerId: "org_1",
@@ -221,6 +235,26 @@ describe("dashboard service", () => {
         createdAt: true
       }
     });
+    expect(notificationSpy).toHaveBeenCalledWith({
+      where: {
+        userId: "org_1",
+        title: {
+          in: ["支付自动催办已执行", "支付自动释放已执行"]
+        },
+        content: {
+          contains: "春日咖啡市集"
+        }
+      },
+      orderBy: {
+        createdAt: "desc"
+      },
+      select: {
+        title: true,
+        content: true,
+        createdAt: true
+      },
+      take: 5
+    });
     expect(summary).toEqual({
       market: {
         id: "market_1",
@@ -256,7 +290,19 @@ describe("dashboard service", () => {
         occupiedStalls: 1,
         stallOccupancyRate: 0.5,
         totalRevenue: 250
-      }
+      },
+      recentAutomationActivities: [
+        {
+          title: "支付自动释放已执行",
+          content: "春日咖啡市集已自动释放 1 笔支付超时订单。",
+          createdAt: new Date("2026-05-03T11:00:00.000Z")
+        },
+        {
+          title: "支付自动催办已执行",
+          content: "春日咖啡市集已自动催办 2 笔支付临期订单。",
+          createdAt: new Date("2026-05-03T10:30:00.000Z")
+        }
+      ]
     });
 
     vi.useRealTimers();

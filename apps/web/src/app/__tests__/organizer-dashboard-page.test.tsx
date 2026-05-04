@@ -104,7 +104,19 @@ describe("Organizer dashboard page", () => {
         occupiedStalls: 3,
         stallOccupancyRate: 0.6,
         totalRevenue: 0
-      }
+      },
+      recentAutomationActivities: [
+        {
+          title: "支付自动释放已执行",
+          content: "春日咖啡市集已自动释放 1 笔支付超时订单。",
+          createdAt: new Date("2026-05-03T11:00:00.000Z")
+        },
+        {
+          title: "支付自动催办已执行",
+          content: "春日咖啡市集已自动催办 2 笔支付临期订单。",
+          createdAt: new Date("2026-05-03T10:30:00.000Z")
+        }
+      ]
     });
 
     const page = await OrganizerDashboardPage({
@@ -143,6 +155,9 @@ describe("Organizer dashboard page", () => {
     expect(screen.getByText("催办转化率")).toBeInTheDocument();
     expect(screen.getByText("50%")).toBeInTheDocument();
     expect(screen.getByRole("button", { name: "执行自动催办" })).toBeInTheDocument();
+    expect(screen.getByRole("heading", { name: "最近自动处理" })).toBeInTheDocument();
+    expect(screen.getByText("支付自动释放已执行")).toBeInTheDocument();
+    expect(screen.getByText("春日咖啡市集已自动催办 2 笔支付临期订单。")).toBeInTheDocument();
     expect(screen.getAllByText("25%").length).toBeGreaterThanOrEqual(2);
     expect(screen.getByText("40%")).toBeInTheDocument();
     expect(screen.getByText("摊位总数")).toBeInTheDocument();
@@ -216,7 +231,8 @@ describe("Organizer dashboard page", () => {
         occupiedStalls: 3,
         stallOccupancyRate: 0.6,
         totalRevenue: 0
-      }
+      },
+      recentAutomationActivities: []
     });
 
     const page = await OrganizerDashboardPage({
@@ -289,7 +305,8 @@ describe("Organizer dashboard page", () => {
         occupiedStalls: 3,
         stallOccupancyRate: 0.6,
         totalRevenue: 0
-      }
+      },
+      recentAutomationActivities: []
     });
 
     const page = await OrganizerDashboardPage({
@@ -362,7 +379,8 @@ describe("Organizer dashboard page", () => {
         occupiedStalls: 3,
         stallOccupancyRate: 0.6,
         totalRevenue: 0
-      }
+      },
+      recentAutomationActivities: []
     });
 
     const page = await OrganizerDashboardPage({
@@ -462,7 +480,8 @@ describe("Organizer dashboard page", () => {
         occupiedStalls: 3,
         stallOccupancyRate: 0.6,
         totalRevenue: 0
-      }
+      },
+      recentAutomationActivities: []
     });
 
     const page = await OrganizerDashboardPage({
@@ -527,7 +546,8 @@ describe("Organizer dashboard page", () => {
         occupiedStalls: 3,
         stallOccupancyRate: 0.6,
         totalRevenue: 0
-      }
+      },
+      recentAutomationActivities: []
     });
 
     const page = await OrganizerDashboardPage({

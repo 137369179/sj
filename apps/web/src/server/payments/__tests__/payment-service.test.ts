@@ -271,12 +271,19 @@ describe("payments service", () => {
         organizerId: "org_1"
       });
 
-      expect(notificationCreateSpy).toHaveBeenCalledTimes(1);
-      expect(notificationCreateSpy).toHaveBeenCalledWith({
+      expect(notificationCreateSpy).toHaveBeenCalledTimes(2);
+      expect(notificationCreateSpy).toHaveBeenNthCalledWith(1, {
         data: {
           userId: "vendor_1",
           title: "支付进度提醒",
           content: "主办方提醒你尽快完成春日咖啡市集的摊位费用支付，当前待支付金额为¥200。"
+        }
+      });
+      expect(notificationCreateSpy).toHaveBeenNthCalledWith(2, {
+        data: {
+          userId: "org_1",
+          title: "支付自动催办已执行",
+          content: "春日咖啡市集已自动催办 1 笔支付临期订单。"
         }
       });
       expect(result).toEqual({
@@ -338,7 +345,9 @@ describe("payments service", () => {
         applicationReview: { create: vi.fn().mockResolvedValue({ id: "review_2" }) }
       };
       vi.spyOn(db, "$transaction").mockImplementation(async (cb) => cb(transactionMock as any));
-      vi.spyOn(db.notification, "create").mockResolvedValue({ id: "notification_release" } as any);
+      const notificationCreateSpy = vi
+        .spyOn(db.notification, "create")
+        .mockResolvedValue({ id: "notification_release" } as any);
 
       const secondOrderSpy = expireSpy.mockResolvedValueOnce({
         id: "order_overdue_1",
@@ -384,6 +393,13 @@ describe("payments service", () => {
         marketId: "market_1",
         releasedCount: 2,
         orderIds: ["order_overdue_1", "order_overdue_2"]
+      });
+      expect(notificationCreateSpy).toHaveBeenLastCalledWith({
+        data: {
+          userId: "org_1",
+          title: "支付自动释放已执行",
+          content: "春日咖啡市集已自动释放 2 笔支付超时订单。"
+        }
       });
 
       vi.useRealTimers();

@@ -36,6 +36,11 @@ export type MarketDashboardSummary = {
     city: string;
   };
   metrics: ReturnType<typeof buildDashboardSummary>;
+  recentAutomationActivities: Array<{
+    title: string;
+    content: string;
+    createdAt: Date;
+  }>;
 };
 
 export type DashboardQueryErrorCode = "NOT_FOUND" | "FORBIDDEN";
@@ -189,6 +194,26 @@ export async function getMarketDashboardSummary(input: {
             createdAt: true
           }
         });
+  const recentAutomationActivities = await db.notification.findMany({
+    where: {
+      userId: input.organizerId,
+      title: {
+        in: ["支付自动催办已执行", "支付自动释放已执行"]
+      },
+      content: {
+        contains: market.title
+      }
+    },
+    orderBy: {
+      createdAt: "desc"
+    },
+    select: {
+      title: true,
+      content: true,
+      createdAt: true
+    },
+    take: 5
+  });
   const totalRevenue = orders
     .filter((order) => order.status === "paid")
     .reduce((sum, order) => sum + order.amount, 0);
@@ -207,7 +232,8 @@ export async function getMarketDashboardSummary(input: {
       ...countPaymentReminderEffect(orders, paymentReminderNotifications),
       ...countStalls(stalls),
       totalRevenue
-    })
+    }),
+    recentAutomationActivities
   };
 }
 

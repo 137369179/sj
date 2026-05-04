@@ -1,5 +1,6 @@
 import { db } from "../../lib/db";
 import {
+  buildAutomaticPaymentOperationNotification,
   buildOrderExpiredNotification,
   buildOrderPaidNotification,
   buildOrderPaymentReminderNotification,
@@ -327,6 +328,17 @@ export async function runAutomaticPaymentReminders(
     remindedOrderIds.push(order.id);
   }
 
+  if (remindedOrderIds.length > 0) {
+    await createNotification(
+      buildAutomaticPaymentOperationNotification({
+        userId: input.organizerId,
+        marketTitle: market.title,
+        action: "auto_reminder",
+        count: remindedOrderIds.length
+      })
+    );
+  }
+
   return {
     marketId: input.marketId,
     remindedCount: remindedOrderIds.length,
@@ -343,6 +355,7 @@ export async function runAutomaticPaymentReleases(
     },
     select: {
       id: true,
+      title: true,
       organizerId: true
     }
   });
@@ -383,6 +396,17 @@ export async function runAutomaticPaymentReleases(
       organizerId: input.organizerId
     });
     releasedOrderIds.push(order.id);
+  }
+
+  if (releasedOrderIds.length > 0) {
+    await createNotification(
+      buildAutomaticPaymentOperationNotification({
+        userId: input.organizerId,
+        marketTitle: market.title,
+        action: "auto_release",
+        count: releasedOrderIds.length
+      })
+    );
   }
 
   return {

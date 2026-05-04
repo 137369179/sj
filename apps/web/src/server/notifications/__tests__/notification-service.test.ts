@@ -4,6 +4,7 @@ import { db } from "../../../lib/db";
 import {
   buildApplicationFollowUpNotification,
   buildApplicationReviewNotification,
+  buildAutomaticPaymentOperationNotification,
   buildOrderExpiredNotification,
   buildOrderPaymentReminderNotification,
   buildOrderPaidNotification,
@@ -165,6 +166,36 @@ describe("notification service", () => {
         userId: "vendor_1",
         title: "支付进度提醒",
         content: "主办方提醒你尽快完成夏日冰饮市集的摊位费用支付，当前待支付金额为¥800。"
+      });
+    });
+  });
+
+  describe("buildAutomaticPaymentOperationNotification", () => {
+    it("builds organizer automation notifications for reminders and releases", () => {
+      expect(
+        buildAutomaticPaymentOperationNotification({
+          userId: "org_1",
+          marketTitle: "夏日冰饮市集",
+          action: "auto_reminder",
+          count: 2
+        })
+      ).toEqual({
+        userId: "org_1",
+        title: "支付自动催办已执行",
+        content: "夏日冰饮市集已自动催办 2 笔支付临期订单。"
+      });
+
+      expect(
+        buildAutomaticPaymentOperationNotification({
+          userId: "org_1",
+          marketTitle: "夏日冰饮市集",
+          action: "auto_release",
+          count: 1
+        })
+      ).toEqual({
+        userId: "org_1",
+        title: "支付自动释放已执行",
+        content: "夏日冰饮市集已自动释放 1 笔支付超时订单。"
       });
     });
   });

@@ -88,7 +88,14 @@ describe("GET /api/dashboard/markets/[marketId]", () => {
         occupiedStalls: 2,
         stallOccupancyRate: 0.4,
         totalRevenue: 0
-      }
+      },
+      recentAutomationActivities: [
+        {
+          title: "支付自动催办已执行",
+          content: "春日咖啡市集已自动催办 2 笔支付临期订单。",
+          createdAt: "2026-05-03T10:30:00.000Z"
+        }
+      ]
     });
 
     const response = await GET(
@@ -140,7 +147,14 @@ describe("GET /api/dashboard/markets/[marketId]", () => {
         occupiedStalls: 2,
         stallOccupancyRate: 0.4,
         totalRevenue: 0
-      }
+      },
+      recentAutomationActivities: [
+        {
+          title: "支付自动催办已执行",
+          content: "春日咖啡市集已自动催办 2 笔支付临期订单。",
+          createdAt: "2026-05-03T10:30:00.000Z"
+        }
+      ]
     });
   });
 
