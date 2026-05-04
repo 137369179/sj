@@ -46,6 +46,19 @@ describe("stall service", () => {
       expect(result).toHaveLength(2);
       expect(result[0].code).toBe("A01");
     });
+
+    it("skips database access for demo market stalls when demo mode is enabled", async () => {
+      process.env.AUTH_ENABLE_DEMO_LOGIN = "true";
+      process.env.NODE_ENV = "development";
+
+      const findManySpy = vi.spyOn(db.stall, "findMany");
+
+      await expect(listAvailableStallsForMarket("spring-coffee")).resolves.toEqual([]);
+      expect(findManySpy).not.toHaveBeenCalled();
+
+      delete process.env.AUTH_ENABLE_DEMO_LOGIN;
+      delete process.env.NODE_ENV;
+    });
   });
 
   it("builds a valid stall payload with active default", () => {

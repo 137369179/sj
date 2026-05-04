@@ -176,6 +176,10 @@ export async function listPublishedMarkets(filters: {
   dateFrom?: string;
   dateTo?: string;
 }): Promise<PublishedMarketListItem[]> {
+  if (isDemoLoginEnabled()) {
+    return filterMarkets(demoMarkets.map(mapDemoMarketToPublishedMarket), filters);
+  }
+
   try {
     const markets = await db.market.findMany({
       where: {
@@ -225,6 +229,11 @@ export async function listPublishedMarkets(filters: {
 export async function getPublishedMarketById(
   marketId: string
 ): Promise<PublishedMarketListItem | null> {
+  if (isDemoLoginEnabled()) {
+    const demoMarket = getDemoMarketById(marketId);
+    return demoMarket ? mapDemoMarketToPublishedMarket(demoMarket) : null;
+  }
+
   const market = await db.market.findFirst({
     where: {
       id: marketId,

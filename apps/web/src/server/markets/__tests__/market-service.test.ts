@@ -274,6 +274,35 @@ describe("market service", () => {
     ]);
   });
 
+  it("skips database access for published markets when demo mode is enabled", async () => {
+    process.env.AUTH_ENABLE_DEMO_LOGIN = "true";
+    process.env.NODE_ENV = "development";
+
+    const findManySpy = vi.spyOn(db.market, "findMany");
+
+    await expect(
+      listPublishedMarkets({
+        city: "杭州"
+      })
+    ).resolves.toEqual([
+      {
+        id: "spring-coffee",
+        title: "春日咖啡市集",
+        city: "杭州",
+        description: "面向精品咖啡、甜点与生活方式品牌开放招募。",
+        startsAt: new Date("2026-05-18T00:00:00.000Z"),
+        endsAt: new Date("2026-05-18T23:59:59.999Z"),
+        status: "published",
+        organizerName: "平台示例",
+        stallsCount: 0
+      }
+    ]);
+    expect(findManySpy).not.toHaveBeenCalled();
+
+    delete process.env.AUTH_ENABLE_DEMO_LOGIN;
+    delete process.env.NODE_ENV;
+  });
+
   it("returns a published market by id for vendor pages", async () => {
     const findFirstSpy = vi.spyOn(db.market, "findFirst").mockResolvedValue({
       id: "market_1",
@@ -320,6 +349,29 @@ describe("market service", () => {
         _count: { select: { stalls: { where: { isActive: true } } } }
       }
     });
+  });
+
+  it("skips database access for demo market detail requests when demo mode is enabled", async () => {
+    process.env.AUTH_ENABLE_DEMO_LOGIN = "true";
+    process.env.NODE_ENV = "development";
+
+    const findFirstSpy = vi.spyOn(db.market, "findFirst");
+
+    await expect(getPublishedMarketById("spring-coffee")).resolves.toEqual({
+      id: "spring-coffee",
+      title: "春日咖啡市集",
+      city: "杭州",
+      description: "面向精品咖啡、甜点与生活方式品牌开放招募。",
+      startsAt: new Date("2026-05-18T00:00:00.000Z"),
+      endsAt: new Date("2026-05-18T23:59:59.999Z"),
+      status: "published",
+      organizerName: "平台示例",
+      stallsCount: 0
+    });
+    expect(findFirstSpy).not.toHaveBeenCalled();
+
+    delete process.env.AUTH_ENABLE_DEMO_LOGIN;
+    delete process.env.NODE_ENV;
   });
 
   it("creates an organizer market as draft", async () => {
