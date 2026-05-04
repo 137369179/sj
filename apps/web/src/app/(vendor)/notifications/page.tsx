@@ -27,6 +27,11 @@ export default async function VendorNotificationsPage() {
     (notification) =>
       notification.title.includes("候补") || notification.content.includes("候补")
   );
+  const hasStallAssignedNotification = notifications.some(
+    (notification) =>
+      notification.title.includes("摊位分配已确认") ||
+      notification.content.includes("已完成摊位分配")
+  );
   const supplementNotification = notifications.find(
     (notification) =>
       notification.title.includes("补充资料") || notification.content.includes("补充资料")
@@ -42,11 +47,23 @@ export default async function VendorNotificationsPage() {
     <AppShell>
       <main aria-labelledby="notifications-title">
         <h2 id="notifications-title">我的通知</h2>
-        {hasSupplementNotification || hasWaitlistNotification ? (
+        {hasSupplementNotification ||
+        hasWaitlistNotification ||
+        hasStallAssignedNotification ? (
           <section aria-labelledby="vendor-notification-guidance-title">
             <h3 id="vendor-notification-guidance-title">本周需要关注</h3>
-            <p>补件通知请尽快处理，候补通知建议保留档期。</p>
-            <p>建议动作优先级：先处理补件，再持续关注候补结果。</p>
+            {hasSupplementNotification || hasWaitlistNotification ? (
+              <>
+                <p>补件通知请尽快处理，候补通知建议保留档期。</p>
+                <p>建议动作优先级：先处理补件，再持续关注候补结果。</p>
+              </>
+            ) : null}
+            {hasStallAssignedNotification ? (
+              <>
+                <p>摊位已分配后请尽快完成支付，避免档期释放。</p>
+                <p>建议动作优先级：先完成支付，再准备进场资料。</p>
+              </>
+            ) : null}
             {timingNote ? <p>{timingNote}</p> : null}
           </section>
         ) : null}

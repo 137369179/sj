@@ -87,6 +87,30 @@ describe("VendorNotificationsPage", () => {
     expect(screen.getByRole("button", { name: "稍后确认" })).toBeInTheDocument();
   });
 
+  it("surfaces payment guidance when stall assignment notification exists", async () => {
+    vi.mocked(getSessionUser).mockResolvedValue({
+      userId: "vendor_1",
+      role: "vendor"
+    });
+    vi.mocked(listVendorNotifications).mockResolvedValue([
+      {
+        id: "n_3",
+        title: "摊位分配已确认",
+        content: "你在夏夜面包市集的申请已完成摊位分配，摊位为面包主通道（B-02）。",
+        isRead: false,
+        createdAt: new Date("2026-05-03T09:00:00Z")
+      }
+    ]);
+
+    const page = await VendorNotificationsPage();
+    render(page);
+
+    expect(screen.getByRole("heading", { name: "本周需要关注" })).toBeInTheDocument();
+    expect(screen.getByText("摊位已分配后请尽快完成支付，避免档期释放。")).toBeInTheDocument();
+    expect(screen.getByText("建议动作优先级：先完成支付，再准备进场资料。")).toBeInTheDocument();
+    expect(screen.getByText("摊位分配已确认")).toBeInTheDocument();
+  });
+
   it("renders empty state when no notifications exist", async () => {
     vi.mocked(getSessionUser).mockResolvedValue({
       userId: "vendor_1",
