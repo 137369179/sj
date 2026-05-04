@@ -48,6 +48,12 @@ export type BuildOrderExpiredNotificationInput = {
   marketTitle: string;
 };
 
+export type BuildOrderPaymentReminderNotificationInput = {
+  userId: string;
+  marketTitle: string;
+  amount: number;
+};
+
 export function buildApplicationReviewNotification(
   input: BuildApplicationReviewNotificationInput
 ): CreateNotificationInput {
@@ -148,6 +154,16 @@ export function buildOrderExpiredNotification(
     userId: input.userId,
     title: "支付超时，档期已释放",
     content: `你在${input.marketTitle}的待支付订单已超时，主办方已释放本次摊位档期，可重新关注后续机会。`
+  };
+}
+
+export function buildOrderPaymentReminderNotification(
+  input: BuildOrderPaymentReminderNotificationInput
+): CreateNotificationInput {
+  return {
+    userId: input.userId,
+    title: "支付进度提醒",
+    content: `主办方提醒你尽快完成${input.marketTitle}的摊位费用支付，当前待支付金额为¥${input.amount}。`
   };
 }
 

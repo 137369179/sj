@@ -5,6 +5,7 @@ import { getSessionUser } from "../../lib/auth";
 import { listOrganizerMarketOptions } from "../../server/markets/service";
 import { listOrganizerApplications } from "../../server/applications/service";
 import { expirePendingOrder } from "../../server/payments/service";
+import { sendPaymentReminder } from "../../server/payments/service";
 import { listOrganizerStalls } from "../../server/stalls/service";
 import OrganizerStallsPage from "../(organizer)/organizer/stalls/page";
 
@@ -26,6 +27,7 @@ vi.mock("../../server/markets/service", () => ({
 
 vi.mock("../../server/payments/service", () => ({
   expirePendingOrder: vi.fn(),
+  sendPaymentReminder: vi.fn(),
   PaymentError: class PaymentError extends Error {
     code: string;
 
@@ -418,6 +420,97 @@ describe("OrganizerStallsPage", () => {
     expect(screen.getByRole("button", { name: "超时释放档期" })).toBeInTheDocument();
 
     vi.useRealTimers();
+  });
+
+  it("shows payment reminder action for pending assigned stalls before timeout", async () => {
+    vi.useFakeTimers();
+    vi.setSystemTime(new Date("2026-05-03T12:00:00.000Z"));
+
+    vi.mocked(getSessionUser).mockResolvedValue({
+      userId: "org_1",
+      role: "organizer"
+    });
+    vi.mocked(listOrganizerMarketOptions).mockResolvedValue([
+      {
+        id: "market_2",
+        title: "夏夜面包市集",
+        city: "上海"
+      }
+    ]);
+    vi.mocked(listOrganizerStalls).mockResolvedValue([
+      buildOrganizerStall({
+        id: "stall_3",
+        marketId: "market_2",
+        marketTitle: "夏夜面包市集",
+        code: "B-03",
+        name: "面包区 3 号位",
+        assignedApplicationId: "app_3",
+        assignedVendorId: "vendor_3",
+        assignedVendorName: "青屿手作",
+        assignedApplicationStatus: "stall_assigned",
+        assignedOrderId: "order_3",
+        assignedOrderStatus: "pending",
+        assignedOrderCreatedAt: new Date("2026-05-02T22:00:00.000Z")
+      })
+    ]);
+    vi.mocked(listOrganizerApplications).mockResolvedValue([]);
+
+    const page = await OrganizerStallsPage({
+      searchParams: Promise.resolve({
+        marketId: "market_2"
+      })
+    });
+
+    render(page);
+
+    expect(screen.getByText("支付状态：待支付")).toBeInTheDocument();
+    expect(screen.getByText("支付将在 10 小时内到期，建议提前催办。")).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "催办支付" })).toBeInTheDocument();
+
+    vi.useRealTimers();
+  });
+
+  it("shows receipt after sending a payment reminder", async () => {
+    vi.mocked(getSessionUser).mockResolvedValue({
+      userId: "org_1",
+      role: "organizer"
+    });
+    vi.mocked(listOrganizerMarketOptions).mockResolvedValue([
+      {
+        id: "market_2",
+        title: "夏夜面包市集",
+        city: "上海"
+      }
+    ]);
+    vi.mocked(listOrganizerStalls).mockResolvedValue([
+      buildOrganizerStall({
+        id: "stall_3",
+        marketId: "market_2",
+        marketTitle: "夏夜面包市集",
+        code: "B-03",
+        name: "面包区 3 号位",
+        assignedApplicationId: "app_3",
+        assignedVendorId: "vendor_3",
+        assignedVendorName: "青屿手作",
+        assignedApplicationStatus: "stall_assigned",
+        assignedOrderId: "order_3",
+        assignedOrderStatus: "pending",
+        assignedOrderCreatedAt: new Date("2026-05-03T02:00:00.000Z")
+      })
+    ]);
+    vi.mocked(listOrganizerApplications).mockResolvedValue([]);
+
+    const page = await OrganizerStallsPage({
+      searchParams: Promise.resolve({
+        marketId: "market_2",
+        paymentRemindedStallId: "stall_3"
+      })
+    });
+
+    render(page);
+
+    expect(screen.getByText("已发送支付提醒，摊主会收到催办通知。")).toBeInTheDocument();
+    expect(sendPaymentReminder).not.toHaveBeenCalled();
   });
 
   it("shows release receipt after expiring an overdue payment order", async () => {

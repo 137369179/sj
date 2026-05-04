@@ -1,7 +1,13 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
 import { db } from "../../../lib/db";
-import { expirePendingOrder, getVendorOrderForApplication, PaymentError, payOrder } from "../service";
+import {
+  expirePendingOrder,
+  getVendorOrderForApplication,
+  PaymentError,
+  payOrder,
+  sendPaymentReminder
+} from "../service";
 
 describe("payments service", () => {
   beforeEach(() => {
@@ -171,6 +177,44 @@ describe("payments service", () => {
       expect(result.application.status).toBe("rejected");
 
       vi.useRealTimers();
+    });
+  });
+
+  describe("sendPaymentReminder", () => {
+    it("sends a reminder for a pending assigned order", async () => {
+      vi.spyOn(db.order, "findUnique").mockResolvedValue({
+        id: "order_3",
+        vendorId: "vendor_3",
+        amount: 900,
+        status: "pending",
+        application: {
+          id: "app_3",
+          status: "stall_assigned",
+          market: {
+            title: "秋日器物市集",
+            organizerId: "org_1"
+          }
+        }
+      } as any);
+
+      const notificationCreateSpy = vi
+        .spyOn(db.notification, "create")
+        .mockResolvedValue({ id: "notification_3" } as any);
+
+      const result = await sendPaymentReminder({
+        orderId: "order_3",
+        organizerId: "org_1"
+      });
+
+      expect(notificationCreateSpy).toHaveBeenCalledWith({
+        data: {
+          userId: "vendor_3",
+          title: "支付进度提醒",
+          content: "主办方提醒你尽快完成秋日器物市集的摊位费用支付，当前待支付金额为¥900。"
+        }
+      });
+      expect(result.orderId).toBe("order_3");
+      expect(result.notification.id).toBe("notification_3");
     });
   });
 });

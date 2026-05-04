@@ -7,7 +7,11 @@ import { ZodError } from "zod";
 import { AppShell } from "../../../../components/layout/app-shell";
 import { getSessionUser } from "../../../../lib/auth";
 import { listOrganizerMarketOptions } from "../../../../server/markets/service";
-import { expirePendingOrder, PaymentError } from "../../../../server/payments/service";
+import {
+  expirePendingOrder,
+  PaymentError,
+  sendPaymentReminder
+} from "../../../../server/payments/service";
 import { listOrganizerApplications } from "../../../../server/applications/service";
 import {
   StallCreationError,
@@ -159,6 +163,40 @@ async function expirePendingPaymentAction(formData: FormData) {
   }
 }
 
+async function remindPendingPaymentAction(formData: FormData) {
+  "use server";
+
+  const sessionUser = await getSessionUser();
+
+  if (!sessionUser || sessionUser.role !== "organizer") {
+    return;
+  }
+
+  const orderId = String(formData.get("orderId") ?? "");
+  const stallId = String(formData.get("stallId") ?? "");
+
+  try {
+    await sendPaymentReminder({
+      orderId,
+      organizerId: sessionUser.userId
+    });
+    revalidatePath("/organizer/stalls");
+
+    const params = buildStallsRedirectParams(formData);
+    params.set("paymentRemindedStallId", stallId);
+    redirect(`/organizer/stalls?${params.toString()}`);
+  } catch (error) {
+    if (error instanceof PaymentError) {
+      const params = buildStallsRedirectParams(formData);
+      params.set("paymentError", error.code);
+      params.set("errorStallId", stallId);
+      redirect(`/organizer/stalls?${params.toString()}`);
+    }
+
+    throw error;
+  }
+}
+
 type OrganizerStallsPageProps = {
   searchParams?: Promise<{
     status?: string;
@@ -174,6 +212,7 @@ type OrganizerStallsPageProps = {
     errorStallId?: string;
     paymentError?: string;
     paymentReleasedStallId?: string;
+    paymentRemindedStallId?: string;
   }>;
 };
 
@@ -459,8 +498,23 @@ export default async function OrganizerStallsPage({
                 {resolvedSearchParams.paymentReleasedStallId === stall.id ? (
                   <p>已按支付超时释放档期，可继续分配给下一位摊主。</p>
                 ) : null}
+                {resolvedSearchParams.paymentRemindedStallId === stall.id ? (
+                  <p>已发送支付提醒，摊主会收到催办通知。</p>
+                ) : null}
                 {resolvedSearchParams.paymentError && resolvedSearchParams.errorStallId === stall.id ? (
                   <p role="alert">{getPaymentErrorMessage(resolvedSearchParams.paymentError)}</p>
+                ) : null}
+                {canRemindPendingOrder(stall) ? (
+                  <form action={remindPendingPaymentAction} aria-label={`${stall.name} 支付提醒表单`}>
+                    <input name="orderId" type="hidden" value={stall.assignedOrderId ?? ""} />
+                    <input name="stallId" type="hidden" value={stall.id} />
+                    <input name="marketId" type="hidden" value={resolvedSearchParams.marketId ?? ""} />
+                    <input name="from" type="hidden" value={resolvedSearchParams.from ?? ""} />
+                    <input name="marketStatus" type="hidden" value={resolvedSearchParams.marketStatus ?? ""} />
+                    <input name="status" type="hidden" value={resolvedSearchParams.status ?? ""} />
+                    <input name="sourceStatus" type="hidden" value={resolvedSearchParams.sourceStatus ?? ""} />
+                    <button type="submit">催办支付</button>
+                  </form>
                 ) : null}
                 {isOverduePendingOrder(stall) ? (
                   <form action={expirePendingPaymentAction} aria-label={`${stall.name} 支付超时处理表单`}>
@@ -754,6 +808,17 @@ function isOverduePendingOrder(
 
   const deadline = new Date(stall.assignedOrderCreatedAt.getTime() + 24 * 60 * 60 * 1000);
   return deadline.getTime() <= Date.now();
+}
+
+function canRemindPendingOrder(
+  stall: Awaited<ReturnType<typeof listOrganizerStalls>>[number]
+) {
+  return (
+    stall.assignedOrderStatus === "pending" &&
+    stall.assignedApplicationStatus === "stall_assigned" &&
+    Boolean(stall.assignedOrderId) &&
+    !isOverduePendingOrder(stall)
+  );
 }
 
 function getPaymentErrorMessage(code: string | undefined) {

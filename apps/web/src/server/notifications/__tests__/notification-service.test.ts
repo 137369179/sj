@@ -5,6 +5,7 @@ import {
   buildApplicationFollowUpNotification,
   buildApplicationReviewNotification,
   buildOrderExpiredNotification,
+  buildOrderPaymentReminderNotification,
   buildOrderPaidNotification,
   buildStallAssignmentNotification,
   createNotification,
@@ -148,6 +149,22 @@ describe("notification service", () => {
         userId: "vendor_1",
         title: "支付超时，档期已释放",
         content: "你在夏日冰饮市集的待支付订单已超时，主办方已释放本次摊位档期，可重新关注后续机会。"
+      });
+    });
+  });
+
+  describe("buildOrderPaymentReminderNotification", () => {
+    it("builds an order payment reminder notification", () => {
+      const result = buildOrderPaymentReminderNotification({
+        userId: "vendor_1",
+        marketTitle: "夏日冰饮市集",
+        amount: 800
+      });
+
+      expect(result).toEqual({
+        userId: "vendor_1",
+        title: "支付进度提醒",
+        content: "主办方提醒你尽快完成夏日冰饮市集的摊位费用支付，当前待支付金额为¥800。"
       });
     });
   });

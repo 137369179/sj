@@ -2,6 +2,7 @@ import { db } from "../../lib/db";
 import {
   buildOrderExpiredNotification,
   buildOrderPaidNotification,
+  buildOrderPaymentReminderNotification,
   createNotification
 } from "../notifications/service";
 
@@ -14,6 +15,11 @@ export class PaymentError extends Error {
 }
 
 export type ExpirePendingOrderInput = {
+  orderId: string;
+  organizerId: string;
+};
+
+export type SendPaymentReminderInput = {
   orderId: string;
   organizerId: string;
 };
@@ -171,6 +177,51 @@ export async function expirePendingOrder(input: ExpirePendingOrderInput) {
   );
 
   return result;
+}
+
+export async function sendPaymentReminder(input: SendPaymentReminderInput) {
+  const order = await db.order.findUnique({
+    where: { id: input.orderId },
+    include: {
+      application: {
+        select: {
+          id: true,
+          status: true,
+          market: {
+            select: {
+              title: true,
+              organizerId: true
+            }
+          }
+        }
+      }
+    }
+  });
+
+  if (!order) {
+    throw new PaymentError("NOT_FOUND");
+  }
+
+  if (order.application.market.organizerId !== input.organizerId) {
+    throw new PaymentError("FORBIDDEN");
+  }
+
+  if (order.status !== "pending" || order.application.status !== "stall_assigned") {
+    throw new PaymentError("INVALID_STATUS");
+  }
+
+  const notification = await createNotification(
+    buildOrderPaymentReminderNotification({
+      userId: order.vendorId,
+      marketTitle: order.application.market.title,
+      amount: order.amount
+    })
+  );
+
+  return {
+    orderId: order.id,
+    notification
+  };
 }
 
 export async function getVendorOrderForApplication(applicationId: string, vendorId: string) {
