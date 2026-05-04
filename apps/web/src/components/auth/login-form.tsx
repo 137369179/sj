@@ -12,6 +12,15 @@ const LOGIN_ERROR_MESSAGES: Record<string, string> = {
   service_unavailable: "登录服务暂时不可用，请稍后再试。",
 };
 
+function resolveLoginErrorMessage(message: string | undefined) {
+  if (!message) {
+    return "登录失败，请稍后重试。";
+  }
+
+  const normalizedMessage = message.trim().toLowerCase().replace(/\s+/g, "_");
+  return LOGIN_ERROR_MESSAGES[normalizedMessage] ?? message;
+}
+
 export function LoginForm({
   initialError,
   returnTo,
@@ -52,7 +61,7 @@ export function LoginForm({
           const result = (await response.json().catch(() => ({ message: "登录失败，请稍后重试。" }))) as {
             message?: string;
           };
-          setError(result.message ?? "登录失败，请稍后重试。");
+          setError(resolveLoginErrorMessage(result.message));
       return;
     }
 

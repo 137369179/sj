@@ -153,52 +153,73 @@ export function getDemoMarketById(marketId: string) {
   return demoMarkets.find((market) => market.id === marketId);
 }
 
+function mapDemoMarketToPublishedMarket(market: DemoMarket): PublishedMarketListItem {
+  const startsAt = new Date(`${market.date}T00:00:00.000Z`);
+  const endsAt = new Date(`${market.date}T23:59:59.999Z`);
+
+  return {
+    id: market.id,
+    title: market.title,
+    city: market.city,
+    description: market.description,
+    startsAt,
+    endsAt,
+    status: "published",
+    organizerName: "平台示例",
+    stallsCount: 0
+  };
+}
+
 export async function listPublishedMarkets(filters: {
   city?: string;
   keyword?: string;
   dateFrom?: string;
   dateTo?: string;
 }): Promise<PublishedMarketListItem[]> {
-  const markets = await db.market.findMany({
-    where: {
-      status: "published",
-      isPlatformApproved: true
-    },
-    select: {
-      id: true,
-      title: true,
-      city: true,
-      coverUrl: true,
-      description: true,
-      startsAt: true,
-      endsAt: true,
-      organizer: {
-        select: { name: true }
+  try {
+    const markets = await db.market.findMany({
+      where: {
+        status: "published",
+        isPlatformApproved: true
       },
-      _count: {
-        select: { stalls: { where: { isActive: true } } }
+      select: {
+        id: true,
+        title: true,
+        city: true,
+        coverUrl: true,
+        description: true,
+        startsAt: true,
+        endsAt: true,
+        organizer: {
+          select: { name: true }
+        },
+        _count: {
+          select: { stalls: { where: { isActive: true } } }
+        }
+      },
+      orderBy: {
+        startsAt: "asc"
       }
-    },
-    orderBy: {
-      startsAt: "asc"
-    }
-  });
+    });
 
-  return filterMarkets(
-    markets.map((m) => ({
-      id: m.id,
-      title: m.title,
-      city: m.city,
-      coverUrl: m.coverUrl,
-      description: m.description,
-      startsAt: m.startsAt,
-      endsAt: m.endsAt,
-      status: "published",
-      organizerName: m.organizer.name,
-      stallsCount: m._count.stalls
-    })),
-    filters
-  );
+    return filterMarkets(
+      markets.map((m) => ({
+        id: m.id,
+        title: m.title,
+        city: m.city,
+        coverUrl: m.coverUrl,
+        description: m.description,
+        startsAt: m.startsAt,
+        endsAt: m.endsAt,
+        status: "published",
+        organizerName: m.organizer.name,
+        stallsCount: m._count.stalls
+      })),
+      filters
+    );
+  } catch {
+    return filterMarkets(demoMarkets.map(mapDemoMarketToPublishedMarket), filters);
+  }
 }
 
 export async function getPublishedMarketById(
@@ -381,5 +402,4 @@ export async function updateOrganizerMarket(
     }
   });
 }
-
 
