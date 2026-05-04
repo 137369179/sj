@@ -203,24 +203,32 @@ export function canAssignStall(input: {
 export async function listOrganizerStalls(
   organizerId: string
 ): Promise<OrganizerStallListItem[]> {
-  const stalls = await db.stall.findMany({
-    where: {
-      market: {
-        organizerId
-      }
-    },
-    include: organizerStallInclude,
-    orderBy: [
-      {
-        marketId: "asc"
+  try {
+    const stalls = await db.stall.findMany({
+      where: {
+        market: {
+          organizerId
+        }
       },
-      {
-        code: "asc"
-      }
-    ]
-  });
+      include: organizerStallInclude,
+      orderBy: [
+        {
+          marketId: "asc"
+        },
+        {
+          code: "asc"
+        }
+      ]
+    });
 
-  return stalls.map((stall) => formatOrganizerStall(stall));
+    return stalls.map((stall) => formatOrganizerStall(stall));
+  } catch (error) {
+    if (isDemoLoginEnabled()) {
+      return [];
+    }
+
+    throw error;
+  }
 }
 
 export async function createStall(input: StallPayload) {
@@ -411,4 +419,8 @@ function formatOrganizerStall(stall: OrganizerStallRecord): OrganizerStallListIt
     assignedOrderStatus: stall.assignedApplication?.order?.status ?? null,
     assignedOrderCreatedAt: stall.assignedApplication?.order?.createdAt ?? null
   };
+}
+
+function isDemoLoginEnabled() {
+  return process.env.AUTH_ENABLE_DEMO_LOGIN === "true" && process.env.NODE_ENV !== "production";
 }

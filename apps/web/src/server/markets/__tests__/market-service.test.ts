@@ -134,6 +134,30 @@ describe("market service", () => {
     ]);
   });
 
+  it("returns empty organizer market options when demo login is enabled and the database is unavailable", async () => {
+    process.env.AUTH_ENABLE_DEMO_LOGIN = "true";
+    process.env.NODE_ENV = "development";
+
+    vi.spyOn(db.market, "findMany").mockRejectedValue(new Error("database unavailable"));
+
+    await expect(listOrganizerMarketOptions("org_1")).resolves.toEqual([]);
+
+    delete process.env.AUTH_ENABLE_DEMO_LOGIN;
+    delete process.env.NODE_ENV;
+  });
+
+  it("returns empty organizer markets when demo login is enabled and the database is unavailable", async () => {
+    process.env.AUTH_ENABLE_DEMO_LOGIN = "true";
+    process.env.NODE_ENV = "development";
+
+    vi.spyOn(db.market, "findMany").mockRejectedValue(new Error("database unavailable"));
+
+    await expect(listOrganizerMarkets("org_1")).resolves.toEqual([]);
+
+    delete process.env.AUTH_ENABLE_DEMO_LOGIN;
+    delete process.env.NODE_ENV;
+  });
+
   it("lists only published markets for vendors and applies filters", async () => {
     const findManySpy = vi.spyOn(db.market, "findMany").mockResolvedValue([
       {

@@ -445,6 +445,30 @@ describe("application service", () => {
     expect(application.latestReviewDecision).toBe("supplement");
   });
 
+  it("returns an empty vendor application list when demo login is enabled and the database is unavailable", async () => {
+    process.env.AUTH_ENABLE_DEMO_LOGIN = "true";
+    process.env.NODE_ENV = "development";
+
+    vi.spyOn(db.application, "findMany").mockRejectedValue(new Error("database unavailable"));
+
+    await expect(listVendorApplications("vendor_1")).resolves.toEqual([]);
+
+    delete process.env.AUTH_ENABLE_DEMO_LOGIN;
+    delete process.env.NODE_ENV;
+  });
+
+  it("returns an empty organizer application list when demo login is enabled and the database is unavailable", async () => {
+    process.env.AUTH_ENABLE_DEMO_LOGIN = "true";
+    process.env.NODE_ENV = "development";
+
+    vi.spyOn(db.application, "findMany").mockRejectedValue(new Error("database unavailable"));
+
+    await expect(listOrganizerApplications("organizer_1")).resolves.toEqual([]);
+
+    delete process.env.AUTH_ENABLE_DEMO_LOGIN;
+    delete process.env.NODE_ENV;
+  });
+
   it("reviews an application and creates a notification", async () => {
     const findUniqueSpy = vi.spyOn(db.application, "findUnique").mockResolvedValue({
       id: "app_1",

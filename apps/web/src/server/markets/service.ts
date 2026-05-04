@@ -270,48 +270,64 @@ export async function getPublishedMarketById(
 export async function listOrganizerMarketOptions(
   organizerId: string
 ): Promise<OrganizerMarketOption[]> {
-  const markets = await db.market.findMany({
-    where: {
-      organizerId
-    },
-    select: {
-      id: true,
-      title: true,
-      city: true,
-      startsAt: true
-    },
-    orderBy: {
-      startsAt: "desc"
-    }
-  });
+  try {
+    const markets = await db.market.findMany({
+      where: {
+        organizerId
+      },
+      select: {
+        id: true,
+        title: true,
+        city: true,
+        startsAt: true
+      },
+      orderBy: {
+        startsAt: "desc"
+      }
+    });
 
-  return markets.map(({ id, title, city }) => ({
-    id,
-    title,
-    city
-  }));
+    return markets.map(({ id, title, city }) => ({
+      id,
+      title,
+      city
+    }));
+  } catch (error) {
+    if (isDemoLoginEnabled()) {
+      return [];
+    }
+
+    throw error;
+  }
 }
 
 export async function listOrganizerMarkets(
   organizerId: string
 ): Promise<OrganizerMarketListItem[]> {
-  return db.market.findMany({
-    where: {
-      organizerId
-    },
-    select: {
-      id: true,
-      title: true,
-      city: true,
-      status: true,
-      isPlatformApproved: true,
-      startsAt: true,
-      endsAt: true
-    },
-    orderBy: {
-      startsAt: "desc"
+  try {
+    return await db.market.findMany({
+      where: {
+        organizerId
+      },
+      select: {
+        id: true,
+        title: true,
+        city: true,
+        status: true,
+        isPlatformApproved: true,
+        startsAt: true,
+        endsAt: true
+      },
+      orderBy: {
+        startsAt: "desc"
+      }
+    });
+  } catch (error) {
+    if (isDemoLoginEnabled()) {
+      return [];
     }
-  });
+
+    throw error;
+  }
 }
 
 export async function createOrganizerMarket(input: CreateOrganizerMarketInput) {
@@ -403,3 +419,6 @@ export async function updateOrganizerMarket(
   });
 }
 
+function isDemoLoginEnabled() {
+  return process.env.AUTH_ENABLE_DEMO_LOGIN === "true" && process.env.NODE_ENV !== "production";
+}

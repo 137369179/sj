@@ -192,6 +192,18 @@ describe("stall service", () => {
     ]);
   });
 
+  it("returns an empty organizer stall list when demo login is enabled and the database is unavailable", async () => {
+    process.env.AUTH_ENABLE_DEMO_LOGIN = "true";
+    process.env.NODE_ENV = "development";
+
+    vi.spyOn(db.stall, "findMany").mockRejectedValue(new Error("database unavailable"));
+
+    await expect(listOrganizerStalls("org_1")).resolves.toEqual([]);
+
+    delete process.env.AUTH_ENABLE_DEMO_LOGIN;
+    delete process.env.NODE_ENV;
+  });
+
   it("creates a stall inside the organizer scope", async () => {
     vi.spyOn(db.market, "findUnique").mockResolvedValue({
       id: "market_1",

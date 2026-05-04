@@ -33,6 +33,8 @@ vi.mock("../../../../lib/logger", () => ({
 describe("POST /api/auth/login", () => {
   beforeEach(() => {
     vi.clearAllMocks();
+    delete process.env.AUTH_ENABLE_DEMO_LOGIN;
+    delete process.env.NODE_ENV;
   });
 
   it("writes an audit log for a successful login", async () => {
@@ -61,6 +63,62 @@ describe("POST /api/auth/login", () => {
       email: "vendor@example.com",
       userId: "user_1",
       activeRole: "vendor",
+    });
+  });
+
+  it("falls back to demo login when role lookup is unavailable and demo login is enabled", async () => {
+    process.env.AUTH_ENABLE_DEMO_LOGIN = "true";
+    process.env.NODE_ENV = "development";
+
+    vi.mocked(auth.api.signInEmail).mockResolvedValue(
+      new Response(JSON.stringify({ ok: true }), {
+        status: 200,
+        headers: { "content-type": "application/json" },
+      }) as never,
+    );
+    vi.mocked(db.user.findUnique).mockRejectedValue(new Error("database unavailable"));
+
+    const response = await POST(
+      new Request("http://localhost/api/auth/login", {
+        method: "POST",
+        headers: { "content-type": "application/json" },
+        body: JSON.stringify({ email: "vendor@example.com", password: "password123" }),
+      }),
+    );
+
+    expect(response.status).toBe(200);
+    expect(await response.json()).toEqual({ ok: true, mode: "demo" });
+    expect(response.headers.get("set-cookie")).toContain("mrp_session=");
+    expect(logger.info).toHaveBeenCalledWith("Auth login succeeded", {
+      email: "vendor@example.com",
+      userId: "vendor_1",
+      activeRole: "vendor",
+      mode: "demo",
+    });
+  });
+
+  it("falls back to demo login when Better Auth is unavailable and demo login is enabled", async () => {
+    process.env.AUTH_ENABLE_DEMO_LOGIN = "true";
+    process.env.NODE_ENV = "development";
+
+    vi.mocked(auth.api.signInEmail).mockRejectedValue(new Error("database unavailable"));
+
+    const response = await POST(
+      new Request("http://localhost/api/auth/login", {
+        method: "POST",
+        headers: { "content-type": "application/json" },
+        body: JSON.stringify({ email: "organizer@example.com", password: "password123" }),
+      }),
+    );
+
+    expect(response.status).toBe(200);
+    expect(await response.json()).toEqual({ ok: true, mode: "demo" });
+    expect(response.headers.get("set-cookie")).toContain("mrp_session=");
+    expect(logger.info).toHaveBeenCalledWith("Auth login succeeded", {
+      email: "organizer@example.com",
+      userId: "organizer_1",
+      activeRole: "organizer",
+      mode: "demo",
     });
   });
 });

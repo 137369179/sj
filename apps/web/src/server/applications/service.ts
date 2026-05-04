@@ -291,35 +291,51 @@ export function makeApplicationKey(marketId: string, vendorId: string) {
 export async function listOrganizerApplications(
   organizerId: string
 ): Promise<OrganizerApplicationListItem[]> {
-  const applications = await db.application.findMany({
-    where: {
-      market: {
-        organizerId
+  try {
+    const applications = await db.application.findMany({
+      where: {
+        market: {
+          organizerId
+        }
+      },
+      include: organizerApplicationInclude,
+      orderBy: {
+        createdAt: "desc"
       }
-    },
-    include: organizerApplicationInclude,
-    orderBy: {
-      createdAt: "desc"
-    }
-  });
+    });
 
-  return applications.map((application) => formatOrganizerApplication(application));
+    return applications.map((application) => formatOrganizerApplication(application));
+  } catch (error) {
+    if (isDemoLoginEnabled()) {
+      return [];
+    }
+
+    throw error;
+  }
 }
 
 export async function listVendorApplications(
   vendorId: string
 ): Promise<VendorApplicationListItem[]> {
-  const applications = await db.application.findMany({
-    where: {
-      vendorId
-    },
-    include: vendorApplicationInclude,
-    orderBy: {
-      createdAt: "desc"
-    }
-  });
+  try {
+    const applications = await db.application.findMany({
+      where: {
+        vendorId
+      },
+      include: vendorApplicationInclude,
+      orderBy: {
+        createdAt: "desc"
+      }
+    });
 
-  return applications.map((application) => formatVendorApplication(application));
+    return applications.map((application) => formatVendorApplication(application));
+  } catch (error) {
+    if (isDemoLoginEnabled()) {
+      return [];
+    }
+
+    throw error;
+  }
 }
 
 export async function reviewApplication(input: ReviewApplicationInput) {
@@ -789,4 +805,8 @@ function resolveReviewNextStatus(
   }
 
   return null;
+}
+
+function isDemoLoginEnabled() {
+  return process.env.AUTH_ENABLE_DEMO_LOGIN === "true" && process.env.NODE_ENV !== "production";
 }
