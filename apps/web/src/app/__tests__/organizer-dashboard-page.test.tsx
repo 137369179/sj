@@ -78,8 +78,11 @@ describe("Organizer dashboard page", () => {
         paymentCreatedCount: 4,
         paymentCompletedCount: 1,
         paymentReleasedCount: 1,
+        paymentReminderCount: 2,
+        paymentReminderConvertedCount: 1,
         paymentCompletionRate: 0.25,
         paymentReleaseRate: 0.25,
+        paymentReminderConversionRate: 0.5,
         approvalRate: 0.4,
         totalStalls: 6,
         activeStalls: 5,
@@ -119,6 +122,10 @@ describe("Organizer dashboard page", () => {
     expect(screen.getByText("已创建支付单")).toBeInTheDocument();
     expect(screen.getByText("已释放档期")).toBeInTheDocument();
     expect(screen.getByText("支付完成率")).toBeInTheDocument();
+    expect(screen.getByText("已发送催办")).toBeInTheDocument();
+    expect(screen.getByText("催办后支付")).toBeInTheDocument();
+    expect(screen.getByText("催办转化率")).toBeInTheDocument();
+    expect(screen.getByText("50%")).toBeInTheDocument();
     expect(screen.getAllByText("25%").length).toBeGreaterThanOrEqual(2);
     expect(screen.getByText("40%")).toBeInTheDocument();
     expect(screen.getByText("摊位总数")).toBeInTheDocument();
@@ -181,8 +188,11 @@ describe("Organizer dashboard page", () => {
         paymentCreatedCount: 4,
         paymentCompletedCount: 1,
         paymentReleasedCount: 1,
+        paymentReminderCount: 2,
+        paymentReminderConvertedCount: 1,
         paymentCompletionRate: 0.25,
         paymentReleaseRate: 0.25,
+        paymentReminderConversionRate: 0.5,
         approvalRate: 0.4,
         totalStalls: 6,
         activeStalls: 5,
@@ -251,8 +261,11 @@ describe("Organizer dashboard page", () => {
         paymentCreatedCount: 4,
         paymentCompletedCount: 1,
         paymentReleasedCount: 1,
+        paymentReminderCount: 2,
+        paymentReminderConvertedCount: 1,
         paymentCompletionRate: 0.25,
         paymentReleaseRate: 0.25,
+        paymentReminderConversionRate: 0.5,
         approvalRate: 0.4,
         totalStalls: 6,
         activeStalls: 5,
@@ -321,8 +334,11 @@ describe("Organizer dashboard page", () => {
         paymentCreatedCount: 4,
         paymentCompletedCount: 1,
         paymentReleasedCount: 1,
+        paymentReminderCount: 2,
+        paymentReminderConvertedCount: 1,
         paymentCompletionRate: 0.25,
         paymentReleaseRate: 0.25,
+        paymentReminderConversionRate: 0.5,
         approvalRate: 0.4,
         totalStalls: 6,
         activeStalls: 5,

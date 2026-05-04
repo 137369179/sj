@@ -53,6 +53,9 @@ export default async function OrganizerDashboardPage({
   const stallOccupancyRateLabel = `${Math.round(summary.metrics.stallOccupancyRate * 100)}%`;
   const paymentCompletionRateLabel = `${Math.round(summary.metrics.paymentCompletionRate * 100)}%`;
   const paymentReleaseRateLabel = `${Math.round(summary.metrics.paymentReleaseRate * 100)}%`;
+  const paymentReminderConversionRateLabel = `${Math.round(
+    summary.metrics.paymentReminderConversionRate * 100
+  )}%`;
 
   return (
     <AppShell>
@@ -212,6 +215,18 @@ export default async function OrganizerDashboardPage({
           <article>
             <h3>释放率</h3>
             <p>{paymentReleaseRateLabel}</p>
+          </article>
+          <article>
+            <h3>已发送催办</h3>
+            <p>{summary.metrics.paymentReminderCount}</p>
+          </article>
+          <article>
+            <h3>催办后支付</h3>
+            <p>{summary.metrics.paymentReminderConvertedCount}</p>
+          </article>
+          <article>
+            <h3>催办转化率</h3>
+            <p>{paymentReminderConversionRateLabel}</p>
           </article>
         </section>
 

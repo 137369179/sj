@@ -21,6 +21,8 @@ export type DashboardSummaryInput = {
   paymentCreatedCount: number;
   paymentCompletedCount: number;
   paymentReleasedCount: number;
+  paymentReminderCount: number;
+  paymentReminderConvertedCount: number;
   totalStalls: number;
   activeStalls: number;
   occupiedStalls: number;
@@ -64,6 +66,10 @@ export function buildDashboardSummary(input: DashboardSummaryInput) {
     input.paymentCreatedCount === 0
       ? 0
       : input.paymentReleasedCount / input.paymentCreatedCount;
+  const paymentReminderConversionRate =
+    input.paymentReminderCount === 0
+      ? 0
+      : input.paymentReminderConvertedCount / input.paymentReminderCount;
 
   return {
     totalApplications,
@@ -83,8 +89,11 @@ export function buildDashboardSummary(input: DashboardSummaryInput) {
     paymentCreatedCount: input.paymentCreatedCount,
     paymentCompletedCount: input.paymentCompletedCount,
     paymentReleasedCount: input.paymentReleasedCount,
+    paymentReminderCount: input.paymentReminderCount,
+    paymentReminderConvertedCount: input.paymentReminderConvertedCount,
     paymentCompletionRate,
     paymentReleaseRate,
+    paymentReminderConversionRate,
     approvalRate: totalApplications === 0 ? 0 : acceptedCount / totalApplications,
     totalStalls: input.totalStalls,
     activeStalls: input.activeStalls,
@@ -156,9 +165,30 @@ export async function getMarketDashboardSummary(input: {
     select: {
       amount: true,
       status: true,
-      createdAt: true
+      vendorId: true,
+      createdAt: true,
+      paidAt: true
     }
   });
+  const vendorIds = Array.from(new Set(orders.map((order) => order.vendorId)));
+  const paymentReminderNotifications =
+    vendorIds.length === 0
+      ? []
+      : await db.notification.findMany({
+          where: {
+            userId: {
+              in: vendorIds
+            },
+            title: "支付进度提醒",
+            content: {
+              contains: market.title
+            }
+          },
+          select: {
+            userId: true,
+            createdAt: true
+          }
+        });
   const totalRevenue = orders
     .filter((order) => order.status === "paid")
     .reduce((sum, order) => sum + order.amount, 0);
@@ -174,6 +204,7 @@ export async function getMarketDashboardSummary(input: {
       ...countOrganizerFollowUps(applications),
       ...countPaymentRisks(orders),
       ...countPaymentFunnel(orders),
+      ...countPaymentReminderEffect(orders, paymentReminderNotifications),
       ...countStalls(stalls),
       totalRevenue
     })
@@ -193,6 +224,8 @@ function countStatuses(
   | "paymentCreatedCount"
   | "paymentCompletedCount"
   | "paymentReleasedCount"
+  | "paymentReminderCount"
+  | "paymentReminderConvertedCount"
   | "totalStalls"
   | "activeStalls"
   | "occupiedStalls"
@@ -280,7 +313,9 @@ function countOrganizerFollowUps(
 function countPaymentRisks(
   orders: Array<{
     status: string;
+    vendorId: string;
     createdAt: Date;
+    paidAt: Date | null;
   }>
 ) {
   const counts = {
@@ -318,7 +353,9 @@ function countPaymentRisks(
 function countPaymentFunnel(
   orders: Array<{
     status: string;
+    vendorId: string;
     createdAt: Date;
+    paidAt: Date | null;
   }>
 ) {
   const counts = {
@@ -334,6 +371,48 @@ function countPaymentFunnel(
 
     if (order.status === "cancelled") {
       counts.paymentReleasedCount += 1;
+    }
+  }
+
+  return counts;
+}
+
+function countPaymentReminderEffect(
+  orders: Array<{
+    status: string;
+    vendorId: string;
+    createdAt: Date;
+    paidAt: Date | null;
+  }>,
+  reminders: Array<{
+    userId: string;
+    createdAt: Date;
+  }>
+) {
+  const latestReminderByUser = new Map<string, Date>();
+
+  for (const reminder of reminders) {
+    const previousReminder = latestReminderByUser.get(reminder.userId);
+
+    if (!previousReminder || previousReminder.getTime() < reminder.createdAt.getTime()) {
+      latestReminderByUser.set(reminder.userId, reminder.createdAt);
+    }
+  }
+
+  const counts = {
+    paymentReminderCount: latestReminderByUser.size,
+    paymentReminderConvertedCount: 0
+  };
+
+  for (const order of orders) {
+    const latestReminder = latestReminderByUser.get(order.vendorId);
+
+    if (!latestReminder || !order.paidAt) {
+      continue;
+    }
+
+    if (order.paidAt.getTime() >= latestReminder.getTime()) {
+      counts.paymentReminderConvertedCount += 1;
     }
   }
 

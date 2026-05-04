@@ -30,6 +30,8 @@ describe("dashboard service", () => {
         paymentCreatedCount: 4,
         paymentCompletedCount: 1,
         paymentReleasedCount: 1,
+        paymentReminderCount: 2,
+        paymentReminderConvertedCount: 1,
         totalStalls: 10,
         activeStalls: 8,
         occupiedStalls: 5,
@@ -53,8 +55,11 @@ describe("dashboard service", () => {
       paymentCreatedCount: 4,
       paymentCompletedCount: 1,
       paymentReleasedCount: 1,
+      paymentReminderCount: 2,
+      paymentReminderConvertedCount: 1,
       paymentCompletionRate: 0.25,
       paymentReleaseRate: 0.25,
+      paymentReminderConversionRate: 0.5,
       approvalRate: 7 / 13,
       totalStalls: 10,
       activeStalls: 8,
@@ -104,11 +109,57 @@ describe("dashboard service", () => {
       }
     ] as Awaited<ReturnType<typeof db.stall.findMany>>);
     const orderSpy = vi.spyOn(db.order, "findMany").mockResolvedValue([
-      { amount: 100, status: "paid", createdAt: new Date("2026-05-02T08:00:00.000Z") },
-      { amount: 150, status: "paid", createdAt: new Date("2026-05-02T09:00:00.000Z") },
-      { amount: 80, status: "pending", createdAt: new Date("2026-05-02T06:00:00.000Z") },
-      { amount: 60, status: "pending", createdAt: new Date("2026-05-04T02:00:00.000Z") },
-      { amount: 70, status: "cancelled", createdAt: new Date("2026-05-02T04:00:00.000Z") }
+      {
+        amount: 100,
+        status: "paid",
+        vendorId: "vendor_1",
+        createdAt: new Date("2026-05-02T08:00:00.000Z"),
+        paidAt: new Date("2026-05-03T10:00:00.000Z")
+      },
+      {
+        amount: 150,
+        status: "paid",
+        vendorId: "vendor_2",
+        createdAt: new Date("2026-05-02T09:00:00.000Z"),
+        paidAt: new Date("2026-05-02T12:00:00.000Z")
+      },
+      {
+        amount: 80,
+        status: "pending",
+        vendorId: "vendor_3",
+        createdAt: new Date("2026-05-02T06:00:00.000Z"),
+        paidAt: null
+      },
+      {
+        amount: 60,
+        status: "pending",
+        vendorId: "vendor_4",
+        createdAt: new Date("2026-05-04T02:00:00.000Z"),
+        paidAt: null
+      },
+      {
+        amount: 70,
+        status: "cancelled",
+        vendorId: "vendor_5",
+        createdAt: new Date("2026-05-02T04:00:00.000Z"),
+        paidAt: null
+      }
+    ] as any);
+    const notificationSpy = vi.spyOn(db.notification, "findMany").mockResolvedValue([
+      {
+        id: "notification_1",
+        userId: "vendor_1",
+        title: "支付进度提醒",
+        content: "主办方提醒你尽快完成春日咖啡市集的摊位费用支付，当前待支付金额为¥100。",
+        createdAt: new Date("2026-05-03T06:00:00.000Z")
+      },
+      {
+        id: "notification_2",
+        userId: "vendor_3",
+        title: "支付进度提醒",
+        content: "主办方提醒你尽快完成春日咖啡市集的摊位费用支付，当前待支付金额为¥80。",
+        createdAt: new Date("2026-05-03T08:00:00.000Z")
+      }
     ] as any);
 
     const summary = await getMarketDashboardSummary({
@@ -155,6 +206,21 @@ describe("dashboard service", () => {
         assignedApplicationId: true
       }
     });
+    expect(notificationSpy).toHaveBeenCalledWith({
+      where: {
+        userId: {
+          in: ["vendor_1", "vendor_2", "vendor_3", "vendor_4", "vendor_5"]
+        },
+        title: "支付进度提醒",
+        content: {
+          contains: "春日咖啡市集"
+        }
+      },
+      select: {
+        userId: true,
+        createdAt: true
+      }
+    });
     expect(summary).toEqual({
       market: {
         id: "market_1",
@@ -179,8 +245,11 @@ describe("dashboard service", () => {
         paymentCreatedCount: 5,
         paymentCompletedCount: 2,
         paymentReleasedCount: 1,
+        paymentReminderCount: 2,
+        paymentReminderConvertedCount: 1,
         paymentCompletionRate: 0.4,
         paymentReleaseRate: 0.2,
+        paymentReminderConversionRate: 0.5,
         approvalRate: 2 / 6,
         totalStalls: 3,
         activeStalls: 2,
