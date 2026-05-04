@@ -29,6 +29,11 @@ export type RunAutomaticPaymentRemindersInput = {
   organizerId: string;
 };
 
+export type RunAutomaticPaymentReleasesInput = {
+  marketId: string;
+  organizerId: string;
+};
+
 export async function payOrder(orderId: string, vendorId: string, method: string = "wechat") {
   const order = await db.order.findUnique({
     where: { id: orderId },
@@ -326,6 +331,64 @@ export async function runAutomaticPaymentReminders(
     marketId: input.marketId,
     remindedCount: remindedOrderIds.length,
     orderIds: remindedOrderIds
+  };
+}
+
+export async function runAutomaticPaymentReleases(
+  input: RunAutomaticPaymentReleasesInput
+) {
+  const market = await db.market.findUnique({
+    where: {
+      id: input.marketId
+    },
+    select: {
+      id: true,
+      organizerId: true
+    }
+  });
+
+  if (!market) {
+    throw new PaymentError("NOT_FOUND");
+  }
+
+  if (market.organizerId !== input.organizerId) {
+    throw new PaymentError("FORBIDDEN");
+  }
+
+  const orders = await db.order.findMany({
+    where: {
+      status: "pending",
+      application: {
+        marketId: input.marketId,
+        status: "stall_assigned"
+      }
+    },
+    select: {
+      id: true,
+      createdAt: true
+    }
+  });
+
+  const releasedOrderIds: string[] = [];
+
+  for (const order of orders) {
+    const deadline = new Date(order.createdAt.getTime() + 24 * 60 * 60 * 1000);
+
+    if (deadline.getTime() > Date.now()) {
+      continue;
+    }
+
+    await expirePendingOrder({
+      orderId: order.id,
+      organizerId: input.organizerId
+    });
+    releasedOrderIds.push(order.id);
+  }
+
+  return {
+    marketId: input.marketId,
+    releasedCount: releasedOrderIds.length,
+    orderIds: releasedOrderIds
   };
 }
 

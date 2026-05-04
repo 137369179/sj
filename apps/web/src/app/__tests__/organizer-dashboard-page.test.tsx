@@ -5,6 +5,7 @@ import { getSessionUser } from "../../lib/auth";
 import { listOrganizerMarketOptions } from "../../server/markets/service";
 import { getMarketDashboardSummary } from "../../server/dashboard/service";
 import { runAutomaticPaymentReminders } from "../../server/payments/service";
+import { runAutomaticPaymentReleases } from "../../server/payments/service";
 import OrganizerDashboardPage from "../(organizer)/organizer/dashboard/[marketId]/page";
 
 vi.mock("../../lib/auth", () => ({
@@ -21,6 +22,7 @@ vi.mock("../../server/dashboard/service", () => ({
 
 vi.mock("../../server/payments/service", () => ({
   runAutomaticPaymentReminders: vi.fn(),
+  runAutomaticPaymentReleases: vi.fn(),
   PaymentError: class PaymentError extends Error {
     code: string;
 
@@ -132,6 +134,7 @@ describe("Organizer dashboard page", () => {
     expect(screen.getByText("支付临期")).toBeInTheDocument();
     expect(screen.getByText("支付超时")).toBeInTheDocument();
     expect(screen.getByRole("heading", { name: "支付漏斗" })).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "执行自动释放" })).toBeInTheDocument();
     expect(screen.getByText("已创建支付单")).toBeInTheDocument();
     expect(screen.getByText("已释放档期")).toBeInTheDocument();
     expect(screen.getByText("支付完成率")).toBeInTheDocument();
@@ -475,5 +478,70 @@ describe("Organizer dashboard page", () => {
 
     expect(screen.getByText("已自动催办 2 笔支付临期订单。")).toBeInTheDocument();
     expect(runAutomaticPaymentReminders).not.toHaveBeenCalled();
+  });
+
+  it("shows automatic release receipt when dashboard action has run", async () => {
+    vi.mocked(getSessionUser).mockResolvedValue({
+      userId: "org_1",
+      role: "organizer"
+    });
+    vi.mocked(listOrganizerMarketOptions).mockResolvedValue([
+      {
+        id: "market_1",
+        title: "春日咖啡市集",
+        city: "杭州"
+      }
+    ]);
+    vi.mocked(getMarketDashboardSummary).mockResolvedValue({
+      market: {
+        id: "market_1",
+        title: "春日咖啡市集",
+        city: "杭州"
+      },
+      metrics: {
+        totalApplications: 5,
+        submittedCount: 2,
+        underReviewCount: 0,
+        pendingReviewCount: 2,
+        approvedCount: 1,
+        rejectedCount: 1,
+        assignedCount: 1,
+        paidCount: 0,
+        supplementPendingCount: 1,
+        waitlistPendingCount: 2,
+        followUpUrgentCount: 1,
+        paymentPendingCount: 2,
+        paymentUrgentCount: 1,
+        paymentOverdueCount: 1,
+        paymentCreatedCount: 4,
+        paymentCompletedCount: 1,
+        paymentReleasedCount: 1,
+        paymentReminderCount: 2,
+        paymentReminderConvertedCount: 1,
+        paymentCompletionRate: 0.25,
+        paymentReleaseRate: 0.25,
+        paymentReminderConversionRate: 0.5,
+        approvalRate: 0.4,
+        totalStalls: 6,
+        activeStalls: 5,
+        occupiedStalls: 3,
+        stallOccupancyRate: 0.6,
+        totalRevenue: 0
+      }
+    });
+
+    const page = await OrganizerDashboardPage({
+      params: Promise.resolve({
+        marketId: "market_1"
+      }),
+      searchParams: Promise.resolve({
+        autoReleasedCount: "1"
+      } as any)
+    });
+
+    render(page);
+
+    expect(screen.getByText("已自动释放 1 笔支付超时订单。")).toBeInTheDocument();
+    expect(runAutomaticPaymentReleases).not.toHaveBeenCalled();
   });
 });

@@ -7,7 +7,10 @@ import { DashboardCharts } from "../../../../../components/dashboard/dashboard-c
 import { getSessionUser } from "../../../../../lib/auth";
 import { getMarketDashboardSummary } from "../../../../../server/dashboard/service";
 import { listOrganizerMarketOptions } from "../../../../../server/markets/service";
-import { runAutomaticPaymentReminders } from "../../../../../server/payments/service";
+import {
+  runAutomaticPaymentReminders,
+  runAutomaticPaymentReleases
+} from "../../../../../server/payments/service";
 
 type OrganizerDashboardPageProps = {
   params: Promise<{
@@ -15,6 +18,7 @@ type OrganizerDashboardPageProps = {
   }>;
   searchParams?: Promise<{
     autoRemindedCount?: string;
+    autoReleasedCount?: string;
     from?: string;
     status?: string;
     marketStatus?: string;
@@ -39,6 +43,27 @@ async function runAutomaticPaymentRemindersAction(formData: FormData) {
 
   const params = buildDashboardActionParams(formData);
   params.set("autoRemindedCount", String(result.remindedCount));
+  redirect(`/organizer/dashboard/${marketId}?${params.toString()}`);
+}
+
+async function runAutomaticPaymentReleasesAction(formData: FormData) {
+  "use server";
+
+  const sessionUser = await getSessionUser();
+
+  if (!sessionUser || sessionUser.role !== "organizer") {
+    return;
+  }
+
+  const marketId = String(formData.get("marketId") ?? "");
+  const result = await runAutomaticPaymentReleases({
+    marketId,
+    organizerId: sessionUser.userId
+  });
+  revalidatePath(`/organizer/dashboard/${marketId}`);
+
+  const params = buildDashboardActionParams(formData);
+  params.set("autoReleasedCount", String(result.releasedCount));
   redirect(`/organizer/dashboard/${marketId}?${params.toString()}`);
 }
 
@@ -224,6 +249,9 @@ export default async function OrganizerDashboardPage({
           {typeof resolvedSearchParams.autoRemindedCount === "string" ? (
             <p>已自动催办 {resolvedSearchParams.autoRemindedCount} 笔支付临期订单。</p>
           ) : null}
+          {typeof resolvedSearchParams.autoReleasedCount === "string" ? (
+            <p>已自动释放 {resolvedSearchParams.autoReleasedCount} 笔支付超时订单。</p>
+          ) : null}
           {summary.metrics.paymentUrgentCount > 0 ? (
             <form action={runAutomaticPaymentRemindersAction} aria-label="自动催办表单">
               <input name="marketId" type="hidden" value={summary.market.id} />
@@ -235,6 +263,19 @@ export default async function OrganizerDashboardPage({
                 value={resolvedSearchParams.marketStatus ?? ""}
               />
               <button type="submit">执行自动催办</button>
+            </form>
+          ) : null}
+          {summary.metrics.paymentOverdueCount > 0 ? (
+            <form action={runAutomaticPaymentReleasesAction} aria-label="自动释放表单">
+              <input name="marketId" type="hidden" value={summary.market.id} />
+              <input name="from" type="hidden" value={resolvedSearchParams.from ?? ""} />
+              <input name="status" type="hidden" value={resolvedSearchParams.status ?? ""} />
+              <input
+                name="marketStatus"
+                type="hidden"
+                value={resolvedSearchParams.marketStatus ?? ""}
+              />
+              <button type="submit">执行自动释放</button>
             </form>
           ) : null}
           <article>

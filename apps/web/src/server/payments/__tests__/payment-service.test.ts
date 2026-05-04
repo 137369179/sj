@@ -7,6 +7,7 @@ import {
   PaymentError,
   payOrder,
   runAutomaticPaymentReminders,
+  runAutomaticPaymentReleases,
   sendPaymentReminder
 } from "../service";
 
@@ -282,6 +283,107 @@ describe("payments service", () => {
         marketId: "market_1",
         remindedCount: 1,
         orderIds: ["order_urgent_1"]
+      });
+
+      vi.useRealTimers();
+    });
+  });
+
+  describe("runAutomaticPaymentReleases", () => {
+    it("automatically releases overdue pending orders for the target market", async () => {
+      vi.useFakeTimers();
+      vi.setSystemTime(new Date("2026-05-04T12:00:00.000Z"));
+
+      vi.spyOn(db.market, "findUnique").mockResolvedValue({
+        id: "market_1",
+        title: "春日咖啡市集",
+        organizerId: "org_1"
+      } as any);
+      vi.spyOn(db.order, "findMany").mockResolvedValue([
+        {
+          id: "order_overdue_1",
+          createdAt: new Date("2026-05-03T06:00:00.000Z")
+        },
+        {
+          id: "order_recent_1",
+          createdAt: new Date("2026-05-04T02:00:00.000Z")
+        },
+        {
+          id: "order_overdue_2",
+          createdAt: new Date("2026-05-03T02:00:00.000Z")
+        }
+      ] as any);
+
+      const expireSpy = vi.spyOn(db.order, "findUnique").mockResolvedValue({
+        id: "order_overdue_1",
+        vendorId: "vendor_2",
+        applicationId: "app_2",
+        amount: 600,
+        status: "pending",
+        createdAt: new Date("2026-05-03T06:00:00.000Z"),
+        application: {
+          id: "app_2",
+          status: "stall_assigned",
+          vendorId: "vendor_2",
+          market: {
+            title: "春日咖啡市集",
+            organizerId: "org_1"
+          }
+        }
+      } as any);
+      const transactionMock = {
+        order: { update: vi.fn().mockResolvedValue({ id: "order_overdue_1", status: "cancelled" }) },
+        stall: { updateMany: vi.fn().mockResolvedValue({ count: 1 }) },
+        application: { update: vi.fn().mockResolvedValue({ id: "app_2", status: "rejected" }) },
+        applicationReview: { create: vi.fn().mockResolvedValue({ id: "review_2" }) }
+      };
+      vi.spyOn(db, "$transaction").mockImplementation(async (cb) => cb(transactionMock as any));
+      vi.spyOn(db.notification, "create").mockResolvedValue({ id: "notification_release" } as any);
+
+      const secondOrderSpy = expireSpy.mockResolvedValueOnce({
+        id: "order_overdue_1",
+        vendorId: "vendor_2",
+        applicationId: "app_2",
+        amount: 600,
+        status: "pending",
+        createdAt: new Date("2026-05-03T06:00:00.000Z"),
+        application: {
+          id: "app_2",
+          status: "stall_assigned",
+          vendorId: "vendor_2",
+          market: {
+            title: "春日咖啡市集",
+            organizerId: "org_1"
+          }
+        }
+      } as any);
+      secondOrderSpy.mockResolvedValueOnce({
+        id: "order_overdue_2",
+        vendorId: "vendor_3",
+        applicationId: "app_3",
+        amount: 500,
+        status: "pending",
+        createdAt: new Date("2026-05-03T02:00:00.000Z"),
+        application: {
+          id: "app_3",
+          status: "stall_assigned",
+          vendorId: "vendor_3",
+          market: {
+            title: "春日咖啡市集",
+            organizerId: "org_1"
+          }
+        }
+      } as any);
+
+      const result = await runAutomaticPaymentReleases({
+        marketId: "market_1",
+        organizerId: "org_1"
+      });
+
+      expect(result).toEqual({
+        marketId: "market_1",
+        releasedCount: 2,
+        orderIds: ["order_overdue_1", "order_overdue_2"]
       });
 
       vi.useRealTimers();
