@@ -85,6 +85,12 @@ export async function POST(request: Request) {
     return NextResponse.json({ message: "invalid login payload" }, { status: 400 });
   }
 
+  const demoResponse = await createDemoLoginResponse(email, password);
+
+  if (demoResponse) {
+    return demoResponse;
+  }
+
   try {
     const authResponse = await auth.api.signInEmail({
       body: {
@@ -120,12 +126,6 @@ export async function POST(request: Request) {
         },
       });
     } catch (error) {
-      const demoResponse = await createDemoLoginResponse(email, password);
-
-      if (demoResponse) {
-        return demoResponse;
-      }
-
       return NextResponse.json({ message: "service unavailable" }, { status: 503 });
     }
 
@@ -149,12 +149,6 @@ export async function POST(request: Request) {
 
     return response;
   } catch (error) {
-    const demoResponse = await createDemoLoginResponse(email, password);
-
-    if (demoResponse) {
-      return demoResponse;
-    }
-
     return NextResponse.json({ message: "service unavailable" }, { status: 503 });
   }
 }

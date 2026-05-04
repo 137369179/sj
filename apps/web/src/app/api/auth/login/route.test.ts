@@ -121,4 +121,23 @@ describe("POST /api/auth/login", () => {
       mode: "demo",
     });
   });
+
+  it("skips Better Auth and role lookup for demo users when demo login is enabled", async () => {
+    process.env.AUTH_ENABLE_DEMO_LOGIN = "true";
+    process.env.NODE_ENV = "development";
+
+    const response = await POST(
+      new Request("http://localhost/api/auth/login", {
+        method: "POST",
+        headers: { "content-type": "application/json" },
+        body: JSON.stringify({ email: "organizer@example.com", password: "password123" }),
+      }),
+    );
+
+    expect(response.status).toBe(200);
+    expect(await response.json()).toEqual({ ok: true, mode: "demo" });
+    expect(vi.mocked(auth.api.signInEmail)).not.toHaveBeenCalled();
+    expect(vi.mocked(db.user.findUnique)).not.toHaveBeenCalled();
+    expect(response.headers.get("set-cookie")).toContain("mrp_session=");
+  });
 });
