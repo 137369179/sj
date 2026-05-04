@@ -127,6 +127,19 @@ describe("role-play metadata", () => {
         reviewNote: "摊主已确认候补补位"
       })
     ).toBe("主办方通常会在 24 小时内同步摊位分配结果，请留意最新通知。");
+
+    expect(
+      getVendorActionLabel({
+        status: "rejected",
+        reviewNote: "摊位支付超时，已释放档期"
+      })
+    ).toBe("重新报名");
+    expect(
+      getVendorReceiptNote({
+        status: "rejected",
+        reviewNote: "摊位支付超时，已释放档期"
+      })
+    ).toBe("由于支付超时，本次摊位档期已释放，可重新关注后续场次。");
   });
 
   it("derives organizer follow-up priority and timing notes", () => {

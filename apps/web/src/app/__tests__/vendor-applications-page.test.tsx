@@ -457,6 +457,47 @@ describe("Vendor applications page", () => {
     ).toBeInTheDocument();
   });
 
+  it("shows a retry-oriented receipt after payment timeout releases the stall", async () => {
+    vi.mocked(getSessionUser).mockResolvedValue({
+      userId: "vendor_1",
+      role: "vendor"
+    });
+    vi.mocked(listVendorApplications).mockResolvedValue([
+      buildVendorApplication({
+        id: "app_11",
+        marketId: "market_11",
+        marketTitle: "秋日器物市集",
+        marketCity: "苏州",
+        status: "rejected",
+        reviewNote: "摊位支付超时，已释放档期",
+        reviewedAt: new Date("2026-05-04T12:00:00.000Z"),
+        reviews: [
+          {
+            id: "review_11",
+            applicationId: "app_11",
+            organizerId: "org_1",
+            decision: "reject",
+            reviewNote: "摊位支付超时，已释放档期",
+            createdAt: new Date("2026-05-04T12:00:00.000Z")
+          }
+        ],
+        createdAt: new Date("2026-05-01T02:00:00.000Z")
+      })
+    ]);
+
+    const page = await VendorApplicationsPage({
+      searchParams: Promise.resolve({})
+    });
+
+    render(page);
+
+    expect(screen.getByText("当前处理：本轮未通过")).toBeInTheDocument();
+    expect(screen.getByText("建议动作：重新报名")).toBeInTheDocument();
+    expect(
+      screen.getByText("进度回执：由于支付超时，本次摊位档期已释放，可重新关注后续场次。")
+    ).toBeInTheDocument();
+  });
+
   it("filters vendor applications by marketId and preserves status context", async () => {
     vi.mocked(getSessionUser).mockResolvedValue({
       userId: "vendor_1",

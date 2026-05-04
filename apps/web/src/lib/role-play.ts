@@ -178,6 +178,10 @@ export function getVendorActionLabel(input: VendorProgressInput) {
     return "准备进场";
   }
 
+  if (isExpiredPaymentRelease(input)) {
+    return "重新报名";
+  }
+
   if (isConfirmedWaitlistProgress(input)) {
     return "等待分配结果";
   }
@@ -208,6 +212,10 @@ export function getVendorReceiptNote(input: VendorProgressInput) {
 
   if (input.status === "paid") {
     return "报名已锁定，可按摊位安排准备进场。";
+  }
+
+  if (isExpiredPaymentRelease(input)) {
+    return "由于支付超时，本次摊位档期已释放，可重新关注后续场次。";
   }
 
   if (isConfirmedWaitlistProgress(input)) {
@@ -317,6 +325,10 @@ function getRemainingHours(reviewedAt: Date, windowHours: number) {
 
 function isConfirmedWaitlistProgress(input: VendorProgressInput) {
   return input.status === "approved" && input.reviewNote === "摊主已确认候补补位";
+}
+
+function isExpiredPaymentRelease(input: VendorProgressInput) {
+  return input.status === "rejected" && input.reviewNote === "摊位支付超时，已释放档期";
 }
 
 export const ORGANIZER_DASHBOARD_PRIORITIES = [

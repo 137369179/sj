@@ -24,6 +24,8 @@ describe("dashboard service", () => {
         supplementPendingCount: 2,
         waitlistPendingCount: 1,
         followUpUrgentCount: 1,
+        paymentPendingCount: 2,
+        paymentOverdueCount: 1,
         totalStalls: 10,
         activeStalls: 8,
         occupiedStalls: 5,
@@ -41,6 +43,8 @@ describe("dashboard service", () => {
       supplementPendingCount: 2,
       waitlistPendingCount: 1,
       followUpUrgentCount: 1,
+      paymentPendingCount: 2,
+      paymentOverdueCount: 1,
       approvalRate: 7 / 13,
       totalStalls: 10,
       activeStalls: 8,
@@ -90,8 +94,10 @@ describe("dashboard service", () => {
       }
     ] as Awaited<ReturnType<typeof db.stall.findMany>>);
     const orderSpy = vi.spyOn(db.order, "findMany").mockResolvedValue([
-      { amount: 100 },
-      { amount: 150 }
+      { amount: 100, status: "paid", createdAt: new Date("2026-05-02T08:00:00.000Z") },
+      { amount: 150, status: "paid", createdAt: new Date("2026-05-02T09:00:00.000Z") },
+      { amount: 80, status: "pending", createdAt: new Date("2026-05-02T06:00:00.000Z") },
+      { amount: 60, status: "pending", createdAt: new Date("2026-05-04T02:00:00.000Z") }
     ] as any);
 
     const summary = await getMarketDashboardSummary({
@@ -156,6 +162,8 @@ describe("dashboard service", () => {
         supplementPendingCount: 1,
         waitlistPendingCount: 1,
         followUpUrgentCount: 2,
+        paymentPendingCount: 2,
+        paymentOverdueCount: 1,
         approvalRate: 2 / 6,
         totalStalls: 3,
         activeStalls: 2,

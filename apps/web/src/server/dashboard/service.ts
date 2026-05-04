@@ -12,6 +12,8 @@ export type DashboardSummaryInput = {
   supplementPendingCount: number;
   waitlistPendingCount: number;
   followUpUrgentCount: number;
+  paymentPendingCount: number;
+  paymentOverdueCount: number;
   totalStalls: number;
   activeStalls: number;
   occupiedStalls: number;
@@ -60,6 +62,8 @@ export function buildDashboardSummary(input: DashboardSummaryInput) {
     supplementPendingCount: input.supplementPendingCount,
     waitlistPendingCount: input.waitlistPendingCount,
     followUpUrgentCount: input.followUpUrgentCount,
+    paymentPendingCount: input.paymentPendingCount,
+    paymentOverdueCount: input.paymentOverdueCount,
     approvalRate: totalApplications === 0 ? 0 : acceptedCount / totalApplications,
     totalStalls: input.totalStalls,
     activeStalls: input.activeStalls,
@@ -126,14 +130,17 @@ export async function getMarketDashboardSummary(input: {
     where: {
       application: {
         marketId: input.marketId
-      },
-      status: "paid"
+      }
     },
     select: {
-      amount: true
+      amount: true,
+      status: true,
+      createdAt: true
     }
   });
-  const totalRevenue = orders.reduce((sum, order) => sum + order.amount, 0);
+  const totalRevenue = orders
+    .filter((order) => order.status === "paid")
+    .reduce((sum, order) => sum + order.amount, 0);
 
   return {
     market: {
@@ -144,6 +151,7 @@ export async function getMarketDashboardSummary(input: {
     metrics: buildDashboardSummary({
       ...countStatuses(applications.map((item) => item.status)),
       ...countOrganizerFollowUps(applications),
+      ...countPaymentRisks(orders),
       ...countStalls(stalls),
       totalRevenue
     })
@@ -157,6 +165,8 @@ function countStatuses(
   | "supplementPendingCount"
   | "waitlistPendingCount"
   | "followUpUrgentCount"
+  | "paymentPendingCount"
+  | "paymentOverdueCount"
   | "totalStalls"
   | "activeStalls"
   | "occupiedStalls"
@@ -235,6 +245,36 @@ function countOrganizerFollowUps(
 
     if (followUpState === "urgent") {
       counts.followUpUrgentCount += 1;
+    }
+  }
+
+  return counts;
+}
+
+function countPaymentRisks(
+  orders: Array<{
+    status: string;
+    createdAt: Date;
+  }>
+) {
+  const counts = {
+    paymentPendingCount: 0,
+    paymentOverdueCount: 0
+  };
+
+  for (const order of orders) {
+    if (order.status !== "pending") {
+      continue;
+    }
+
+    counts.paymentPendingCount += 1;
+
+    const remainingHours = Math.ceil(
+      (order.createdAt.getTime() + 24 * 60 * 60 * 1000 - Date.now()) / (60 * 60 * 1000)
+    );
+
+    if (remainingHours <= 0) {
+      counts.paymentOverdueCount += 1;
     }
   }
 
