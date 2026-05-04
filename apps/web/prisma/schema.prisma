@@ -1,0 +1,228 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum UserRole {
+  vendor
+  organizer
+  admin
+}
+
+enum RoleMembershipStatus {
+  active
+  suspended
+}
+
+enum MarketStatus {
+  draft
+  published
+  recruiting
+  reviewing
+  confirmed
+  ongoing
+  completed
+}
+
+enum ApplicationStatus {
+  submitted
+  under_review
+  approved
+  rejected
+  stall_assigned
+  paid
+}
+
+enum OrderStatus {
+  pending
+  paid
+  refunded
+  cancelled
+}
+
+model User {
+  id               String               @id @default(cuid())
+  email            String               @unique
+  emailVerified    Boolean              @default(false)
+  emailVerifiedAt  DateTime?
+  phone            String?              @unique
+  role             UserRole
+  name             String
+  image            String?
+  isVerified       Boolean              @default(false)
+  createdAt        DateTime             @default(now())
+  updatedAt        DateTime             @updatedAt
+  accounts         Account[]
+  sessions         Session[]
+  passkeys         Passkey[]
+  roleMemberships  UserRoleMembership[]
+  organizedMarkets Market[]             @relation("OrganizerMarkets")
+  applications     Application[]        @relation("VendorApplications")
+  notifications    Notification[]
+  orders           Order[]
+}
+
+model UserRoleMembership {
+  id        String               @id @default(cuid())
+  userId    String
+  role      UserRole
+  status    RoleMembershipStatus @default(active)
+  grantedAt DateTime             @default(now())
+  user      User                 @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, role])
+}
+
+model Session {
+  id         String    @id @default(cuid())
+  userId     String
+  token      String    @unique
+  expiresAt  DateTime
+  ipAddress  String?
+  userAgent  String?
+  activeRole UserRole?
+  createdAt  DateTime  @default(now())
+  updatedAt  DateTime  @updatedAt
+  user       User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+model Account {
+  id                    String    @id @default(cuid())
+  userId                String
+  accountId             String
+  providerId            String
+  accessToken           String?   @db.Text
+  refreshToken          String?   @db.Text
+  accessTokenExpiresAt  DateTime?
+  refreshTokenExpiresAt DateTime?
+  scope                 String?
+  idToken               String?   @db.Text
+  password              String?
+  createdAt             DateTime  @default(now())
+  updatedAt             DateTime  @updatedAt
+  user                  User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([providerId, accountId])
+}
+
+model Verification {
+  id         String   @id @default(cuid())
+  identifier String
+  value      String
+  expiresAt  DateTime
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+
+  @@unique([identifier, value])
+}
+
+model Passkey {
+  id           String    @id @default(cuid())
+  name         String?
+  publicKey    String    @db.Text
+  userId       String
+  credentialID String
+  counter      Int
+  deviceType   String
+  backedUp     Boolean
+  transports   String?
+  createdAt    DateTime? @default(now())
+  aaguid       String?
+  user         User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, credentialID])
+}
+
+model Market {
+  id                 String         @id @default(cuid())
+  organizerId        String
+  title              String
+  city               String
+  coverUrl           String?
+  description        String?        @db.Text
+  startsAt           DateTime
+  endsAt             DateTime
+  status             MarketStatus   @default(draft)
+  isPlatformApproved Boolean        @default(false)
+  organizer          User           @relation("OrganizerMarkets", fields: [organizerId], references: [id])
+  applications       Application[]
+  stalls             Stall[]
+}
+
+model Application {
+  id               String            @id @default(cuid())
+  marketId         String
+  vendorId         String
+  status           ApplicationStatus @default(submitted)
+  note             String?
+  applicationNote  String?
+  reviewNote       String?
+  boothPreference  String?
+  attachmentsJson  Json?
+  reviewedAt       DateTime?
+  reviewedByUserId String?
+  createdAt        DateTime          @default(now())
+  market           Market            @relation(fields: [marketId], references: [id])
+  vendor           User              @relation("VendorApplications", fields: [vendorId], references: [id])
+  assignedStall    Stall?            @relation("AssignedStall")
+  reviews          ApplicationReview[]
+  order            Order?
+
+  @@unique([marketId, vendorId])
+}
+
+model Order {
+  id               String      @id @default(cuid())
+  applicationId    String      @unique
+  vendorId         String
+  amount           Float
+  commissionAmount Float?
+  netAmount        Float?
+  status           OrderStatus @default(pending)
+  paymentMethod    String?
+  paidAt           DateTime?
+  createdAt        DateTime    @default(now())
+  updatedAt        DateTime    @updatedAt
+  application      Application @relation(fields: [applicationId], references: [id])
+  vendor           User        @relation(fields: [vendorId], references: [id])
+}
+
+model ApplicationReview {
+  id            String      @id @default(cuid())
+  applicationId String
+  organizerId   String
+  decision      String
+  reviewNote    String?
+  createdAt     DateTime    @default(now())
+  application   Application @relation(fields: [applicationId], references: [id])
+
+  @@index([applicationId, createdAt])
+}
+
+model Stall {
+  id                    String       @id @default(cuid())
+  marketId              String
+  code                  String
+  name                  String
+  price                 Float        @default(0)
+  isActive              Boolean      @default(true)
+  assignedApplicationId String?      @unique
+  market                Market       @relation(fields: [marketId], references: [id])
+  assignedApplication   Application? @relation("AssignedStall", fields: [assignedApplicationId], references: [id])
+
+  @@unique([marketId, code])
+}
+
+model Notification {
+  id        String   @id @default(cuid())
+  userId    String
+  title     String
+  content   String
+  readAt    DateTime?
+  createdAt DateTime @default(now())
+  user      User     @relation(fields: [userId], references: [id])
+}

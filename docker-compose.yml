@@ -1,0 +1,48 @@
+version: '3.8'
+
+services:
+  db:
+    image: postgres:15-alpine
+    restart: always
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: password
+      POSTGRES_DB: market_recruitment
+    ports:
+      - "5432:5432"
+    volumes:
+      - db_data:/var/lib/postgresql/data
+
+  migrate:
+    build:
+      context: .
+      dockerfile: Dockerfile
+      target: builder
+    working_dir: /app/apps/web
+    command: sh -c "npx wait-on tcp:db:5432 && npx prisma migrate deploy && npx prisma db seed"
+    environment:
+      - DATABASE_URL=postgresql://postgres:password@db:5432/market_recruitment?schema=public
+    depends_on:
+      db:
+        condition: service_started
+
+  web:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    restart: always
+    ports:
+      - "3000:3000"
+    environment:
+      - DATABASE_URL=postgresql://postgres:password@db:5432/market_recruitment?schema=public
+      - JWT_SECRET=your_super_secret_key_for_jwt_session
+      - UPLOAD_DIR=/app/uploads
+    depends_on:
+      migrate:
+        condition: service_completed_successfully
+    volumes:
+      - uploads_data:/app/uploads
+
+volumes:
+  db_data:
+  uploads_data:
