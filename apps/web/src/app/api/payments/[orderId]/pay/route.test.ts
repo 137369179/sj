@@ -13,6 +13,9 @@ vi.mock("../../../../../lib/db", () => ({
     order: {
       findUnique: vi.fn()
     },
+    notification: {
+      create: vi.fn()
+    },
     $transaction: vi.fn()
   }
 }));
@@ -42,7 +45,13 @@ describe("POST /api/payments/[orderId]/pay", () => {
       id: "order_1",
       vendorId: "vendor_1",
       applicationId: "app_1",
-      status: "pending"
+      status: "pending",
+      amount: 100,
+      application: {
+        market: {
+          title: "春日咖啡市集"
+        }
+      }
     } as any);
 
     const transactionMock = {
@@ -53,6 +62,9 @@ describe("POST /api/payments/[orderId]/pay", () => {
     vi.mocked(db.$transaction).mockImplementation(async (cb) => {
       return cb(transactionMock as any);
     });
+    vi.mocked(db.notification.create).mockResolvedValue({
+      id: "notification_1"
+    } as any);
 
     const response = await POST(new Request("http://localhost/api/payments/order_1/pay"), {
       params: Promise.resolve({ orderId: "order_1" })

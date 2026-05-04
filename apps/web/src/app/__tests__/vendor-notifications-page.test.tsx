@@ -111,6 +111,30 @@ describe("VendorNotificationsPage", () => {
     expect(screen.getByText("摊位分配已确认")).toBeInTheDocument();
   });
 
+  it("surfaces arrival guidance when payment completed notification exists", async () => {
+    vi.mocked(getSessionUser).mockResolvedValue({
+      userId: "vendor_1",
+      role: "vendor"
+    });
+    vi.mocked(listVendorNotifications).mockResolvedValue([
+      {
+        id: "n_4",
+        title: "支付已完成",
+        content: "你在夏夜面包市集的摊位费用已支付完成，金额为¥800，本次报名已锁定。",
+        isRead: false,
+        createdAt: new Date("2026-05-03T12:00:00Z")
+      }
+    ]);
+
+    const page = await VendorNotificationsPage();
+    render(page);
+
+    expect(screen.getByRole("heading", { name: "本周需要关注" })).toBeInTheDocument();
+    expect(screen.getByText("支付完成后可开始准备进场资料，并核对摊位信息。")).toBeInTheDocument();
+    expect(screen.getByText("建议动作优先级：先核对摊位安排，再准备进场。")).toBeInTheDocument();
+    expect(screen.getByText("支付已完成")).toBeInTheDocument();
+  });
+
   it("renders empty state when no notifications exist", async () => {
     vi.mocked(getSessionUser).mockResolvedValue({
       userId: "vendor_1",

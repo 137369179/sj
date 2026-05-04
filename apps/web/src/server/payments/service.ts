@@ -1,4 +1,5 @@
 import { db } from "../../lib/db";
+import { buildOrderPaidNotification, createNotification } from "../notifications/service";
 
 export class PaymentError extends Error {
   code: "NOT_FOUND" | "INVALID_STATUS" | "FORBIDDEN";
@@ -10,7 +11,18 @@ export class PaymentError extends Error {
 
 export async function payOrder(orderId: string, vendorId: string, method: string = "wechat") {
   const order = await db.order.findUnique({
-    where: { id: orderId }
+    where: { id: orderId },
+    include: {
+      application: {
+        select: {
+          market: {
+            select: {
+              title: true
+            }
+          }
+        }
+      }
+    }
   });
 
   if (!order) {
@@ -28,7 +40,7 @@ export async function payOrder(orderId: string, vendorId: string, method: string
   const commissionAmount = order.amount * 0.05; // 5% platform fee
   const netAmount = order.amount - commissionAmount;
 
-  return db.$transaction(async (tx) => {
+  const updatedOrder = await db.$transaction(async (tx) => {
     const updatedOrder = await tx.order.update({
       where: { id: orderId },
       data: {
@@ -49,6 +61,16 @@ export async function payOrder(orderId: string, vendorId: string, method: string
 
     return updatedOrder;
   });
+
+  await createNotification(
+    buildOrderPaidNotification({
+      userId: vendorId,
+      marketTitle: order.application.market.title,
+      amount: order.amount
+    })
+  );
+
+  return updatedOrder;
 }
 
 export async function getVendorOrderForApplication(applicationId: string, vendorId: string) {

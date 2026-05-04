@@ -4,6 +4,7 @@ import { db } from "../../../lib/db";
 import {
   buildApplicationFollowUpNotification,
   buildApplicationReviewNotification,
+  buildOrderPaidNotification,
   buildStallAssignmentNotification,
   createNotification,
   listVendorNotifications,
@@ -115,6 +116,22 @@ describe("notification service", () => {
         userId: "vendor_1",
         title: "摊位分配已确认",
         content: "你在夏日冰饮市集的申请已完成摊位分配，摊位为主入口特展（A01）。"
+      });
+    });
+  });
+
+  describe("buildOrderPaidNotification", () => {
+    it("builds an order paid notification", () => {
+      const result = buildOrderPaidNotification({
+        userId: "vendor_1",
+        marketTitle: "夏日冰饮市集",
+        amount: 800
+      });
+
+      expect(result).toEqual({
+        userId: "vendor_1",
+        title: "支付已完成",
+        content: "你在夏日冰饮市集的摊位费用已支付完成，金额为¥800，本次报名已锁定。"
       });
     });
   });

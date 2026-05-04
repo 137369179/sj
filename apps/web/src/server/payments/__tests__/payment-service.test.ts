@@ -15,7 +15,12 @@ describe("payments service", () => {
         vendorId: "vendor_1",
         applicationId: "app_1",
         status: "pending",
-        amount: 100
+        amount: 100,
+        application: {
+          market: {
+            title: "春日咖啡市集"
+          }
+        }
       } as any);
 
       const transactionMock = {
@@ -26,6 +31,9 @@ describe("payments service", () => {
       vi.spyOn(db, "$transaction").mockImplementation(async (cb) => {
         return cb(transactionMock as any);
       });
+      const notificationCreateSpy = vi
+        .spyOn(db.notification, "create")
+        .mockResolvedValue({ id: "notification_1" } as any);
 
       const result = await payOrder("order_1", "vendor_1");
 
@@ -43,6 +51,13 @@ describe("payments service", () => {
       expect(transactionMock.application.update).toHaveBeenCalledWith({
         where: { id: "app_1" },
         data: { status: "paid" }
+      });
+      expect(notificationCreateSpy).toHaveBeenCalledWith({
+        data: {
+          userId: "vendor_1",
+          title: "支付已完成",
+          content: "你在春日咖啡市集的摊位费用已支付完成，金额为¥100，本次报名已锁定。"
+        }
       });
       expect(result.status).toBe("paid");
     });

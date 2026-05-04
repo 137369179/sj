@@ -32,6 +32,10 @@ export default async function VendorNotificationsPage() {
       notification.title.includes("摊位分配已确认") ||
       notification.content.includes("已完成摊位分配")
   );
+  const hasPaidNotification = notifications.some(
+    (notification) =>
+      notification.title.includes("支付已完成") || notification.content.includes("本次报名已锁定")
+  );
   const supplementNotification = notifications.find(
     (notification) =>
       notification.title.includes("补充资料") || notification.content.includes("补充资料")
@@ -49,7 +53,8 @@ export default async function VendorNotificationsPage() {
         <h2 id="notifications-title">我的通知</h2>
         {hasSupplementNotification ||
         hasWaitlistNotification ||
-        hasStallAssignedNotification ? (
+        hasStallAssignedNotification ||
+        hasPaidNotification ? (
           <section aria-labelledby="vendor-notification-guidance-title">
             <h3 id="vendor-notification-guidance-title">本周需要关注</h3>
             {hasSupplementNotification || hasWaitlistNotification ? (
@@ -62,6 +67,12 @@ export default async function VendorNotificationsPage() {
               <>
                 <p>摊位已分配后请尽快完成支付，避免档期释放。</p>
                 <p>建议动作优先级：先完成支付，再准备进场资料。</p>
+              </>
+            ) : null}
+            {hasPaidNotification ? (
+              <>
+                <p>支付完成后可开始准备进场资料，并核对摊位信息。</p>
+                <p>建议动作优先级：先核对摊位安排，再准备进场。</p>
               </>
             ) : null}
             {timingNote ? <p>{timingNote}</p> : null}

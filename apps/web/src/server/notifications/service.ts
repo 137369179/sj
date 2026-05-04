@@ -37,6 +37,12 @@ export type BuildStallAssignmentNotificationInput = {
   stallName: string;
 };
 
+export type BuildOrderPaidNotificationInput = {
+  userId: string;
+  marketTitle: string;
+  amount: number;
+};
+
 export function buildApplicationReviewNotification(
   input: BuildApplicationReviewNotificationInput
 ): CreateNotificationInput {
@@ -117,6 +123,16 @@ export function buildStallAssignmentNotification(
     userId: input.userId,
     title: "摊位分配已确认",
     content: `你在${input.marketTitle}的申请已完成摊位分配，摊位为${input.stallName}（${input.stallCode}）。`
+  };
+}
+
+export function buildOrderPaidNotification(
+  input: BuildOrderPaidNotificationInput
+): CreateNotificationInput {
+  return {
+    userId: input.userId,
+    title: "支付已完成",
+    content: `你在${input.marketTitle}的摊位费用已支付完成，金额为¥${input.amount}，本次报名已锁定。`
   };
 }
 
