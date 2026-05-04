@@ -1,5 +1,8 @@
 import { db } from "../../lib/db";
-import { getOrganizerFollowUpState } from "../../lib/role-play";
+import {
+  getOrganizerFollowUpState,
+  getOrganizerPaymentFollowUpState
+} from "../../lib/role-play";
 import type { ApplicationStatus } from "../applications/status";
 
 export type DashboardSummaryInput = {
@@ -13,6 +16,7 @@ export type DashboardSummaryInput = {
   waitlistPendingCount: number;
   followUpUrgentCount: number;
   paymentPendingCount: number;
+  paymentUrgentCount: number;
   paymentOverdueCount: number;
   totalStalls: number;
   activeStalls: number;
@@ -63,6 +67,7 @@ export function buildDashboardSummary(input: DashboardSummaryInput) {
     waitlistPendingCount: input.waitlistPendingCount,
     followUpUrgentCount: input.followUpUrgentCount,
     paymentPendingCount: input.paymentPendingCount,
+    paymentUrgentCount: input.paymentUrgentCount,
     paymentOverdueCount: input.paymentOverdueCount,
     approvalRate: totalApplications === 0 ? 0 : acceptedCount / totalApplications,
     totalStalls: input.totalStalls,
@@ -166,6 +171,7 @@ function countStatuses(
   | "waitlistPendingCount"
   | "followUpUrgentCount"
   | "paymentPendingCount"
+  | "paymentUrgentCount"
   | "paymentOverdueCount"
   | "totalStalls"
   | "activeStalls"
@@ -259,6 +265,7 @@ function countPaymentRisks(
 ) {
   const counts = {
     paymentPendingCount: 0,
+    paymentUrgentCount: 0,
     paymentOverdueCount: 0
   };
 
@@ -268,11 +275,18 @@ function countPaymentRisks(
     }
 
     counts.paymentPendingCount += 1;
+    const followUpState = getOrganizerPaymentFollowUpState({
+      orderStatus: order.status,
+      orderCreatedAt: order.createdAt
+    });
+
+    if (followUpState === "urgent") {
+      counts.paymentUrgentCount += 1;
+    }
 
     const remainingHours = Math.ceil(
       (order.createdAt.getTime() + 24 * 60 * 60 * 1000 - Date.now()) / (60 * 60 * 1000)
     );
-
     if (remainingHours <= 0) {
       counts.paymentOverdueCount += 1;
     }

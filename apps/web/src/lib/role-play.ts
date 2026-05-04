@@ -20,6 +20,7 @@ export type VendorApplicationTaskGroupId =
   (typeof VENDOR_APPLICATION_TASK_GROUPS)[number]["id"];
 
 export type OrganizerFollowUpState = "idle" | "watching" | "urgent";
+export type OrganizerPaymentFollowUpState = "idle" | "watching" | "urgent";
 
 type VendorProgressInput = {
   status: string;
@@ -307,6 +308,60 @@ export function getOrganizerFollowUpNote(input: {
   }
 
   return null;
+}
+
+export function getOrganizerPaymentFollowUpState(input: {
+  orderStatus?: string | null;
+  orderCreatedAt?: Date | string | null;
+}): OrganizerPaymentFollowUpState {
+  const orderCreatedAt = normalizeDate(input.orderCreatedAt);
+
+  if (input.orderStatus !== "pending" || !orderCreatedAt) {
+    return "idle";
+  }
+
+  const remainingHours = getRemainingHours(orderCreatedAt, 24);
+
+  if (remainingHours <= 12) {
+    return "urgent";
+  }
+
+  return "watching";
+}
+
+export function getOrganizerPaymentFollowUpLabel(state: OrganizerPaymentFollowUpState) {
+  if (state === "urgent") {
+    return "立即催办";
+  }
+
+  if (state === "watching") {
+    return "持续跟进";
+  }
+
+  return "正常推进";
+}
+
+export function getOrganizerPaymentFollowUpNote(input: {
+  orderStatus?: string | null;
+  orderCreatedAt?: Date | string | null;
+}) {
+  const orderCreatedAt = normalizeDate(input.orderCreatedAt);
+
+  if (input.orderStatus !== "pending" || !orderCreatedAt) {
+    return null;
+  }
+
+  const remainingHours = getRemainingHours(orderCreatedAt, 24);
+
+  if (remainingHours <= 0) {
+    return "支付已超时，建议立即释放档期并通知下一位候补。";
+  }
+
+  if (remainingHours <= 12) {
+    return `支付将在 ${remainingHours} 小时后超时，建议立即催办摊主完成支付。`;
+  }
+
+  return "待支付订单仍在时效窗口内，可继续观察付款进展。";
 }
 
 function normalizeDate(value?: Date | string | null) {

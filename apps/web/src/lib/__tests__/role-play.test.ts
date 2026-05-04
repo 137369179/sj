@@ -4,6 +4,9 @@ import {
   getVendorActionLabel,
   getOrganizerFollowUpLabel,
   getOrganizerFollowUpNote,
+  getOrganizerPaymentFollowUpLabel,
+  getOrganizerPaymentFollowUpNote,
+  getOrganizerPaymentFollowUpState,
   getOrganizerFollowUpState,
   getVendorReceiptNote,
   getVendorTimingNote,
@@ -167,5 +170,19 @@ describe("role-play metadata", () => {
       })
     ).toBe("候补观察已到期，建议立即确认补位或释放名额。");
     expect(getOrganizerFollowUpLabel("watching")).toBe("持续跟进");
+
+    expect(
+      getOrganizerPaymentFollowUpState({
+        orderStatus: "pending",
+        orderCreatedAt: new Date("2026-05-02T22:00:00.000Z")
+      })
+    ).toBe("urgent");
+    expect(
+      getOrganizerPaymentFollowUpNote({
+        orderStatus: "pending",
+        orderCreatedAt: new Date("2026-05-02T22:00:00.000Z")
+      })
+    ).toBe("支付将在 10 小时后超时，建议立即催办摊主完成支付。");
+    expect(getOrganizerPaymentFollowUpLabel("watching")).toBe("持续跟进");
   });
 });

@@ -464,7 +464,9 @@ describe("OrganizerStallsPage", () => {
     render(page);
 
     expect(screen.getByText("支付状态：待支付")).toBeInTheDocument();
-    expect(screen.getByText("支付将在 10 小时内到期，建议提前催办。")).toBeInTheDocument();
+    expect(screen.getByText("支付跟进：立即催办")).toBeInTheDocument();
+    expect(screen.getByText("支付将在 10 小时后超时，建议立即催办摊主完成支付。")).toBeInTheDocument();
+    expect(screen.queryByText("支付将在 10 小时内到期，建议提前催办。")).not.toBeInTheDocument();
     expect(screen.getByRole("button", { name: "催办支付" })).toBeInTheDocument();
 
     vi.useRealTimers();

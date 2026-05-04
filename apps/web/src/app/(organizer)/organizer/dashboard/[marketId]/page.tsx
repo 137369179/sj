@@ -159,6 +159,10 @@ export default async function OrganizerDashboardPage({
             <p>{summary.metrics.paymentPendingCount}</p>
           </article>
           <article>
+            <h3>支付临期</h3>
+            <p>{summary.metrics.paymentUrgentCount}</p>
+          </article>
+          <article>
             <h3>支付超时</h3>
             <p>{summary.metrics.paymentOverdueCount}</p>
           </article>

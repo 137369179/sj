@@ -78,6 +78,7 @@
   - 已打通主办方“超时释放档期”动作：主办方可在摊位管理页对超时未支付订单执行释放档期，系统会取消订单、释放摊位、将申请改为拒绝并写入“摊位支付超时，已释放档期”审核记录，同时通知摊主
   - 已补齐支付风险指标与结果语义：主办方看板新增“待支付 / 支付超时”计数，摊主报名列表在档期因支付超时被释放后会显示“重新报名”和明确结果回执
   - 已补齐主办方“催办支付”动作：主办方可在摊位管理页对未超时的待支付订单发送支付提醒，摊主通知页会收到“支付进度提醒”并把当前优先事项切换为先完成支付
+  - 已补齐共享支付跟进语义：主办方摊位管理页和市集看板统一复用“正常推进 / 持续跟进 / 立即催办”优先级，并新增 `支付临期` 指标，避免页面各自维护不同的支付风险文案
   - 已接入摊主端时效规则提醒：补件进入 24 小时内显示剩余小时数，超时后给出明确补救提示，候补状态展示观察期提醒
   - 已将摊主报名列表升级为更精确的动作回执视图：按状态展示“建议动作”和“进度回执”，补件、候补、待支付等关键阶段都有明确下一步提示
   - 已将主办方市集页升级为“招募进度总览”语义，首屏展示待审核申请、待确认摊主和空位风险
@@ -105,6 +106,7 @@
   - `pnpm --filter web test -- src/app/__tests__/vendor-market-pages.test.tsx src/app/__tests__/vendor-apply-page.test.tsx src/app/__tests__/vendor-applications-page.test.tsx`
   - `pnpm --filter web test -- src/app/__tests__/organizer-markets-page.test.tsx src/app/__tests__/organizer-applications-page.test.tsx src/app/__tests__/organizer-dashboard-page.test.tsx`
   - `pnpm --filter web test -- src/components/layout/__tests__/app-shell.test.tsx src/server/applications/__tests__/application-service.test.ts`
+  - `pnpm --filter web test src/lib/__tests__/role-play.test.ts src/server/dashboard/__tests__/dashboard-service.test.ts src/app/__tests__/organizer-stalls-page.test.tsx src/app/__tests__/organizer-dashboard-page.test.tsx src/app/api/dashboard/markets/[marketId]/route.test.ts`
 - 当前全量 Vitest 回归通过：
   - `pnpm --filter web test`
 - 当前生产构建通过：

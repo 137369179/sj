@@ -73,6 +73,7 @@ describe("Organizer dashboard page", () => {
         waitlistPendingCount: 2,
         followUpUrgentCount: 1,
         paymentPendingCount: 2,
+        paymentUrgentCount: 1,
         paymentOverdueCount: 1,
         approvalRate: 0.4,
         totalStalls: 6,
@@ -107,6 +108,7 @@ describe("Organizer dashboard page", () => {
     expect(screen.getByText("候补待决")).toBeInTheDocument();
     expect(screen.getByText("高优先风险")).toBeInTheDocument();
     expect(screen.getByText("待支付")).toBeInTheDocument();
+    expect(screen.getByText("支付临期")).toBeInTheDocument();
     expect(screen.getByText("支付超时")).toBeInTheDocument();
     expect(screen.getByText("40%")).toBeInTheDocument();
     expect(screen.getByText("摊位总数")).toBeInTheDocument();
@@ -164,6 +166,7 @@ describe("Organizer dashboard page", () => {
         waitlistPendingCount: 2,
         followUpUrgentCount: 1,
         paymentPendingCount: 2,
+        paymentUrgentCount: 1,
         paymentOverdueCount: 1,
         approvalRate: 0.4,
         totalStalls: 6,
@@ -228,6 +231,7 @@ describe("Organizer dashboard page", () => {
         waitlistPendingCount: 2,
         followUpUrgentCount: 1,
         paymentPendingCount: 2,
+        paymentUrgentCount: 1,
         paymentOverdueCount: 1,
         approvalRate: 0.4,
         totalStalls: 6,
@@ -292,6 +296,7 @@ describe("Organizer dashboard page", () => {
         waitlistPendingCount: 2,
         followUpUrgentCount: 1,
         paymentPendingCount: 2,
+        paymentUrgentCount: 1,
         paymentOverdueCount: 1,
         approvalRate: 0.4,
         totalStalls: 6,

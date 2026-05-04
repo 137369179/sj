@@ -6,6 +6,11 @@ import { ZodError } from "zod";
 
 import { AppShell } from "../../../../components/layout/app-shell";
 import { getSessionUser } from "../../../../lib/auth";
+import {
+  getOrganizerPaymentFollowUpLabel,
+  getOrganizerPaymentFollowUpNote,
+  getOrganizerPaymentFollowUpState
+} from "../../../../lib/role-play";
 import { listOrganizerMarketOptions } from "../../../../server/markets/service";
 import {
   expirePendingOrder,
@@ -492,8 +497,19 @@ export default async function OrganizerStallsPage({
                 {stall.assignedOrderStatus ? (
                   <p>支付状态：{getOrderStatusLabel(stall.assignedOrderStatus)}</p>
                 ) : null}
+                {stall.assignedOrderStatus ? (
+                  <p>
+                    支付跟进：
+                    {getOrganizerPaymentFollowUpLabel(getPaymentFollowUpStateForStall(stall))}
+                  </p>
+                ) : null}
                 {stall.assignedOrderStatus === "pending" && stall.assignedOrderCreatedAt ? (
-                  <p>{getPendingOrderNote(stall.assignedOrderCreatedAt)}</p>
+                  <p>
+                    {getOrganizerPaymentFollowUpNote({
+                      orderStatus: stall.assignedOrderStatus,
+                      orderCreatedAt: stall.assignedOrderCreatedAt
+                    })}
+                  </p>
                 ) : null}
                 {resolvedSearchParams.paymentReleasedStallId === stall.id ? (
                   <p>已按支付超时释放档期，可继续分配给下一位摊主。</p>
@@ -784,21 +800,6 @@ function getOrderStatusLabel(status: string) {
   return status;
 }
 
-function getPendingOrderNote(createdAt: Date) {
-  const deadline = new Date(createdAt.getTime() + 24 * 60 * 60 * 1000);
-  const remainingHours = Math.ceil((deadline.getTime() - Date.now()) / (60 * 60 * 1000));
-
-  if (remainingHours <= 0) {
-    return "支付已超时，建议立即释放档期并通知下一位候补。";
-  }
-
-  if (remainingHours <= 12) {
-    return `支付将在 ${remainingHours} 小时内到期，建议提前催办。`;
-  }
-
-  return "待支付订单仍在时效窗口内，可继续观察付款进展。";
-}
-
 function isOverduePendingOrder(
   stall: Awaited<ReturnType<typeof listOrganizerStalls>>[number]
 ) {
@@ -819,6 +820,15 @@ function canRemindPendingOrder(
     Boolean(stall.assignedOrderId) &&
     !isOverduePendingOrder(stall)
   );
+}
+
+function getPaymentFollowUpStateForStall(
+  stall: Awaited<ReturnType<typeof listOrganizerStalls>>[number]
+) {
+  return getOrganizerPaymentFollowUpState({
+    orderStatus: stall.assignedOrderStatus,
+    orderCreatedAt: stall.assignedOrderCreatedAt
+  });
 }
 
 function getPaymentErrorMessage(code: string | undefined) {
