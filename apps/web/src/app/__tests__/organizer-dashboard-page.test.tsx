@@ -4,6 +4,7 @@ import { beforeEach, describe, expect, it, vi } from "vitest";
 import { getSessionUser } from "../../lib/auth";
 import { listOrganizerMarketOptions } from "../../server/markets/service";
 import { getMarketDashboardSummary } from "../../server/dashboard/service";
+import { runAutomaticPaymentReminders } from "../../server/payments/service";
 import OrganizerDashboardPage from "../(organizer)/organizer/dashboard/[marketId]/page";
 
 vi.mock("../../lib/auth", () => ({
@@ -16,6 +17,18 @@ vi.mock("../../server/markets/service", () => ({
 
 vi.mock("../../server/dashboard/service", () => ({
   getMarketDashboardSummary: vi.fn()
+}));
+
+vi.mock("../../server/payments/service", () => ({
+  runAutomaticPaymentReminders: vi.fn(),
+  PaymentError: class PaymentError extends Error {
+    code: string;
+
+    constructor(code: string) {
+      super(code);
+      this.code = code;
+    }
+  }
 }));
 
 vi.mock("../../components/layout/app-shell", () => ({
@@ -126,6 +139,7 @@ describe("Organizer dashboard page", () => {
     expect(screen.getByText("催办后支付")).toBeInTheDocument();
     expect(screen.getByText("催办转化率")).toBeInTheDocument();
     expect(screen.getByText("50%")).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "执行自动催办" })).toBeInTheDocument();
     expect(screen.getAllByText("25%").length).toBeGreaterThanOrEqual(2);
     expect(screen.getByText("40%")).toBeInTheDocument();
     expect(screen.getByText("摊位总数")).toBeInTheDocument();
@@ -396,5 +410,70 @@ describe("Organizer dashboard page", () => {
     expect(listOrganizerMarketOptions).not.toHaveBeenCalled();
     expect(screen.getByText("当前市集编号：market_1")).toBeInTheDocument();
     expect(getMarketDashboardSummary).not.toHaveBeenCalled();
+  });
+
+  it("shows automatic reminder receipt when dashboard action has run", async () => {
+    vi.mocked(getSessionUser).mockResolvedValue({
+      userId: "org_1",
+      role: "organizer"
+    });
+    vi.mocked(listOrganizerMarketOptions).mockResolvedValue([
+      {
+        id: "market_1",
+        title: "春日咖啡市集",
+        city: "杭州"
+      }
+    ]);
+    vi.mocked(getMarketDashboardSummary).mockResolvedValue({
+      market: {
+        id: "market_1",
+        title: "春日咖啡市集",
+        city: "杭州"
+      },
+      metrics: {
+        totalApplications: 5,
+        submittedCount: 2,
+        underReviewCount: 0,
+        pendingReviewCount: 2,
+        approvedCount: 1,
+        rejectedCount: 1,
+        assignedCount: 1,
+        paidCount: 0,
+        supplementPendingCount: 1,
+        waitlistPendingCount: 2,
+        followUpUrgentCount: 1,
+        paymentPendingCount: 2,
+        paymentUrgentCount: 1,
+        paymentOverdueCount: 1,
+        paymentCreatedCount: 4,
+        paymentCompletedCount: 1,
+        paymentReleasedCount: 1,
+        paymentReminderCount: 2,
+        paymentReminderConvertedCount: 1,
+        paymentCompletionRate: 0.25,
+        paymentReleaseRate: 0.25,
+        paymentReminderConversionRate: 0.5,
+        approvalRate: 0.4,
+        totalStalls: 6,
+        activeStalls: 5,
+        occupiedStalls: 3,
+        stallOccupancyRate: 0.6,
+        totalRevenue: 0
+      }
+    });
+
+    const page = await OrganizerDashboardPage({
+      params: Promise.resolve({
+        marketId: "market_1"
+      }),
+      searchParams: Promise.resolve({
+        autoRemindedCount: "2"
+      } as any)
+    });
+
+    render(page);
+
+    expect(screen.getByText("已自动催办 2 笔支付临期订单。")).toBeInTheDocument();
+    expect(runAutomaticPaymentReminders).not.toHaveBeenCalled();
   });
 });

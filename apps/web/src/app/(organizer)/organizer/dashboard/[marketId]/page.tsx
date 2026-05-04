@@ -1,21 +1,46 @@
+import { revalidatePath } from "next/cache";
 import Link from "next/link";
 
+import { redirect } from "next/navigation";
 import { AppShell } from "../../../../../components/layout/app-shell";
 import { DashboardCharts } from "../../../../../components/dashboard/dashboard-charts";
 import { getSessionUser } from "../../../../../lib/auth";
 import { getMarketDashboardSummary } from "../../../../../server/dashboard/service";
 import { listOrganizerMarketOptions } from "../../../../../server/markets/service";
+import { runAutomaticPaymentReminders } from "../../../../../server/payments/service";
 
 type OrganizerDashboardPageProps = {
   params: Promise<{
     marketId: string;
   }>;
   searchParams?: Promise<{
+    autoRemindedCount?: string;
     from?: string;
     status?: string;
     marketStatus?: string;
   }>;
 };
+
+async function runAutomaticPaymentRemindersAction(formData: FormData) {
+  "use server";
+
+  const sessionUser = await getSessionUser();
+
+  if (!sessionUser || sessionUser.role !== "organizer") {
+    return;
+  }
+
+  const marketId = String(formData.get("marketId") ?? "");
+  const result = await runAutomaticPaymentReminders({
+    marketId,
+    organizerId: sessionUser.userId
+  });
+  revalidatePath(`/organizer/dashboard/${marketId}`);
+
+  const params = buildDashboardActionParams(formData);
+  params.set("autoRemindedCount", String(result.remindedCount));
+  redirect(`/organizer/dashboard/${marketId}?${params.toString()}`);
+}
 
 export default async function OrganizerDashboardPage({
   params,
@@ -196,6 +221,22 @@ export default async function OrganizerDashboardPage({
         <section aria-labelledby="payment-funnel-title" style={{ marginTop: "1.5rem" }}>
           <h3 id="payment-funnel-title">支付漏斗</h3>
           <p>用于快速判断当前市集从已创建支付单到完成支付、释放档期的转化情况。</p>
+          {typeof resolvedSearchParams.autoRemindedCount === "string" ? (
+            <p>已自动催办 {resolvedSearchParams.autoRemindedCount} 笔支付临期订单。</p>
+          ) : null}
+          {summary.metrics.paymentUrgentCount > 0 ? (
+            <form action={runAutomaticPaymentRemindersAction} aria-label="自动催办表单">
+              <input name="marketId" type="hidden" value={summary.market.id} />
+              <input name="from" type="hidden" value={resolvedSearchParams.from ?? ""} />
+              <input name="status" type="hidden" value={resolvedSearchParams.status ?? ""} />
+              <input
+                name="marketStatus"
+                type="hidden"
+                value={resolvedSearchParams.marketStatus ?? ""}
+              />
+              <button type="submit">执行自动催办</button>
+            </form>
+          ) : null}
           <article>
             <h3>已创建支付单</h3>
             <p>{summary.metrics.paymentCreatedCount}</p>
@@ -411,4 +452,25 @@ function buildDashboardShortcutHref(input: {
   }
 
   return `${input.pathname}?${params.toString()}`;
+}
+
+function buildDashboardActionParams(formData: FormData) {
+  const params = new URLSearchParams();
+  const from = String(formData.get("from") ?? "");
+  const status = String(formData.get("status") ?? "");
+  const marketStatus = String(formData.get("marketStatus") ?? "");
+
+  if (from === "applications" || from === "stalls" || from === "markets") {
+    params.set("from", from);
+  }
+
+  if (status) {
+    params.set("status", status);
+  }
+
+  if (marketStatus) {
+    params.set("marketStatus", marketStatus);
+  }
+
+  return params;
 }

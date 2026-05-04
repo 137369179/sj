@@ -24,6 +24,11 @@ export type SendPaymentReminderInput = {
   organizerId: string;
 };
 
+export type RunAutomaticPaymentRemindersInput = {
+  marketId: string;
+  organizerId: string;
+};
+
 export async function payOrder(orderId: string, vendorId: string, method: string = "wechat") {
   const order = await db.order.findUnique({
     where: { id: orderId },
@@ -221,6 +226,106 @@ export async function sendPaymentReminder(input: SendPaymentReminderInput) {
   return {
     orderId: order.id,
     notification
+  };
+}
+
+export async function runAutomaticPaymentReminders(
+  input: RunAutomaticPaymentRemindersInput
+) {
+  const market = await db.market.findUnique({
+    where: {
+      id: input.marketId
+    },
+    select: {
+      id: true,
+      title: true,
+      organizerId: true
+    }
+  });
+
+  if (!market) {
+    throw new PaymentError("NOT_FOUND");
+  }
+
+  if (market.organizerId !== input.organizerId) {
+    throw new PaymentError("FORBIDDEN");
+  }
+
+  const orders = await db.order.findMany({
+    where: {
+      status: "pending",
+      application: {
+        marketId: input.marketId,
+        status: "stall_assigned"
+      }
+    },
+    select: {
+      id: true,
+      vendorId: true,
+      amount: true,
+      createdAt: true
+    }
+  });
+
+  const vendorIds = Array.from(new Set(orders.map((order) => order.vendorId)));
+  const existingReminders =
+    vendorIds.length === 0
+      ? []
+      : await db.notification.findMany({
+          where: {
+            userId: {
+              in: vendorIds
+            },
+            title: "支付进度提醒",
+            content: {
+              contains: market.title
+            }
+          },
+          select: {
+            userId: true,
+            createdAt: true
+          }
+        });
+
+  const latestReminderByUser = new Map<string, Date>();
+  for (const reminder of existingReminders) {
+    const previousReminder = latestReminderByUser.get(reminder.userId);
+
+    if (!previousReminder || previousReminder.getTime() < reminder.createdAt.getTime()) {
+      latestReminderByUser.set(reminder.userId, reminder.createdAt);
+    }
+  }
+
+  const remindedOrderIds: string[] = [];
+
+  for (const order of orders) {
+    const remainingHours = Math.ceil(
+      (order.createdAt.getTime() + 24 * 60 * 60 * 1000 - Date.now()) / (60 * 60 * 1000)
+    );
+
+    if (remainingHours > 12 || remainingHours <= 0) {
+      continue;
+    }
+
+    const latestReminder = latestReminderByUser.get(order.vendorId);
+    if (latestReminder && latestReminder.getTime() >= order.createdAt.getTime()) {
+      continue;
+    }
+
+    await createNotification(
+      buildOrderPaymentReminderNotification({
+        userId: order.vendorId,
+        marketTitle: market.title,
+        amount: order.amount
+      })
+    );
+    remindedOrderIds.push(order.id);
+  }
+
+  return {
+    marketId: input.marketId,
+    remindedCount: remindedOrderIds.length,
+    orderIds: remindedOrderIds
   };
 }
 

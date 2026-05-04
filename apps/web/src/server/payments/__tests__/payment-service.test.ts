@@ -6,6 +6,7 @@ import {
   getVendorOrderForApplication,
   PaymentError,
   payOrder,
+  runAutomaticPaymentReminders,
   sendPaymentReminder
 } from "../service";
 
@@ -215,6 +216,75 @@ describe("payments service", () => {
       });
       expect(result.orderId).toBe("order_3");
       expect(result.notification.id).toBe("notification_3");
+    });
+  });
+
+  describe("runAutomaticPaymentReminders", () => {
+    it("automatically reminds urgent pending orders that have not been reminded after order creation", async () => {
+      vi.useFakeTimers();
+      vi.setSystemTime(new Date("2026-05-03T12:00:00.000Z"));
+
+      vi.spyOn(db.market, "findUnique").mockResolvedValue({
+        id: "market_1",
+        title: "春日咖啡市集",
+        organizerId: "org_1"
+      } as any);
+      vi.spyOn(db.order, "findMany").mockResolvedValue([
+        {
+          id: "order_urgent_1",
+          vendorId: "vendor_1",
+          amount: 200,
+          status: "pending",
+          createdAt: new Date("2026-05-02T22:00:00.000Z")
+        },
+        {
+          id: "order_watching_1",
+          vendorId: "vendor_2",
+          amount: 180,
+          status: "pending",
+          createdAt: new Date("2026-05-03T03:00:00.000Z")
+        },
+        {
+          id: "order_urgent_2",
+          vendorId: "vendor_3",
+          amount: 220,
+          status: "pending",
+          createdAt: new Date("2026-05-02T23:00:00.000Z")
+        }
+      ] as any);
+      vi.spyOn(db.notification, "findMany").mockResolvedValue([
+        {
+          id: "notification_existing",
+          userId: "vendor_3",
+          title: "支付进度提醒",
+          content: "主办方提醒你尽快完成春日咖啡市集的摊位费用支付，当前待支付金额为¥220。",
+          createdAt: new Date("2026-05-03T09:00:00.000Z")
+        }
+      ] as any);
+      const notificationCreateSpy = vi
+        .spyOn(db.notification, "create")
+        .mockResolvedValue({ id: "notification_new" } as any);
+
+      const result = await runAutomaticPaymentReminders({
+        marketId: "market_1",
+        organizerId: "org_1"
+      });
+
+      expect(notificationCreateSpy).toHaveBeenCalledTimes(1);
+      expect(notificationCreateSpy).toHaveBeenCalledWith({
+        data: {
+          userId: "vendor_1",
+          title: "支付进度提醒",
+          content: "主办方提醒你尽快完成春日咖啡市集的摊位费用支付，当前待支付金额为¥200。"
+        }
+      });
+      expect(result).toEqual({
+        marketId: "market_1",
+        remindedCount: 1,
+        orderIds: ["order_urgent_1"]
+      });
+
+      vi.useRealTimers();
     });
   });
 });
