@@ -163,8 +163,10 @@ export default async function VendorApplicationsPage({
         <section aria-label="报名列表">
           {filteredApplications.map((application) => {
             const timingNote = getVendorTimingNote({
+              status: application.status,
               latestReviewDecision: application.latestReviewDecision,
-              reviewedAt: application.reviewedAt
+              reviewedAt: application.reviewedAt,
+              reviewNote: application.reviewNote
             });
 
             return (

@@ -111,6 +111,14 @@ describe("role-play metadata", () => {
         reviewNote: "摊主已确认候补补位"
       })
     ).toBe("你已确认候补补位，主办方正在安排摊位分配。");
+    expect(
+      getVendorTimingNote({
+        status: "approved",
+        latestReviewDecision: "approve",
+        reviewedAt: new Date("2026-05-03T10:00:00.000Z"),
+        reviewNote: "摊主已确认候补补位"
+      })
+    ).toBe("主办方通常会在 24 小时内同步摊位分配结果，请留意最新通知。");
   });
 
   it("derives organizer follow-up priority and timing notes", () => {

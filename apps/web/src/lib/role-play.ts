@@ -100,8 +100,10 @@ export function getVendorCurrentStepLabel(
 }
 
 export function getVendorTimingNote(input: {
+  status?: string;
   latestReviewDecision?: string | null;
   reviewedAt?: Date | string | null;
+  reviewNote?: string | null;
 }) {
   const reviewedAt = normalizeDate(input.reviewedAt);
 
@@ -126,6 +128,10 @@ export function getVendorTimingNote(input: {
 
   if (input.latestReviewDecision === "waitlist") {
     return "候补观察期内请保留档期，留意补位通知。";
+  }
+
+  if (input.status === "approved" && input.reviewNote === "摊主已确认候补补位") {
+    return "主办方通常会在 24 小时内同步摊位分配结果，请留意最新通知。";
   }
 
   return null;

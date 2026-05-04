@@ -446,6 +446,9 @@ describe("Vendor applications page", () => {
     expect(
       screen.getByText("进度回执：你已确认候补补位，主办方正在安排摊位分配。")
     ).toBeInTheDocument();
+    expect(
+      screen.getByText("时效提醒：主办方通常会在 24 小时内同步摊位分配结果，请留意最新通知。")
+    ).toBeInTheDocument();
   });
 
   it("filters vendor applications by marketId and preserves status context", async () => {
