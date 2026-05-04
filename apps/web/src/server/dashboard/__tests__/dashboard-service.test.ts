@@ -379,4 +379,28 @@ describe("dashboard service", () => {
     delete process.env.AUTH_ENABLE_DEMO_LOGIN;
     delete process.env.NODE_ENV;
   });
+
+  it("skips database access for demo organizer dashboard requests", async () => {
+    process.env.AUTH_ENABLE_DEMO_LOGIN = "true";
+    process.env.NODE_ENV = "development";
+
+    const marketSpy = vi.spyOn(db.market, "findUnique");
+
+    await expect(
+      getMarketDashboardSummary({
+        organizerId: "organizer_1",
+        marketId: "market_1"
+      })
+    ).resolves.toMatchObject({
+      market: {
+        id: "market_1",
+        title: "演示市集看板"
+      }
+    });
+
+    expect(marketSpy).not.toHaveBeenCalled();
+
+    delete process.env.AUTH_ENABLE_DEMO_LOGIN;
+    delete process.env.NODE_ENV;
+  });
 });

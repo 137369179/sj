@@ -113,6 +113,10 @@ export async function getMarketDashboardSummary(input: {
   organizerId: string;
   marketId: string;
 }): Promise<MarketDashboardSummary> {
+  if (isDemoOrganizerUser(input.organizerId)) {
+    return buildDemoDashboardSummary(input.marketId);
+  }
+
   let market;
 
   try {
@@ -283,6 +287,10 @@ function buildDemoDashboardSummary(marketId: string): MarketDashboardSummary {
 
 function isDemoLoginEnabled() {
   return process.env.AUTH_ENABLE_DEMO_LOGIN === "true" && process.env.NODE_ENV !== "production";
+}
+
+function isDemoOrganizerUser(organizerId: string) {
+  return isDemoLoginEnabled() && organizerId === "organizer_1";
 }
 
 function countStatuses(

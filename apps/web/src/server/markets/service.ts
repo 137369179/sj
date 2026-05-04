@@ -270,6 +270,10 @@ export async function getPublishedMarketById(
 export async function listOrganizerMarketOptions(
   organizerId: string
 ): Promise<OrganizerMarketOption[]> {
+  if (isDemoOrganizerUser(organizerId)) {
+    return [];
+  }
+
   try {
     const markets = await db.market.findMany({
       where: {
@@ -303,6 +307,10 @@ export async function listOrganizerMarketOptions(
 export async function listOrganizerMarkets(
   organizerId: string
 ): Promise<OrganizerMarketListItem[]> {
+  if (isDemoOrganizerUser(organizerId)) {
+    return [];
+  }
+
   try {
     return await db.market.findMany({
       where: {
@@ -421,4 +429,8 @@ export async function updateOrganizerMarket(
 
 function isDemoLoginEnabled() {
   return process.env.AUTH_ENABLE_DEMO_LOGIN === "true" && process.env.NODE_ENV !== "production";
+}
+
+function isDemoOrganizerUser(organizerId: string) {
+  return isDemoLoginEnabled() && organizerId === "organizer_1";
 }

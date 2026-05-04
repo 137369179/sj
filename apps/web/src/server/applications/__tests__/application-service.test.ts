@@ -469,6 +469,32 @@ describe("application service", () => {
     delete process.env.NODE_ENV;
   });
 
+  it("skips database access for demo vendor application requests", async () => {
+    process.env.AUTH_ENABLE_DEMO_LOGIN = "true";
+    process.env.NODE_ENV = "development";
+
+    const findManySpy = vi.spyOn(db.application, "findMany");
+
+    await expect(listVendorApplications("vendor_1")).resolves.toEqual([]);
+    expect(findManySpy).not.toHaveBeenCalled();
+
+    delete process.env.AUTH_ENABLE_DEMO_LOGIN;
+    delete process.env.NODE_ENV;
+  });
+
+  it("skips database access for demo organizer application requests", async () => {
+    process.env.AUTH_ENABLE_DEMO_LOGIN = "true";
+    process.env.NODE_ENV = "development";
+
+    const findManySpy = vi.spyOn(db.application, "findMany");
+
+    await expect(listOrganizerApplications("organizer_1")).resolves.toEqual([]);
+    expect(findManySpy).not.toHaveBeenCalled();
+
+    delete process.env.AUTH_ENABLE_DEMO_LOGIN;
+    delete process.env.NODE_ENV;
+  });
+
   it("reviews an application and creates a notification", async () => {
     const findUniqueSpy = vi.spyOn(db.application, "findUnique").mockResolvedValue({
       id: "app_1",

@@ -203,6 +203,10 @@ export function canAssignStall(input: {
 export async function listOrganizerStalls(
   organizerId: string
 ): Promise<OrganizerStallListItem[]> {
+  if (isDemoOrganizerUser(organizerId)) {
+    return [];
+  }
+
   try {
     const stalls = await db.stall.findMany({
       where: {
@@ -423,4 +427,8 @@ function formatOrganizerStall(stall: OrganizerStallRecord): OrganizerStallListIt
 
 function isDemoLoginEnabled() {
   return process.env.AUTH_ENABLE_DEMO_LOGIN === "true" && process.env.NODE_ENV !== "production";
+}
+
+function isDemoOrganizerUser(organizerId: string) {
+  return isDemoLoginEnabled() && organizerId === "organizer_1";
 }

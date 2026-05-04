@@ -158,6 +158,32 @@ describe("market service", () => {
     delete process.env.NODE_ENV;
   });
 
+  it("skips database access for demo organizer market option requests", async () => {
+    process.env.AUTH_ENABLE_DEMO_LOGIN = "true";
+    process.env.NODE_ENV = "development";
+
+    const findManySpy = vi.spyOn(db.market, "findMany");
+
+    await expect(listOrganizerMarketOptions("organizer_1")).resolves.toEqual([]);
+    expect(findManySpy).not.toHaveBeenCalled();
+
+    delete process.env.AUTH_ENABLE_DEMO_LOGIN;
+    delete process.env.NODE_ENV;
+  });
+
+  it("skips database access for demo organizer market list requests", async () => {
+    process.env.AUTH_ENABLE_DEMO_LOGIN = "true";
+    process.env.NODE_ENV = "development";
+
+    const findManySpy = vi.spyOn(db.market, "findMany");
+
+    await expect(listOrganizerMarkets("organizer_1")).resolves.toEqual([]);
+    expect(findManySpy).not.toHaveBeenCalled();
+
+    delete process.env.AUTH_ENABLE_DEMO_LOGIN;
+    delete process.env.NODE_ENV;
+  });
+
   it("lists only published markets for vendors and applies filters", async () => {
     const findManySpy = vi.spyOn(db.market, "findMany").mockResolvedValue([
       {

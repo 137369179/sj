@@ -291,6 +291,10 @@ export function makeApplicationKey(marketId: string, vendorId: string) {
 export async function listOrganizerApplications(
   organizerId: string
 ): Promise<OrganizerApplicationListItem[]> {
+  if (isDemoOrganizerUser(organizerId)) {
+    return [];
+  }
+
   try {
     const applications = await db.application.findMany({
       where: {
@@ -317,6 +321,10 @@ export async function listOrganizerApplications(
 export async function listVendorApplications(
   vendorId: string
 ): Promise<VendorApplicationListItem[]> {
+  if (isDemoVendorUser(vendorId)) {
+    return [];
+  }
+
   try {
     const applications = await db.application.findMany({
       where: {
@@ -809,4 +817,12 @@ function resolveReviewNextStatus(
 
 function isDemoLoginEnabled() {
   return process.env.AUTH_ENABLE_DEMO_LOGIN === "true" && process.env.NODE_ENV !== "production";
+}
+
+function isDemoVendorUser(vendorId: string) {
+  return isDemoLoginEnabled() && vendorId === "vendor_1";
+}
+
+function isDemoOrganizerUser(organizerId: string) {
+  return isDemoLoginEnabled() && organizerId === "organizer_1";
 }

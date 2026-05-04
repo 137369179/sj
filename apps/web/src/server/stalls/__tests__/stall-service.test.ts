@@ -204,6 +204,19 @@ describe("stall service", () => {
     delete process.env.NODE_ENV;
   });
 
+  it("skips database access for demo organizer stall requests", async () => {
+    process.env.AUTH_ENABLE_DEMO_LOGIN = "true";
+    process.env.NODE_ENV = "development";
+
+    const findManySpy = vi.spyOn(db.stall, "findMany");
+
+    await expect(listOrganizerStalls("organizer_1")).resolves.toEqual([]);
+    expect(findManySpy).not.toHaveBeenCalled();
+
+    delete process.env.AUTH_ENABLE_DEMO_LOGIN;
+    delete process.env.NODE_ENV;
+  });
+
   it("creates a stall inside the organizer scope", async () => {
     vi.spyOn(db.market, "findUnique").mockResolvedValue({
       id: "market_1",
